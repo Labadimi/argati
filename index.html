@@ -342,7 +342,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 <div id="fab">
     <div class="fab-inner">
         <div class="fab-left">
-            <div class="fab-count" id="fab-count">0 zgjedhura</div>
+            <div class="fab-count" id="fab-count">0 selected</div>
             <div class="fab-sub">Tap Place to send them</div>
         </div>
         <button class="fab-btn" id="fab-approve-btn" onclick="approveSelected()">▶ Place Orders</button>
@@ -354,7 +354,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 <div class="notif-overlay" id="notif-overlay">
     <div class="notif-card">
         <div class="notif-icon"  id="notif-icon">✅</div>
-        <div class="notif-title" id="notif-title">Porosi e kryer!</div>
+        <div class="notif-title" id="notif-title">Order placed!</div>
         <div class="notif-sub"   id="notif-sub"></div>
         <button class="notif-btn" id="notif-btn" onclick="closeNotif()">OK</button>
     </div>
@@ -499,7 +499,7 @@ async function loadOrders(silent = false) {
         if (lastCount >= 0 && allOrders.length > lastCount) {
             const diff = allOrders.length - lastCount;
             const banner = document.getElementById('new-order-banner');
-            banner.innerText = '🔔 ' + diff + (diff===1 ? ' new order!' : ' new orders!');
+            banner.innerText = '🔔 ' + diff + (diff===1 ? ' new order arrived!' : ' new orders arrived!');
             banner.style.display = 'block';
             setTimeout(() => { banner.style.display='none'; }, 5000);
             if (navigator.vibrate) navigator.vibrate([200,100,200]);
@@ -573,7 +573,7 @@ function buildCard(o) {
         <div class="card-check">${isSelected?'✓':''}</div>
         <div class="card-top">
             <span class="card-badge">#${o.rowNumber}</span>
-            <span class="card-label">${isReview ? '⚠️ Review' : '🟢 Ready'}</span>
+            <span class="card-label">${isReview ? '⚠️ Needs review' : '🟢 Ready'}</span>
         </div>
         <div class="card-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
         <div class="card-detail"><span class="icon">📦</span><span class="val">${product}</span></div>
@@ -591,7 +591,7 @@ async function approveSelected() {
 
     const btn = document.getElementById('fab-approve-btn');
     btn.disabled  = true;
-    btn.innerText = '⏳ Duke derguar...';
+    btn.innerText = '⏳ Sending...';
 
     // Build queue from selected orders (preserve sorted order)
     const toProcess = allOrders.filter(o => selectedRows.has(o.rowNumber));
@@ -628,8 +628,8 @@ async function approveSelected() {
         // All sent successfully — now poll for results
         showNotif(
             '📤',
-            total === 1 ? 'Porosia u dërgua!' : total + ' orders sent!',
-            'Desktop po i vendos njëra pas tjetrës.\nDo të njoftohesh kur të kryhen.',
+            total === 1 ? '1 order sent!' : total + ' orders sent!',
+            'Desktop is placing them one by one.\nYou\'ll be notified as each completes.',
             'green'
         );
         // Poll for each order's result
@@ -688,7 +688,7 @@ function pollForResult(rowNumber, name, product, attempts, total) {
             } else {
                 addHistory({ rowNumber, name, product }, false, null);
                 showNotif('⚠️', 'Timed out',
-                    '#' + rowNumber + ' — ' + name + '\nNuk u konfirmua brenda 2 min.\nKontrollo nëse laptopi është ndezur.',
+                    '#' + rowNumber + ' — ' + name + '\nNot confirmed within 2 minutes.\nMake sure Chrome is open on your laptop.',
                     'red');
             }
         } catch(e) {
@@ -713,7 +713,7 @@ function addHistory(order, success, orderId) {
             <div class="history-bottom">
                 <span class="history-product">${h.product}</span>
                 <span class="history-result ${h.success?'ok':'err'}">
-                    ${h.success ? '✅ ' + (h.orderId||'OK') : '❌ Deshtoi'}
+                    ${h.success ? '✅ ' + (h.orderId||'OK') : '❌ Failed'}
                 </span>
             </div>
         </div>`).join('');
