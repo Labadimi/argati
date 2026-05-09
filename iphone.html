@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Argati">
+<title>Argati</title>
+<style>
+  :root {
+    --primary: #ff4500;
+    --bg:      #0f1117;
+    --card:    #1a1d27;
+    --text:    #e2e8f0;
+    --muted:   #64748b;
+    --border:  #2a2d3a;
+    --green:   #10b981;
+    --red:     #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, 'SF Pro Display', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 16px 20px; padding-top: calc(16px + env(safe-area-inset-top));
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header-left  { display: flex; align-items: center; gap: 10px; }
+  .header-icon  { font-size: 24px; }
+  .header-title { font-size: 18px; font-weight: 800; }
+  .header-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .badge {
+    background: var(--primary); color: white;
+    font-size: 12px; font-weight: 800; padding: 3px 9px;
+    border-radius: 20px; min-width: 28px; text-align: center;
+  }
+
+  /* STATS */
+  .stats { display: flex; gap: 0; background: var(--card); border-bottom: 1px solid var(--border); }
+  .stat  { flex: 1; padding: 12px; text-align: center; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: none; }
+  .stat-num   { font-size: 22px; font-weight: 800; color: var(--green); }
+  .stat-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+  /* MAIN */
+  .main { padding: 16px; }
+
+  .section-label {
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin: 0 0 10px 0;
+  }
+
+  /* ORDER CARD */
+  .order-card {
+    background: var(--card); border-radius: 16px;
+    border-left: 4px solid var(--primary);
+    padding: 16px; margin-bottom: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .order-card.needs-review { border-left-color: #f59e0b; }
+  .order-card.approved     { border-left-color: var(--green); opacity: 0.6; }
+
+  .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .order-row-num {
+    background: rgba(255,69,0,0.12); color: var(--primary);
+    font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px;
+  }
+  .order-name { font-size: 16px; font-weight: 800; margin-top: 8px; }
+
+  .order-detail { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: #94a3b8; }
+  .order-detail span:first-child { font-size: 14px; opacity: 0.7; }
+  .order-detail b { color: var(--text); font-weight: 600; }
+
+  .alert-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #2d1a0a; border: 1px solid #7c3509; color: #fb923c;
+    font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 7px;
+    margin-top: 10px;
+  }
+  .comment-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #0d1f3c; border: 1px solid #1e3a8a; color: #93c5fd;
+    font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 7px;
+    margin-top: 6px;
+  }
+
+  /* APPROVE BUTTON */
+  .approve-btn {
+    width: 100%; padding: 14px; margin-top: 14px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 800; letter-spacing: 0.04em;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  .approve-btn:active   { background: #e03d00; transform: scale(0.98); }
+  .approve-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .approve-btn.done     { background: var(--green); }
+
+  /* EMPTY STATE */
+  .empty {
+    text-align: center; padding: 60px 20px;
+  }
+  .empty-icon  { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .empty-sub   { font-size: 14px; color: var(--muted); }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* REFRESH BTN */
+  .refresh-btn {
+    width: 100%; padding: 12px; background: var(--card);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    color: var(--text); font-size: 13px; font-weight: 700;
+    cursor: pointer; margin-bottom: 16px;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: calc(24px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%);
+    background: var(--green); color: white;
+    padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 700;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🤖</div>
+    <div>
+      <div class="header-title">Argati</div>
+      <div class="header-sub">Approval Center</div>
+    </div>
+  </div>
+  <div class="badge" id="badge">0</div>
+</div>
+
+<div class="stats" id="stats">
+  <div class="stat">
+    <div class="stat-num" id="stat-pending">—</div>
+    <div class="stat-label">Në pritje</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" id="stat-review" style="color:#f59e0b">—</div>
+    <div class="stat-label">Review</div>
+  </div>
+</div>
+
+<div class="main">
+  <button class="refresh-btn" id="refresh-btn" onclick="loadOrders()">↻ Rifresko</button>
+  <div id="order-list">
+    <div class="loading">
+      <div class="spinner"></div>
+      Duke ngarkuar porositë...
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG — paste your Apps Script URL here ────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
+
+const PRODUCT_NAMES = {
+  "105":"Pastrues Frenave 105","106":"DPF Additiv 106","107":"Pastrues DPF 107",
+  "201":"Super Diesel Additiv 201","204":"Pastrues Injektimit Dizel 204",
+  "206":"Perforcues Oktani 206","207":"Additiv Vaj Motorik 207",
+  "209":"Super Benzin Additiv 209","210":"Pastrues Injektimit Benzine 210"
+};
+
+function getProductName(raw) {
+  if (!raw) return '—';
+  const code = raw.toString().trim();
+  if (code.includes('+')) return code.split('+').map(c => PRODUCT_NAMES[c.trim()] || c.trim()).join(' + ');
+  return PRODUCT_NAMES[code] || code;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+async function loadOrders() {
+  const list = document.getElementById('order-list');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>Duke ngarkuar...</div>';
+
+  try {
+    const res    = await fetch(SCRIPT_URL + '?action=pending&t=' + Date.now());
+    const orders = await res.json();
+
+    const needsReview = orders.filter(o => {
+      const hasComment = (o['Koment shtese (Nese ka)'] || '').toString().trim() !== '';
+      const isMulti    = (o['Produkti'] || '').toString().includes('+');
+      return hasComment || isMulti;
+    });
+
+    // Update stats
+    document.getElementById('stat-pending').innerText = orders.length;
+    document.getElementById('stat-review').innerText  = needsReview.length;
+    document.getElementById('badge').innerText        = orders.length;
+
+    if (orders.length === 0) {
+      list.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🎉</div>
+          <div class="empty-title">Asnje porosi ne pritje!</div>
+          <div class="empty-sub">Te gjitha porositë jane kryer.</div>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = '';
+
+    // Show orders needing review first
+    const sorted = [...needsReview, ...orders.filter(o => !needsReview.includes(o))];
+
+    sorted.forEach(order => {
+      const produkti   = (order['Produkti'] || '').toString();
+      const isMulti    = produkti.includes('+');
+      const comment    = (order['Koment shtese (Nese ka)'] || '').toString().trim();
+      const hasComment = comment !== '';
+      const isReview   = isMulti || hasComment;
+      const productName = getProductName(produkti);
+
+      const card = document.createElement('div');
+      card.className = 'order-card' + (isReview ? ' needs-review' : '');
+      card.innerHTML = `
+        <div class="order-top">
+          <span class="order-row-num">#${order.rowNumber}</span>
+        </div>
+        <div class="order-name">${(order['Emri'] || '').trim()} ${(order['Mbiemri'] || '').trim()}</div>
+        <div class="order-detail"><span>📦</span><b>${productName}</b></div>
+        <div class="order-detail"><span>📍</span>${order['Qyteti'] || '—'}</div>
+        <div class="order-detail"><span>📞</span>${order['Telefoni'] || '—'}</div>
+        ${isMulti    ? `<div class="alert-badge">⚠️ Produkte te shumta: ${produkti}</div>` : ''}
+        ${hasComment ? `<div class="comment-badge">💬 ${comment}</div>` : ''}
+        <button class="approve-btn" id="btn-${order.rowNumber}" onclick="approveOrder(${order.rowNumber}, this)">
+          ▶ Vendos Porosinë
+        </button>`;
+      list.appendChild(card);
+    });
+
+  } catch(e) {
+    list.innerHTML = `<div class="loading" style="color:#ef4444">⚠ Gabim: ${e.message}<br><br><small>Kontrollo lidhjen dhe provo perseri.</small></div>`;
+  }
+}
+
+async function approveOrder(rowNumber, btn) {
+  btn.disabled  = true;
+  btn.innerText = '⏳ Duke aprovuar...';
+
+  try {
+    const res  = await fetch(SCRIPT_URL + '?action=approve&row=' + rowNumber + '&t=' + Date.now());
+    const data = await res.json();
+
+    if (data.success) {
+      btn.innerText  = '✅ Aprovuar!';
+      btn.className  = 'approve-btn done';
+      const card = btn.closest('.order-card');
+      card.classList.add('approved');
+      card.classList.remove('needs-review');
+      showToast('✅ Porosia #' + rowNumber + ' u aprovua!');
+
+      // Refresh after 2s
+      setTimeout(loadOrders, 2000);
+    } else {
+      btn.disabled  = false;
+      btn.innerText = '▶ Vendos Porosinë';
+      showToast('⚠ Gabim — provo perseri');
+    }
+  } catch(e) {
+    btn.disabled  = false;
+    btn.innerText = '▶ Vendos Porosinë';
+    showToast('⚠ Gabim: ' + e.message);
+  }
+}
+
+// Auto-refresh every 60 seconds
+loadOrders();
+setInterval(loadOrders, 60000);
+</script>
+</body>
+</html>
