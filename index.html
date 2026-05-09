@@ -2,309 +2,901 @@
 <html lang="sq">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Argati">
 <title>Argati</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --primary: #ff4500;
-    --bg:      #0f1117;
-    --card:    #1a1d27;
-    --text:    #e2e8f0;
-    --muted:   #64748b;
-    --border:  #2a2d3a;
-    --green:   #10b981;
-    --red:     #ef4444;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* ── THEME VARIABLES ────────────────────────────────────────────────────────── */
+:root {
+    --primary:       #ff4500;
+    --primary-light: rgba(255,69,0,0.09);
+    --bg:            #f0f2f5;
+    --card:          #ffffff;
+    --text:          #0f172a;
+    --muted:         #94a3b8;
+    --border:        #e8ecf0;
+    --detail-text:   #475569;
+    --shadow:        rgba(0,0,0,0.07);
+    --green:         #10b981;
+}
+body.dark {
+    --primary:       #ff5722;
+    --primary-light: rgba(255,87,34,0.12);
+    --bg:            #0f1117;
+    --card:          #1a1d27;
+    --text:          #e2e8f0;
+    --muted:         #64748b;
+    --border:        #2a2d3a;
+    --detail-text:   #94a3b8;
+    --shadow:        rgba(0,0,0,0.4);
+}
 
-  body {
-    font-family: -apple-system, 'SF Pro Display', system-ui, sans-serif;
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+    font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
     background: var(--bg); color: var(--text);
-    min-height: 100vh; padding-bottom: env(safe-area-inset-bottom);
-  }
+    min-height: 100vh;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    transition: background 0.2s, color 0.2s;
+}
 
-  /* HEADER */
-  .header {
+/* ── HEADER ─────────────────────────────────────────────────────────────────── */
+.header {
+    position: sticky; top: 0; z-index: 50;
     background: var(--card); border-bottom: 1px solid var(--border);
-    padding: 16px 20px; padding-top: calc(16px + env(safe-area-inset-top));
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 10;
-  }
-  .header-left  { display: flex; align-items: center; gap: 10px; }
-  .header-icon  { font-size: 24px; }
-  .header-title { font-size: 18px; font-weight: 800; }
-  .header-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
-  .badge {
-    background: var(--primary); color: white;
-    font-size: 12px; font-weight: 800; padding: 3px 9px;
-    border-radius: 20px; min-width: 28px; text-align: center;
-  }
+    padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+    display: flex; align-items: center; gap: 10px;
+}
+.header-icon {
+    width: 38px; height: 38px; background: var(--primary);
+    border-radius: 11px; display: flex; align-items: center;
+    justify-content: center; font-size: 20px; flex-shrink: 0;
+}
+.header-text { flex: 1; }
+.header-title { font-size: 16px; font-weight: 800; color: var(--text); line-height: 1.2; }
+.header-sub   { font-size: 11px; color: var(--muted); font-weight: 500; }
+.header-btns  { display: flex; gap: 7px; }
 
-  /* STATS */
-  .stats { display: flex; gap: 0; background: var(--card); border-bottom: 1px solid var(--border); }
-  .stat  { flex: 1; padding: 12px; text-align: center; border-right: 1px solid var(--border); }
-  .stat:last-child { border-right: none; }
-  .stat-num   { font-size: 22px; font-weight: 800; color: var(--green); }
-  .stat-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+.icon-btn {
+    width: 34px; height: 34px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    background: var(--card); cursor: pointer; color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0; transition: border-color 0.15s;
+    padding: 0; line-height: 1;
+}
+.icon-btn:active { border-color: var(--primary); background: var(--primary-light); }
+#reload-btn.spinning { animation: spin 0.5s linear; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  /* MAIN */
-  .main { padding: 16px; }
+/* ── NEW ORDER BANNER ───────────────────────────────────────────────────────── */
+#new-order-banner {
+    display: none; background: var(--green); color: white;
+    font-size: 13px; font-weight: 700; text-align: center;
+    padding: 10px 16px; margin: 12px 16px 0;
+    border-radius: 12px; animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
 
-  .section-label {
-    font-size: 10px; font-weight: 800; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 0.1em;
-    margin: 0 0 10px 0;
-  }
+/* ── MAIN SCROLL AREA ───────────────────────────────────────────────────────── */
+.main { padding: 14px 16px; }
 
-  /* ORDER CARD */
-  .order-card {
-    background: var(--card); border-radius: 16px;
+/* ── STATS BAR ──────────────────────────────────────────────────────────────── */
+.stats-bar {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--card); border-radius: 14px;
+    padding: 12px 16px; margin-bottom: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px var(--shadow);
+}
+.stat-item  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stat-num   { font-size: 24px; font-weight: 800; color: var(--green); line-height: 1; }
+.stat-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-divider { width: 1px; height: 34px; background: var(--border); margin: 0 10px; }
+
+/* ── ACTIVE ORDER CARD ──────────────────────────────────────────────────────── */
+.active-order-box {
+    background: var(--card); border-radius: 18px;
+    padding: 16px; margin-bottom: 14px;
     border-left: 4px solid var(--primary);
-    padding: 16px; margin-bottom: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-  }
-  .order-card.needs-review { border-left-color: #f59e0b; }
-  .order-card.approved     { border-left-color: var(--green); opacity: 0.6; }
+    box-shadow: 0 2px 14px var(--shadow);
+}
+.active-label {
+    font-size: 9px; font-weight: 800; color: var(--primary);
+    text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 11px 0;
+}
+.order-name-row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.order-row-num  {
+    background: var(--primary-light); color: var(--primary);
+    font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 7px; flex-shrink: 0;
+}
+.order-fullname { font-size: 16px; font-weight: 800; color: var(--text); }
+.order-detail-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--detail-text); }
+.detail-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
+.detail-text { font-weight: 500; line-height: 1.4; word-break: break-word; }
+.detail-text a { color: #3b82f6; text-decoration: none; }
 
-  .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-  .order-row-num {
-    background: rgba(255,69,0,0.12); color: var(--primary);
-    font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 6px;
-  }
-  .order-name { font-size: 16px; font-weight: 800; margin-top: 8px; }
+/* ── ALERTS ─────────────────────────────────────────────────────────────────── */
+.order-alert { display: flex; align-items: flex-start; gap: 9px; margin-top: 11px; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.4; }
+.order-alert strong { font-weight: 700; display: block; margin-bottom: 2px; }
+.alert-sub { font-weight: 500; opacity: 0.85; }
+.alert-multi   { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+.alert-comment { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+body.dark .alert-multi   { background: #2d1a0a; border-color: #7c3509; color: #fb923c; }
+body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #93c5fd; }
 
-  .order-detail { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: #94a3b8; }
-  .order-detail span:first-child { font-size: 14px; opacity: 0.7; }
-  .order-detail b { color: var(--text); font-weight: 600; }
+/* ── QUEUE ──────────────────────────────────────────────────────────────────── */
+.queue-label {
+    font-size: 9px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.1em; margin: 14px 0 8px 0;
+}
+.next-up-card {
+    background: var(--card); border-radius: 12px; padding: 11px 14px;
+    margin-bottom: 8px; display: flex; justify-content: space-between;
+    align-items: center; border: 1px solid var(--border);
+    transition: border-color 0.15s; font-size: 13px;
+    cursor: pointer;
+}
+.next-up-card:active { border-color: var(--primary); background: var(--primary-light); }
+.nuc-name { font-weight: 700; color: var(--text); }
+.nuc-city { color: var(--muted); font-size: 12px; }
 
-  .alert-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: #2d1a0a; border: 1px solid #7c3509; color: #fb923c;
-    font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 7px;
-    margin-top: 10px;
-  }
-  .comment-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: #0d1f3c; border: 1px solid #1e3a8a; color: #93c5fd;
-    font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 7px;
-    margin-top: 6px;
-  }
+/* ── CITY WARNING ───────────────────────────────────────────────────────────── */
+#city-warning {
+    display: none; align-items: flex-start; gap: 8px;
+    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+    border-radius: 12px; padding: 10px 13px; margin-bottom: 12px;
+    font-size: 12px; font-weight: 600; line-height: 1.5;
+}
+body.dark #city-warning { background: #2d0a0a; border-color: #7f1d1d; color: #fca5a5; }
 
-  /* APPROVE BUTTON */
-  .approve-btn {
-    width: 100%; padding: 14px; margin-top: 14px;
-    background: var(--primary); color: white;
-    border: none; border-radius: 12px;
-    font-size: 15px; font-weight: 800; letter-spacing: 0.04em;
-    cursor: pointer; transition: background 0.15s, transform 0.1s;
-    font-family: -apple-system, system-ui, sans-serif;
-  }
-  .approve-btn:active   { background: #e03d00; transform: scale(0.98); }
-  .approve-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .approve-btn.done     { background: var(--green); }
+/* ── CHECKLIST ──────────────────────────────────────────────────────────────── */
+.checklist {
+    display: none; background: var(--card); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--border);
+}
+.step { font-size: 13px; margin: 7px 0; color: var(--muted); display: flex; align-items: center; gap: 9px; font-weight: 500; transition: color 0.2s; }
+.step.done { color: var(--green); font-weight: 700; }
 
-  /* EMPTY STATE */
-  .empty {
-    text-align: center; padding: 60px 20px;
-  }
-  .empty-icon  { font-size: 48px; margin-bottom: 12px; }
-  .empty-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-  .empty-sub   { font-size: 14px; color: var(--muted); }
+/* ── TIMER ──────────────────────────────────────────────────────────────────── */
+#order-timer {
+    display: none; align-items: center; justify-content: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 16px; margin-bottom: 12px;
+    font-size: 13px; color: var(--muted); font-weight: 600;
+}
+#timer-display { font-size: 20px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
 
-  /* LOADING */
-  .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
-  .spinner {
-    width: 28px; height: 28px; border: 3px solid var(--border);
-    border-top-color: var(--primary); border-radius: 50%;
-    animation: spin 0.7s linear infinite; margin: 0 auto 12px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── TOGGLES ────────────────────────────────────────────────────────────────── */
+.toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 10px;
+}
+.toggle-label { font-size: 13px; font-weight: 700; color: var(--text); }
+.toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 24px; cursor: pointer; transition: background 0.2s; }
+.toggle-slider:before { content:''; position:absolute; width:18px; height:18px; left:3px; top:3px; background:white; border-radius:50%; transition:transform 0.2s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--green); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
 
-  /* REFRESH BTN */
-  .refresh-btn {
-    width: 100%; padding: 12px; background: var(--card);
-    border: 1.5px solid var(--border); border-radius: 12px;
-    color: var(--text); font-size: 13px; font-weight: 700;
-    cursor: pointer; margin-bottom: 16px;
-    font-family: -apple-system, system-ui, sans-serif;
-  }
+.autopilot-row {
+    background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.04));
+    border-color: rgba(16,185,129,0.25);
+}
 
-  /* TOAST */
-  .toast {
-    position: fixed; bottom: calc(24px + env(safe-area-inset-bottom));
-    left: 50%; transform: translateX(-50%);
-    background: var(--green); color: white;
-    padding: 10px 20px; border-radius: 20px;
-    font-size: 13px; font-weight: 700;
-    opacity: 0; transition: opacity 0.3s;
-    pointer-events: none; z-index: 100;
-    white-space: nowrap;
-  }
-  .toast.show { opacity: 1; }
+/* ── PLACE ORDER BUTTON ─────────────────────────────────────────────────────── */
+#place-order {
+    width: 100%; padding: 16px; border: none; border-radius: 14px;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--primary); color: white; font-size: 15px;
+    font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(255,69,0,0.3);
+    transition: background 0.15s, transform 0.1s;
+}
+#place-order:active:not(:disabled)  { background: #e03d00; transform: scale(0.98); }
+#place-order:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── COLLAPSIBLE PANELS ─────────────────────────────────────────────────────── */
+.panel-toggle {
+    width: 100%; padding: 11px 16px; border: 1.5px solid var(--border);
+    border-radius: 12px; background: var(--card); color: var(--text);
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    text-align: center; margin-bottom: 10px;
+    transition: border-color 0.15s;
+}
+.panel-toggle:active { border-color: var(--primary); background: var(--primary-light); }
+.panel-body {
+    display: none; background: var(--card); border-radius: 14px;
+    border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden;
+}
+
+/* ── ANALYTICS ──────────────────────────────────────────────────────────────── */
+.analytics-inner { padding: 14px 14px 10px; }
+.analytics-title { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+.chart-wrap { display: flex; align-items: flex-end; gap: 5px; height: 72px; padding-top: 12px; margin-bottom: 6px; }
+.chart-col  { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; height:100%; justify-content:flex-end; }
+.chart-bar-wrap { width:100%; flex:1; display:flex; align-items:flex-end; justify-content:center; }
+.chart-bar  { width:100%; border-radius:4px 4px 0 0; background:var(--primary); opacity:0.75; min-height:2px; transition:height 0.4s ease; }
+.chart-bar.today { opacity:1; }
+.chart-bar.zero  { opacity:0.2; }
+.chart-val  { font-size:10px; font-weight:800; color:var(--text); min-height:14px; }
+.chart-day  { font-size:9px; color:var(--muted); font-weight:600; }
+.chart-day.today { color:var(--primary); font-weight:800; }
+.avg-row { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:10px; margin-top:4px; }
+.avg-label { font-size:12px; color:var(--muted); font-weight:600; }
+.avg-value { font-size:15px; font-weight:800; color:var(--primary); }
+.avg-sub   { font-size:9px; color:var(--muted); margin-top:1px; text-align:right; }
+
+/* ── HISTORY ────────────────────────────────────────────────────────────────── */
+.history-item { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.history-item:last-child { border-bottom: none; }
+.history-top    { display:flex; justify-content:space-between; margin-bottom:3px; }
+.history-name   { font-weight:700; color:var(--text); }
+.history-time   { color:var(--muted); font-size:11px; }
+.history-bottom { display:flex; justify-content:space-between; }
+.history-product { color:var(--detail-text); font-weight:500; }
+.history-meta    { color:var(--green); font-weight:700; font-size:11px; }
+.history-empty   { padding:18px; text-align:center; color:var(--muted); font-size:13px; }
+
+/* ── STATUS ─────────────────────────────────────────────────────────────────── */
+#status {
+    text-align:center; font-size:12px; color:var(--muted);
+    margin-top:10px; font-weight:600; letter-spacing:0.02em;
+    padding-bottom: 8px;
+}
+
+/* ── TOAST ──────────────────────────────────────────────────────────────────── */
+.toast {
+    position:fixed; bottom:calc(24px + env(safe-area-inset-bottom));
+    left:50%; transform:translateX(-50%);
+    background:#1e293b; color:white;
+    padding:10px 20px; border-radius:20px;
+    font-size:13px; font-weight:700;
+    opacity:0; transition:opacity 0.3s;
+    pointer-events:none; z-index:100; white-space:nowrap;
+}
+.toast.show { opacity:1; }
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <div class="header-left">
     <div class="header-icon">🤖</div>
-    <div>
-      <div class="header-title">Argati</div>
-      <div class="header-sub">Approval Center</div>
+    <div class="header-text">
+        <div class="header-title">Argati</div>
+        <div class="header-sub">Order Manager</div>
     </div>
-  </div>
-  <div class="badge" id="badge">0</div>
+    <div class="header-btns">
+        <button class="icon-btn" id="theme-btn" title="Dark/Light">🌙</button>
+        <button class="icon-btn" id="reload-btn" title="Rifresko">↻</button>
+    </div>
 </div>
 
-<div class="stats" id="stats">
-  <div class="stat">
-    <div class="stat-num" id="stat-pending">—</div>
-    <div class="stat-label">Në pritje</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num" id="stat-review" style="color:#f59e0b">—</div>
-    <div class="stat-label">Review</div>
-  </div>
-</div>
+<div id="new-order-banner"></div>
 
 <div class="main">
-  <button class="refresh-btn" id="refresh-btn" onclick="loadOrders()">↻ Rifresko</button>
-  <div id="order-list">
-    <div class="loading">
-      <div class="spinner"></div>
-      Duke ngarkuar porositë...
+
+    <!-- STATS BAR -->
+    <div id="stats-bar" class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-num" id="stat-today">—</span>
+            <span class="stat-label">Sot ✅</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-num" id="stat-pending" style="color:var(--primary)">—</span>
+            <span class="stat-label">Ne pritje 🕐</span>
+        </div>
     </div>
-  </div>
+
+    <!-- ORDER INFO (active card + queue) -->
+    <div id="order-info"></div>
+
+    <!-- CITY WARNING -->
+    <div id="city-warning"></div>
+
+    <!-- TIMER -->
+    <div id="order-timer">
+        <span>⏱</span>
+        <span id="timer-display">00:00</span>
+        <span>duke procesuar...</span>
+    </div>
+
+    <!-- CHECKLIST -->
+    <div id="checklist" class="checklist">
+        <div class="step" id="step-1">○ Opening Product...</div>
+        <div class="step" id="step-2">○ Filling Customer Info...</div>
+        <div class="step" id="step-3">○ Selecting Payment...</div>
+        <div class="step" id="step-4">○ Recording Order ID...</div>
+    </div>
+
+    <!-- TOGGLES -->
+    <div class="toggle-row">
+        <span class="toggle-label" id="auto-queue-label">Automatik: OFF</span>
+        <label class="toggle-switch">
+            <input type="checkbox" id="auto-queue-toggle">
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+
+    <div class="toggle-row autopilot-row">
+        <span class="toggle-label" id="autopilot-label">Auto-Pilot: OFF</span>
+        <label class="toggle-switch">
+            <input type="checkbox" id="autopilot-toggle">
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+
+    <!-- PLACE ORDER -->
+    <button id="place-order" disabled>▶ Place Order</button>
+
+    <!-- ANALYTICS -->
+    <button class="panel-toggle" id="analytics-toggle">📊 Analitika</button>
+    <div class="panel-body" id="analytics-panel">
+        <div class="analytics-inner">
+            <p class="analytics-title">Porosi — 7 ditet e fundit</p>
+            <div class="chart-wrap" id="perf-chart"></div>
+            <div class="avg-row">
+                <span class="avg-label">Koha mesatare sot</span>
+                <div style="text-align:right">
+                    <div class="avg-value" id="avg-time-value">--:--</div>
+                    <div class="avg-sub"   id="avg-time-sub">asnje porosi ende</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HISTORY -->
+    <button class="panel-toggle" id="history-toggle">📋 Historiku</button>
+    <div class="panel-body" id="history-panel">
+        <div id="history-list">
+            <div class="history-empty">Asnje porosi ende ne kete sesion.</div>
+        </div>
+    </div>
+
+    <div id="status">Duke u lidhur...</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── CONFIG — paste your Apps Script URL here ────────────────────────────────
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 
-const PRODUCT_NAMES = {
-  "105":"Pastrues Frenave 105","106":"DPF Additiv 106","107":"Pastrues DPF 107",
-  "201":"Super Diesel Additiv 201","204":"Pastrues Injektimit Dizel 204",
-  "206":"Perforcues Oktani 206","207":"Additiv Vaj Motorik 207",
-  "209":"Super Benzin Additiv 209","210":"Pastrues Injektimit Benzine 210"
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentOrder        = null;
+let allPendingOrders    = [];
+let autoQueueEnabled    = false;
+let autoPilotEnabled    = false;
+let isProcessing        = false;
+let lastKnownCount      = -1;
+let orderHistory        = [];
+let autoQueue           = [];
+let sessionTimings      = [];
+let weeklyChartData     = {};
+let timerInterval       = null;
+let timerStart          = null;
+
+const DAYS_SQ = ['Die','Hen','Mar','Mer','Enj','Pre','Sht'];
+
+// ─── PRODUCT MAP ──────────────────────────────────────────────────────────────
+const PRODUCTS = {
+    "105":{ name:"Pastrues Frenave 105",     url:"https://gjirafamall.com/pastrues-i-frenave-80100-pcl-005-105" },
+    "106":{ name:"DPF Additiv 106",           url:"https://gjirafamall.com/dpf-additiv-pcl-006-106" },
+    "107":{ name:"Pastrues DPF 107",          url:"https://gjirafamall.com/pastrues-i-dpf-parts-center-pcl007-107-300-ml" },
+    "201":{ name:"Super Diesel Additiv 201",  url:"https://gjirafamall.com/super-diesel-addetiv-pcs-001-201-300-ml" },
+    "204":{ name:"Pastrues Injektimit Dizel 204", url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-dizel-parts-center-204" },
+    "206":{ name:"Perforcues Oktani 206",     url:"https://gjirafamall.com/perforcues-i-oktanit-te-benzines-pcs-006-206" },
+    "207":{ name:"Additiv Vaj Motorik 207",   url:"https://gjirafamall.com/additiv-per-vaj-motorik-pcs-007-207" },
+    "209":{ name:"Super Benzin Additiv 209",  url:"https://gjirafamall.com/super-benzin-addetiv-pcs-009-209" },
+    "210":{ name:"Pastrues Injektimit Benzine 210", url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-benzine-pcs-010-210" },
 };
 
-function getProductName(raw) {
-  if (!raw) return '—';
-  const code = raw.toString().trim();
-  if (code.includes('+')) return code.split('+').map(c => PRODUCT_NAMES[c.trim()] || c.trim()).join(' + ');
-  return PRODUCT_NAMES[code] || code;
+function resolveProduct(raw) {
+    if (!raw) return { name:'—', url:'' };
+    const code = raw.toString().trim();
+    if (PRODUCTS[code]) return PRODUCTS[code];
+    return { name: code, url: '' };
 }
 
+// ─── VALIDATORS ───────────────────────────────────────────────────────────────
+function validatePhone(raw) {
+    if (!raw) return { value:'', warning:'Numri i telefonit mungon!' };
+    let p = raw.toString().trim().replace(/[\s\-().]/g,'');
+    p = p.replace(/^\+3830?/,'0').replace(/^3830?/,'0');
+    if (!/^04\d{7}$/.test(p)) return { value:p, warning:'Numri '+p+' duket i gabuar' };
+    return { value:p, warning:null };
+}
+
+function normalizeAddress(raw) {
+    if (!raw) return { value:'', warning:'Adresa mungon!' };
+    let a = raw.toString().trim().replace(/\s+/g,' ');
+    return { value:a, warning:null };
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.innerText = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-async function loadOrders() {
-  const list = document.getElementById('order-list');
-  list.innerHTML = '<div class="loading"><div class="spinner"></div>Duke ngarkuar...</div>';
+// ─── DARK MODE ────────────────────────────────────────────────────────────────
+function applyTheme(dark) {
+    document.body.classList.toggle('dark', dark);
+    document.getElementById('theme-btn').innerText = dark ? '☀️' : '🌙';
+    localStorage.setItem('darkMode', dark ? '1' : '');
+}
+document.getElementById('theme-btn').addEventListener('click', () => {
+    applyTheme(!document.body.classList.contains('dark'));
+});
+if (localStorage.getItem('darkMode')) applyTheme(true);
 
-  try {
-    const res    = await fetch(SCRIPT_URL + '?action=pending&t=' + Date.now());
-    const orders = await res.json();
+// ─── RELOAD ───────────────────────────────────────────────────────────────────
+document.getElementById('reload-btn').addEventListener('click', () => {
+    if (isProcessing) return;
+    const btn = document.getElementById('reload-btn');
+    btn.classList.add('spinning');
+    btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once:true });
+    loadNextOrder();
+});
 
-    const needsReview = orders.filter(o => {
-      const hasComment = (o['Koment shtese (Nese ka)'] || '').toString().trim() !== '';
-      const isMulti    = (o['Produkti'] || '').toString().includes('+');
-      return hasComment || isMulti;
+// ─── PANEL TOGGLES ────────────────────────────────────────────────────────────
+function setupPanelToggle(toggleId, panelId, openLabel, closeLabel, onOpen) {
+    document.getElementById(toggleId).addEventListener('click', () => {
+        const panel  = document.getElementById(panelId);
+        const btn    = document.getElementById(toggleId);
+        const willOpen = panel.style.display !== 'block';
+        panel.style.display = willOpen ? 'block' : 'none';
+        btn.innerText = willOpen ? closeLabel : openLabel;
+        if (willOpen && onOpen) onOpen();
     });
+}
+setupPanelToggle('analytics-toggle','analytics-panel','📊 Analitika','📊 Mbyll ✕', () => {
+    renderChart(weeklyChartData); updateAvgTime();
+});
+setupPanelToggle('history-toggle','history-panel','📋 Historiku','📋 Mbyll ✕');
 
-    // Update stats
-    document.getElementById('stat-pending').innerText = orders.length;
-    document.getElementById('stat-review').innerText  = needsReview.length;
-    document.getElementById('badge').innerText        = orders.length;
+// ─── AUTO-QUEUE & AUTO-PILOT TOGGLES ─────────────────────────────────────────
+document.getElementById('auto-queue-toggle').addEventListener('change', (e) => {
+    autoQueueEnabled = e.target.checked;
+    document.getElementById('auto-queue-label').innerText =
+        autoQueueEnabled ? 'Automatik: ON' : 'Automatik: OFF';
+    if (!autoQueueEnabled) autoQueue = [];
+    localStorage.setItem('autoQueue', autoQueueEnabled ? '1' : '');
+});
+document.getElementById('autopilot-toggle').addEventListener('change', (e) => {
+    autoPilotEnabled = e.target.checked;
+    document.getElementById('autopilot-label').innerText =
+        autoPilotEnabled ? 'Auto-Pilot: ON 🤖' : 'Auto-Pilot: OFF';
+    localStorage.setItem('autoPilot', autoPilotEnabled ? '1' : '');
+});
 
-    if (orders.length === 0) {
-      list.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🎉</div>
-          <div class="empty-title">Asnje porosi ne pritje!</div>
-          <div class="empty-sub">Te gjitha porositë jane kryer.</div>
+// Restore preferences
+if (localStorage.getItem('autoQueue')) {
+    autoQueueEnabled = true;
+    document.getElementById('auto-queue-toggle').checked = true;
+    document.getElementById('auto-queue-label').innerText = 'Automatik: ON';
+}
+if (localStorage.getItem('autoPilot')) {
+    autoPilotEnabled = true;
+    document.getElementById('autopilot-toggle').checked = true;
+    document.getElementById('autopilot-label').innerText = 'Auto-Pilot: ON 🤖';
+}
+
+// ─── ANALYTICS ────────────────────────────────────────────────────────────────
+function buildWeeklyData(orders) {
+    const result = {};
+    const today  = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(today); d.setDate(d.getDate() - i);
+        result[d.toDateString()] = 0;
+    }
+    orders.forEach(o => {
+        const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
+        if (!oid || oid.toLowerCase() === 'pending') return;
+        const placed = (o['PlacedDate'] || '').toString().trim();
+        if (!placed) return;
+        try { const ds = new Date(placed).toDateString(); if (ds in result) result[ds]++; } catch(e) {}
+    });
+    return result;
+}
+
+function renderChart(data) {
+    const wrap = document.getElementById('perf-chart');
+    if (!wrap) return;
+    const entries  = Object.entries(data);
+    const max      = Math.max(...entries.map(e => e[1]), 1);
+    const todayStr = new Date().toDateString();
+    wrap.innerHTML = entries.map(([ds, count]) => {
+        const isToday = ds === todayStr;
+        const barH = Math.max(Math.round((count/max)*100), count>0 ? 8 : 2);
+        return `<div class="chart-col">
+            <div class="chart-bar-wrap">
+                <div class="chart-bar${isToday?' today':''}${count===0?' zero':''}" style="height:${barH}%"></div>
+            </div>
+            <div class="chart-val">${count>0?count:''}</div>
+            <div class="chart-day${isToday?' today':''}">${isToday?'Sot':DAYS_SQ[new Date(ds).getDay()]}</div>
         </div>`;
-      return;
+    }).join('');
+}
+
+function updateAvgTime() {
+    const el    = document.getElementById('avg-time-value');
+    const subEl = document.getElementById('avg-time-sub');
+    if (!el||!subEl) return;
+    // Load from localStorage
+    const saved = JSON.parse(localStorage.getItem('sessionTimings')||'{}');
+    const today = new Date().toDateString();
+    if (saved.date === today && Array.isArray(saved.timings)) sessionTimings = saved.timings;
+    if (sessionTimings.length===0) { el.innerText='--:--'; subEl.innerText='asnje porosi ende'; return; }
+    const avg = Math.round(sessionTimings.reduce((a,b)=>a+b,0)/sessionTimings.length);
+    const mm = String(Math.floor(avg/60)).padStart(2,'0');
+    const ss = String(avg%60).padStart(2,'0');
+    el.innerText = mm+':'+ss;
+    subEl.innerText = 'bazuar ne '+sessionTimings.length+' porosi';
+}
+
+function saveTimings() {
+    localStorage.setItem('sessionTimings', JSON.stringify({
+        date: new Date().toDateString(), timings: sessionTimings
+    }));
+}
+
+// Load timings on startup
+(function() {
+    const saved = JSON.parse(localStorage.getItem('sessionTimings')||'{}');
+    if (saved.date === new Date().toDateString() && Array.isArray(saved.timings))
+        sessionTimings = saved.timings;
+})();
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function addToHistory(order, orderId, elapsedSec) {
+    const mm   = String(Math.floor(elapsedSec/60)).padStart(2,'0');
+    const ss   = String(elapsedSec%60).padStart(2,'0');
+    const time = new Date().toLocaleTimeString('sq-AL',{hour:'2-digit',minute:'2-digit'});
+    orderHistory.unshift({
+        rowNumber: order.rowNumber,
+        name: (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(),
+        product: resolveProduct(order.Produkti).name,
+        orderId, time, elapsed: mm+':'+ss
+    });
+    if (orderHistory.length>20) orderHistory.pop();
+    const container = document.getElementById('history-list');
+    if (!container) return;
+    container.innerHTML = orderHistory.map(h => `
+        <div class="history-item">
+            <div class="history-top">
+                <span class="history-name">#${h.rowNumber} ${h.name}</span>
+                <span class="history-time">${h.time}</span>
+            </div>
+            <div class="history-bottom">
+                <span class="history-product">${h.product}</span>
+                <span class="history-meta">${h.orderId} · ${h.elapsed}</span>
+            </div>
+        </div>`).join('');
+}
+
+// ─── STATS BAR ────────────────────────────────────────────────────────────────
+function updateStatsBar(completedToday, pending) {
+    const t = document.getElementById('stat-today');
+    const p = document.getElementById('stat-pending');
+    if (t) t.innerText = completedToday;
+    if (p) {
+        p.innerText = pending;
+        p.style.color = pending > 0 ? 'var(--primary)' : 'var(--green)';
+    }
+}
+
+// ─── RENDER ORDER CARD ────────────────────────────────────────────────────────
+function renderCurrentOrder() {
+    const infoDiv = document.getElementById('order-info');
+    const btn     = document.getElementById('place-order');
+
+    if (!currentOrder) {
+        infoDiv.innerHTML = `<div class="active-order-box" style="text-align:center;padding:24px;">
+            <div style="font-size:32px;margin-bottom:8px;">🎉</div>
+            <div style="font-weight:800;font-size:16px;">Asnje porosi ne pritje!</div>
+        </div>`;
+        btn.disabled = true;
+        return;
     }
 
-    list.innerHTML = '';
+    const product    = resolveProduct(currentOrder.Produkti);
+    const rawProduct = (currentOrder.Produkti||'').toString().trim();
+    const isMulti    = rawProduct.includes('+');
+    const comment    = (currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
+    const phoneCheck = validatePhone(currentOrder.Telefoni);
+    const addrCheck  = normalizeAddress(currentOrder.Adresa);
 
-    // Show orders needing review first
-    const sorted = [...needsReview, ...orders.filter(o => !needsReview.includes(o))];
+    infoDiv.innerHTML = `
+        <div class="active-order-box">
+            <p class="active-label">⚡ Detyra Aktive</p>
+            <div class="order-name-row">
+                <span class="order-row-num">#${currentOrder.rowNumber}</span>
+                <span class="order-fullname">${(currentOrder.Emri||'').trim()} ${(currentOrder.Mbiemri||'').trim()}</span>
+            </div>
+            <div class="order-detail-row">
+                <span class="detail-icon">📦</span>
+                <span class="detail-text">
+                    ${product.url
+                        ? '<a href="'+product.url+'" target="_blank">'+product.name+'</a>'
+                        : '<span style="color:#e63e00;font-weight:700;">⚠ '+rawProduct+'</span>'}
+                </span>
+            </div>
+            <div class="order-detail-row">
+                <span class="detail-icon">📍</span>
+                <span class="detail-text">${currentOrder.Qyteti||'—'}</span>
+            </div>
+            <div class="order-detail-row">
+                <span class="detail-icon">📞</span>
+                <span class="detail-text" style="color:${phoneCheck.warning?'#e63e00':'inherit'}">
+                    ${phoneCheck.warning ? '⚠ '+phoneCheck.warning : phoneCheck.value}
+                </span>
+            </div>
+            <div class="order-detail-row">
+                <span class="detail-icon">🏠</span>
+                <span class="detail-text">${addrCheck.value||'—'}</span>
+            </div>
+            ${isMulti ? `<div class="order-alert alert-multi">
+                <span>⚠️</span>
+                <div><strong>Kerkese speciale — shume produkte</strong>
+                <div class="alert-sub">${rawProduct.split('+').map(c=>c.trim()).join(' + ')}</div></div>
+            </div>` : ''}
+            ${comment ? `<div class="order-alert alert-comment">
+                <span>💬</span>
+                <div><strong>Ka koment</strong><div class="alert-sub">${comment}</div></div>
+            </div>` : ''}
+        </div>`;
 
-    sorted.forEach(order => {
-      const produkti   = (order['Produkti'] || '').toString();
-      const isMulti    = produkti.includes('+');
-      const comment    = (order['Koment shtese (Nese ka)'] || '').toString().trim();
-      const hasComment = comment !== '';
-      const isReview   = isMulti || hasComment;
-      const productName = getProductName(produkti);
+    btn.disabled = !product.url || !!phoneCheck.warning || isProcessing;
+}
 
-      const card = document.createElement('div');
-      card.className = 'order-card' + (isReview ? ' needs-review' : '');
-      card.innerHTML = `
-        <div class="order-top">
-          <span class="order-row-num">#${order.rowNumber}</span>
-        </div>
-        <div class="order-name">${(order['Emri'] || '').trim()} ${(order['Mbiemri'] || '').trim()}</div>
-        <div class="order-detail"><span>📦</span><b>${productName}</b></div>
-        <div class="order-detail"><span>📍</span>${order['Qyteti'] || '—'}</div>
-        <div class="order-detail"><span>📞</span>${order['Telefoni'] || '—'}</div>
-        ${isMulti    ? `<div class="alert-badge">⚠️ Produkte te shumta: ${produkti}</div>` : ''}
-        ${hasComment ? `<div class="comment-badge">💬 ${comment}</div>` : ''}
-        <button class="approve-btn" id="btn-${order.rowNumber}" onclick="approveOrder(${order.rowNumber}, this)">
-          ▶ Vendos Porosinë
-        </button>`;
-      list.appendChild(card);
+// ─── LOAD QUEUE ───────────────────────────────────────────────────────────────
+async function loadNextOrder(specificOrder = null, backgroundRefresh = false) {
+    const status = document.getElementById('status');
+    if (!backgroundRefresh) status.innerText = 'Duke u sinkronizuar...';
+
+    try {
+        const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
+        const orders = await res.json();
+
+        allPendingOrders = orders.filter(o => {
+            const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
+            return oid === '' || oid.toLowerCase() === 'pending';
+        });
+
+        lastKnownCount = allPendingOrders.length;
+
+        // Stats
+        const todayStr = new Date().toDateString();
+        const completedToday = orders.filter(o => {
+            const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
+            if (!oid || oid.toLowerCase()==='pending') return false;
+            const placed = (o['PlacedDate']||'').toString().trim();
+            if (!placed) return false;
+            try { return new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
+        }).length;
+        updateStatsBar(completedToday, allPendingOrders.length);
+
+        weeklyChartData = buildWeeklyData(orders);
+        const analyticsEl = document.getElementById('analytics-panel');
+        if (analyticsEl && analyticsEl.style.display==='block') renderChart(weeklyChartData);
+
+        currentOrder = specificOrder || allPendingOrders[0];
+        renderCurrentOrder();
+
+        // Queue list
+        const infoDiv = document.getElementById('order-info');
+        const others  = allPendingOrders.filter(o => o.rowNumber !== currentOrder?.rowNumber);
+        if (currentOrder && others.length > 0) {
+            let q = '<p class="queue-label">Radha — kliko per ndryshim</p>';
+            others.slice(0,5).forEach(next => {
+                const np     = resolveProduct(next.Produkti);
+                const nPhone = validatePhone(next.Telefoni);
+                q += `<div class="next-up-card" data-row="${next.rowNumber}">
+                    <div>
+                        <div class="nuc-name"><b>#${next.rowNumber}</b> ${(next.Emri||'').trim()} ${(next.Mbiemri||'').trim()}</div>
+                        <div style="font-size:11px;color:var(--muted);margin-top:3px;">${np.name}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="nuc-city">${next.Qyteti||'—'}</div>
+                        ${nPhone.warning?'<div style="font-size:10px;color:#e63e00;margin-top:2px;">⚠ Tel</div>':''}
+                    </div>
+                </div>`;
+            });
+            infoDiv.innerHTML += q;
+        }
+
+        document.querySelectorAll('.next-up-card').forEach(card => {
+            card.addEventListener('click', () => {
+                if (isProcessing) return;
+                const rowId = card.getAttribute('data-row');
+                loadNextOrder(allPendingOrders.find(o => o.rowNumber == rowId));
+            });
+        });
+
+        if (!backgroundRefresh) {
+            status.innerText = allPendingOrders.length > 0
+                ? allPendingOrders.length + ' Porosi ne pritje' : '';
+        }
+
+        // Auto-pilot check
+        if (autoPilotEnabled && !isProcessing && currentOrder) {
+            const rp      = (currentOrder.Produkti||'').toString().trim();
+            const cm      = (currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
+            const isClean = !rp.includes('+') && cm === '';
+            if (isClean) {
+                setTimeout(() => {
+                    if (!isProcessing && currentOrder && autoPilotEnabled) {
+                        status.innerText = '🤖 Auto-pilot: duke vendosur...';
+                        placeOrder(currentOrder);
+                    }
+                }, 3000);
+            }
+        }
+
+    } catch(e) {
+        console.error(e);
+        document.getElementById('status').innerText = 'Gabim: ' + (e.message||'lidhje deshtoi');
+    }
+}
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+function startTimer() {
+    timerStart = Date.now();
+    if (timerInterval) clearInterval(timerInterval);
+    document.getElementById('order-timer').style.display = 'flex';
+    timerInterval = setInterval(() => {
+        const e  = Math.floor((Date.now()-timerStart)/1000);
+        const mm = String(Math.floor(e/60)).padStart(2,'0');
+        const ss = String(e%60).padStart(2,'0');
+        document.getElementById('timer-display').innerText = mm+':'+ss;
+    }, 1000);
+}
+
+function stopTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    document.getElementById('order-timer').style.display = 'none';
+    const elapsed = timerStart ? Math.floor((Date.now()-timerStart)/1000) : 0;
+    timerStart = null;
+    return elapsed;
+}
+
+// ─── PLACE ORDER ─────────────────────────────────────────────────────────────
+// On iPhone we can't inject scripts into other tabs.
+// So "placing order" means writing "Approved: YES" to the sheet,
+// which the desktop extension picks up and fires automatically.
+async function placeOrder(order) {
+    if (isProcessing) return;
+
+    const product    = resolveProduct(order.Produkti);
+    const phoneCheck = validatePhone(order.Telefoni);
+
+    if (!product.url)       { showToast('⚠ Produkti nuk u gjet!'); return; }
+    if (phoneCheck.warning) { showToast('⚠ ' + phoneCheck.warning); return; }
+
+    isProcessing = true;
+    document.getElementById('place-order').disabled = true;
+    document.getElementById('checklist').style.display = 'block';
+
+    const steps = ['Opening Product...','Filling Customer Info...','Selecting Payment...','Recording Order ID...'];
+    [1,2,3,4].forEach(i => {
+        const el = document.getElementById('step-'+i);
+        el.innerText = '○ ' + steps[i-1];
+        el.classList.remove('done');
     });
 
-  } catch(e) {
-    list.innerHTML = `<div class="loading" style="color:#ef4444">⚠ Gabim: ${e.message}<br><br><small>Kontrollo lidhjen dhe provo perseri.</small></div>`;
-  }
-}
+    document.getElementById('status').innerText = 'Duke aprovuar...';
+    startTimer();
 
-async function approveOrder(rowNumber, btn) {
-  btn.disabled  = true;
-  btn.innerText = '⏳ Duke aprovuar...';
+    try {
+        // Write "Approved: YES" to sheet — desktop extension will auto-fire it
+        const res  = await fetch(SCRIPT_URL + '?action=approve&row=' + order.rowNumber + '&t=' + Date.now());
+        const data = await res.json();
 
-  try {
-    const res  = await fetch(SCRIPT_URL + '?action=approve&row=' + rowNumber + '&t=' + Date.now());
-    const data = await res.json();
+        if (data.success) {
+            // Simulate step progress visually
+            const delays = [500, 1200, 2000, 2800];
+            delays.forEach((delay, i) => {
+                setTimeout(() => {
+                    const el = document.getElementById('step-'+(i+1));
+                    if (el) { el.innerText = '✅ ' + steps[i]; el.classList.add('done'); }
+                }, delay);
+            });
 
-    if (data.success) {
-      btn.innerText  = '✅ Aprovuar!';
-      btn.className  = 'approve-btn done';
-      const card = btn.closest('.order-card');
-      card.classList.add('approved');
-      card.classList.remove('needs-review');
-      showToast('✅ Porosia #' + rowNumber + ' u aprovua!');
+            setTimeout(() => {
+                const elapsed = stopTimer();
+                const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+                const ss = String(elapsed%60).padStart(2,'0');
 
-      // Refresh after 2s
-      setTimeout(loadOrders, 2000);
-    } else {
-      btn.disabled  = false;
-      btn.innerText = '▶ Vendos Porosinë';
-      showToast('⚠ Gabim — provo perseri');
+                sessionTimings.push(elapsed);
+                saveTimings();
+                updateAvgTime();
+
+                addToHistory(order, 'Aprovuar', elapsed);
+                isProcessing = false;
+
+                showToast('✅ Porosia #' + order.rowNumber + ' u aprovua!');
+                document.getElementById('status').innerText = '✅ Aprovuar ne ' + mm + ':' + ss;
+
+                if (autoQueueEnabled && autoQueue.length > 0) {
+                    const next = autoQueue.shift();
+                    setTimeout(() => {
+                        currentOrder = next;
+                        renderCurrentOrder();
+                        placeOrder(next);
+                    }, 2500);
+                } else {
+                    document.getElementById('place-order').disabled = false;
+                    setTimeout(() => loadNextOrder(null, true), 2000);
+                }
+            }, 3200);
+
+        } else {
+            stopTimer();
+            isProcessing = false;
+            document.getElementById('place-order').disabled = false;
+            document.getElementById('status').innerText = '⚠ Gabim — provo perseri';
+            showToast('⚠ Aprovimi deshtoi');
+        }
+    } catch(e) {
+        stopTimer();
+        isProcessing = false;
+        document.getElementById('place-order').disabled = false;
+        document.getElementById('status').innerText = 'Gabim: ' + (e.message||'lidhje deshtoi');
+        showToast('⚠ ' + (e.message||'Gabim lidhjeje'));
     }
-  } catch(e) {
-    btn.disabled  = false;
-    btn.innerText = '▶ Vendos Porosinë';
-    showToast('⚠ Gabim: ' + e.message);
-  }
 }
 
-// Auto-refresh every 60 seconds
-loadOrders();
-setInterval(loadOrders, 60000);
+// ─── PLACE ORDER BUTTON ───────────────────────────────────────────────────────
+document.getElementById('place-order').addEventListener('click', () => {
+    if (!currentOrder || isProcessing) return;
+
+    if (autoQueueEnabled && allPendingOrders.length > 1) {
+        autoQueue = allPendingOrders.filter(o => o.rowNumber !== currentOrder.rowNumber).slice();
+        document.getElementById('status').innerText = '▶ Auto-queue: ' + (autoQueue.length+1) + ' porosi...';
+    } else {
+        autoQueue = [];
+    }
+    placeOrder(currentOrder);
+});
+
+// ─── AUTO-DETECT NEW ORDERS ───────────────────────────────────────────────────
+async function pollForNewOrders() {
+    if (isProcessing) return;
+    try {
+        const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
+        const orders = await res.json();
+        const pending = orders.filter(o => {
+            const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
+            return oid === '' || oid.toLowerCase() === 'pending';
+        }).length;
+        if (lastKnownCount >= 0 && pending > lastKnownCount) {
+            const banner = document.getElementById('new-order-banner');
+            const count  = pending - lastKnownCount;
+            banner.innerText = '🔔 ' + count + (count===1 ? ' porosi e re!' : ' porosi te reja!');
+            banner.style.display = 'block';
+            setTimeout(() => { banner.style.display='none'; }, 6000);
+            loadNextOrder(null, true);
+        }
+        lastKnownCount = pending;
+    } catch(e) {}
+}
+setInterval(pollForNewOrders, 60000);
+
+// ─── STARTUP ─────────────────────────────────────────────────────────────────
+updateAvgTime();
+loadNextOrder();
 </script>
 </body>
 </html>
