@@ -9,7 +9,6 @@
 <title>Argati</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ── THEME VARIABLES ────────────────────────────────────────────────────────── */
 :root {
     --primary:       #ff4500;
     --primary-light: rgba(255,69,0,0.09);
@@ -18,9 +17,11 @@
     --text:          #0f172a;
     --muted:         #94a3b8;
     --border:        #e8ecf0;
-    --detail-text:   #475569;
     --shadow:        rgba(0,0,0,0.07);
     --green:         #10b981;
+    --amber:         #f59e0b;
+    --red:           #ef4444;
+    --blue:          #3b82f6;
 }
 body.dark {
     --primary:       #ff5722;
@@ -30,8 +31,7 @@ body.dark {
     --text:          #e2e8f0;
     --muted:         #64748b;
     --border:        #2a2d3a;
-    --detail-text:   #94a3b8;
-    --shadow:        rgba(0,0,0,0.4);
+    --shadow:        rgba(0,0,0,0.5);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -40,230 +40,246 @@ body {
     font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
     background: var(--bg); color: var(--text);
     min-height: 100vh;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom));
-    transition: background 0.2s, color 0.2s;
+    padding-bottom: calc(32px + env(safe-area-inset-bottom));
+    transition: background 0.25s, color 0.25s;
 }
 
 /* ── HEADER ─────────────────────────────────────────────────────────────────── */
 .header {
     position: sticky; top: 0; z-index: 50;
     background: var(--card); border-bottom: 1px solid var(--border);
-    padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
-    display: flex; align-items: center; gap: 10px;
+    padding: calc(env(safe-area-inset-top) + 14px) 18px 14px;
+    display: flex; align-items: center; gap: 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 .header-icon {
-    width: 38px; height: 38px; background: var(--primary);
-    border-radius: 11px; display: flex; align-items: center;
-    justify-content: center; font-size: 20px; flex-shrink: 0;
+    width: 40px; height: 40px; background: var(--primary);
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(255,69,0,0.3);
 }
 .header-text { flex: 1; }
-.header-title { font-size: 16px; font-weight: 800; color: var(--text); line-height: 1.2; }
-.header-sub   { font-size: 11px; color: var(--muted); font-weight: 500; }
-.header-btns  { display: flex; gap: 7px; }
+.header-title { font-size: 17px; font-weight: 800; color: var(--text); line-height: 1.2; }
+.header-sub   { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+.header-btns  { display: flex; gap: 8px; align-items: center; }
 
 .icon-btn {
-    width: 34px; height: 34px;
-    border: 1.5px solid var(--border); border-radius: 10px;
-    background: var(--card); cursor: pointer; color: var(--text);
+    width: 36px; height: 36px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--card); color: var(--text);
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; flex-shrink: 0; transition: border-color 0.15s;
-    padding: 0; line-height: 1;
+    font-size: 16px; cursor: pointer; padding: 0; line-height: 1;
+    transition: all 0.15s;
 }
-.icon-btn:active { border-color: var(--primary); background: var(--primary-light); }
+.icon-btn:active { border-color: var(--primary); background: var(--primary-light); transform: scale(0.94); }
+
 #reload-btn.spinning { animation: spin 0.5s linear; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── MAIN ───────────────────────────────────────────────────────────────────── */
+.main { padding: 16px 18px; }
+
 /* ── NEW ORDER BANNER ───────────────────────────────────────────────────────── */
 #new-order-banner {
-    display: none; background: var(--green); color: white;
+    display: none;
+    background: var(--green); color: white;
     font-size: 13px; font-weight: 700; text-align: center;
-    padding: 10px 16px; margin: 12px 16px 0;
-    border-radius: 12px; animation: fadeIn 0.3s ease;
+    padding: 11px 18px; margin-bottom: 14px;
+    border-radius: 14px; animation: slideDown 0.3s ease;
 }
-@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-
-/* ── MAIN SCROLL AREA ───────────────────────────────────────────────────────── */
-.main { padding: 14px 16px; }
+@keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
 
 /* ── STATS BAR ──────────────────────────────────────────────────────────────── */
 .stats-bar {
-    display: flex; align-items: center; justify-content: center;
-    background: var(--card); border-radius: 14px;
-    padding: 12px 16px; margin-bottom: 14px;
+    display: flex; align-items: center;
+    background: var(--card); border-radius: 16px;
+    padding: 14px 16px; margin-bottom: 16px;
     border: 1px solid var(--border);
-    box-shadow: 0 2px 8px var(--shadow);
+    box-shadow: 0 2px 10px var(--shadow);
 }
 .stat-item  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.stat-num   { font-size: 24px; font-weight: 800; color: var(--green); line-height: 1; }
-.stat-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.stat-divider { width: 1px; height: 34px; background: var(--border); margin: 0 10px; }
+.stat-num   { font-size: 26px; font-weight: 800; color: var(--green); line-height: 1; }
+.stat-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-divider { width: 1px; height: 36px; background: var(--border); margin: 0 12px; }
 
-/* ── ACTIVE ORDER CARD ──────────────────────────────────────────────────────── */
-.active-order-box {
-    background: var(--card); border-radius: 18px;
-    padding: 16px; margin-bottom: 14px;
+/* ── SECTION LABEL ──────────────────────────────────────────────────────────── */
+.section-label {
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin: 0 0 10px 2px;
+}
+
+/* ── ORDER CARD ─────────────────────────────────────────────────────────────── */
+.order-card {
+    background: var(--card); border-radius: 20px;
+    padding: 18px; margin-bottom: 12px;
     border-left: 4px solid var(--primary);
-    box-shadow: 0 2px 14px var(--shadow);
+    box-shadow: 0 3px 16px var(--shadow);
+    transition: transform 0.15s;
 }
-.active-label {
-    font-size: 9px; font-weight: 800; color: var(--primary);
-    text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 11px 0;
-}
-.order-name-row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
-.order-row-num  {
-    background: var(--primary-light); color: var(--primary);
-    font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 7px; flex-shrink: 0;
-}
-.order-fullname { font-size: 16px; font-weight: 800; color: var(--text); }
-.order-detail-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--detail-text); }
-.detail-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
-.detail-text { font-weight: 500; line-height: 1.4; word-break: break-word; }
-.detail-text a { color: #3b82f6; text-decoration: none; }
+.order-card:active { transform: scale(0.99); }
+.order-card.review { border-left-color: var(--amber); }
+.order-card.placed { border-left-color: var(--green); opacity: 0.65; }
+.order-card.failed { border-left-color: var(--red); }
 
-/* ── ALERTS ─────────────────────────────────────────────────────────────────── */
-.order-alert { display: flex; align-items: flex-start; gap: 9px; margin-top: 11px; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.4; }
-.order-alert strong { font-weight: 700; display: block; margin-bottom: 2px; }
-.alert-sub { font-weight: 500; opacity: 0.85; }
+/* card header row */
+.card-top {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 12px;
+}
+.card-badge {
+    background: var(--primary-light); color: var(--primary);
+    font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 8px;
+}
+.order-card.review .card-badge { background: rgba(245,158,11,0.12); color: var(--amber); }
+.card-status {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+}
+
+.card-name { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+
+.card-detail {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 13px; color: var(--muted); margin-bottom: 8px;
+    font-weight: 500;
+}
+.card-detail:last-of-type { margin-bottom: 0; }
+.card-detail .icon { font-size: 15px; flex-shrink: 0; }
+.card-detail .val  { color: var(--text); font-weight: 600; }
+
+/* alerts inside card */
+.card-alert {
+    display: flex; align-items: flex-start; gap: 9px;
+    margin-top: 12px; padding: 10px 12px; border-radius: 11px;
+    font-size: 12px; line-height: 1.5; font-weight: 600;
+}
 .alert-multi   { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
 .alert-comment { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
 body.dark .alert-multi   { background: #2d1a0a; border-color: #7c3509; color: #fb923c; }
 body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #93c5fd; }
 
-/* ── QUEUE ──────────────────────────────────────────────────────────────────── */
-.queue-label {
-    font-size: 9px; font-weight: 800; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 0.1em; margin: 14px 0 8px 0;
+/* result feedback inside card */
+.card-result {
+    display: none; align-items: center; gap: 9px;
+    margin-top: 12px; padding: 11px 13px; border-radius: 12px;
+    font-size: 13px; font-weight: 700;
 }
-.next-up-card {
-    background: var(--card); border-radius: 12px; padding: 11px 14px;
+.card-result.success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--green); display: flex; }
+.card-result.failed  { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red);   display: flex; }
+
+/* approve button */
+.approve-btn {
+    width: 100%; padding: 15px; margin-top: 14px;
+    background: var(--primary); color: white; border: none;
+    border-radius: 14px; font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 15px; font-weight: 800; letter-spacing: 0.04em;
+    text-transform: uppercase; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(255,69,0,0.25);
+    transition: all 0.15s;
+}
+.approve-btn:active:not(:disabled) { transform: scale(0.97); background: #e03d00; }
+.approve-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.approve-btn.pending  { background: var(--muted); }
+.approve-btn.done     { background: var(--green); box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
+
+/* ── QUEUE SECTION ──────────────────────────────────────────────────────────── */
+.queue-card {
+    background: var(--card); border-radius: 14px; padding: 13px 16px;
     margin-bottom: 8px; display: flex; justify-content: space-between;
     align-items: center; border: 1px solid var(--border);
-    transition: border-color 0.15s; font-size: 13px;
-    cursor: pointer;
+    box-shadow: 0 1px 6px var(--shadow);
 }
-.next-up-card:active { border-color: var(--primary); background: var(--primary-light); }
-.nuc-name { font-weight: 700; color: var(--text); }
-.nuc-city { color: var(--muted); font-size: 12px; }
+.queue-card.review-q { border-color: rgba(245,158,11,0.4); }
+.qc-left  { flex: 1; }
+.qc-num   { font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 3px; }
+.qc-name  { font-size: 14px; font-weight: 700; color: var(--text); }
+.qc-prod  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.qc-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
+.qc-city  { font-size: 12px; color: var(--muted); font-weight: 600; }
+.qc-flag  { font-size: 11px; color: var(--amber); margin-top: 3px; font-weight: 700; }
 
-/* ── CITY WARNING ───────────────────────────────────────────────────────────── */
-#city-warning {
-    display: none; align-items: flex-start; gap: 8px;
-    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
-    border-radius: 12px; padding: 10px 13px; margin-bottom: 12px;
-    font-size: 12px; font-weight: 600; line-height: 1.5;
-}
-body.dark #city-warning { background: #2d0a0a; border-color: #7f1d1d; color: #fca5a5; }
-
-/* ── CHECKLIST ──────────────────────────────────────────────────────────────── */
-.checklist {
-    display: none; background: var(--card); border-radius: 14px;
-    padding: 14px 16px; margin-bottom: 14px; border: 1px solid var(--border);
-}
-.step { font-size: 13px; margin: 7px 0; color: var(--muted); display: flex; align-items: center; gap: 9px; font-weight: 500; transition: color 0.2s; }
-.step.done { color: var(--green); font-weight: 700; }
-
-/* ── TIMER ──────────────────────────────────────────────────────────────────── */
-#order-timer {
-    display: none; align-items: center; justify-content: center; gap: 10px;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 10px 16px; margin-bottom: 12px;
-    font-size: 13px; color: var(--muted); font-weight: 600;
-}
-#timer-display { font-size: 20px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
-
-/* ── TOGGLES ────────────────────────────────────────────────────────────────── */
-.toggle-row {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 12px 16px; margin-bottom: 10px;
-}
-.toggle-label { font-size: 13px; font-weight: 700; color: var(--text); }
-.toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 24px; cursor: pointer; transition: background 0.2s; }
-.toggle-slider:before { content:''; position:absolute; width:18px; height:18px; left:3px; top:3px; background:white; border-radius:50%; transition:transform 0.2s; }
-.toggle-switch input:checked + .toggle-slider { background: var(--green); }
-.toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
-
-.autopilot-row {
-    background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.04));
-    border-color: rgba(16,185,129,0.25);
-}
-
-/* ── PLACE ORDER BUTTON ─────────────────────────────────────────────────────── */
-#place-order {
-    width: 100%; padding: 16px; border: none; border-radius: 14px;
-    font-family: 'DM Sans', system-ui, sans-serif;
-    background: var(--primary); color: white; font-size: 15px;
-    font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
-    cursor: pointer; margin-bottom: 12px;
-    box-shadow: 0 4px 16px rgba(255,69,0,0.3);
-    transition: background 0.15s, transform 0.1s;
-}
-#place-order:active:not(:disabled)  { background: #e03d00; transform: scale(0.98); }
-#place-order:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* ── COLLAPSIBLE PANELS ─────────────────────────────────────────────────────── */
+/* ── HISTORY ────────────────────────────────────────────────────────────────── */
 .panel-toggle {
-    width: 100%; padding: 11px 16px; border: 1.5px solid var(--border);
-    border-radius: 12px; background: var(--card); color: var(--text);
+    width: 100%; padding: 13px 16px; border: 1.5px solid var(--border);
+    border-radius: 14px; background: var(--card); color: var(--text);
     font-family: 'DM Sans', system-ui, sans-serif;
     font-size: 13px; font-weight: 700; cursor: pointer;
     text-align: center; margin-bottom: 10px;
-    transition: border-color 0.15s;
+    transition: all 0.15s;
 }
 .panel-toggle:active { border-color: var(--primary); background: var(--primary-light); }
-.panel-body {
-    display: none; background: var(--card); border-radius: 14px;
-    border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden;
-}
-
-/* ── ANALYTICS ──────────────────────────────────────────────────────────────── */
-.analytics-inner { padding: 14px 14px 10px; }
-.analytics-title { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
-.chart-wrap { display: flex; align-items: flex-end; gap: 5px; height: 72px; padding-top: 12px; margin-bottom: 6px; }
-.chart-col  { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; height:100%; justify-content:flex-end; }
-.chart-bar-wrap { width:100%; flex:1; display:flex; align-items:flex-end; justify-content:center; }
-.chart-bar  { width:100%; border-radius:4px 4px 0 0; background:var(--primary); opacity:0.75; min-height:2px; transition:height 0.4s ease; }
-.chart-bar.today { opacity:1; }
-.chart-bar.zero  { opacity:0.2; }
-.chart-val  { font-size:10px; font-weight:800; color:var(--text); min-height:14px; }
-.chart-day  { font-size:9px; color:var(--muted); font-weight:600; }
-.chart-day.today { color:var(--primary); font-weight:800; }
-.avg-row { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:10px; margin-top:4px; }
-.avg-label { font-size:12px; color:var(--muted); font-weight:600; }
-.avg-value { font-size:15px; font-weight:800; color:var(--primary); }
-.avg-sub   { font-size:9px; color:var(--muted); margin-top:1px; text-align:right; }
-
-/* ── HISTORY ────────────────────────────────────────────────────────────────── */
-.history-item { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.panel-body { display: none; background: var(--card); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
+.history-item { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 12px; }
 .history-item:last-child { border-bottom: none; }
-.history-top    { display:flex; justify-content:space-between; margin-bottom:3px; }
-.history-name   { font-weight:700; color:var(--text); }
-.history-time   { color:var(--muted); font-size:11px; }
-.history-bottom { display:flex; justify-content:space-between; }
-.history-product { color:var(--detail-text); font-weight:500; }
-.history-meta    { color:var(--green); font-weight:700; font-size:11px; }
-.history-empty   { padding:18px; text-align:center; color:var(--muted); font-size:13px; }
+.history-top    { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.history-name   { font-weight: 700; color: var(--text); font-size: 13px; }
+.history-time   { color: var(--muted); font-size: 11px; }
+.history-bottom { display: flex; justify-content: space-between; align-items: center; }
+.history-product { color: var(--muted); font-weight: 500; }
+.history-result  { font-size: 12px; font-weight: 800; }
+.history-result.ok  { color: var(--green); }
+.history-result.err { color: var(--red); }
+.history-empty  { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
 
-/* ── STATUS ─────────────────────────────────────────────────────────────────── */
-#status {
-    text-align:center; font-size:12px; color:var(--muted);
-    margin-top:10px; font-weight:600; letter-spacing:0.02em;
-    padding-bottom: 8px;
+/* ── EMPTY STATE ────────────────────────────────────────────────────────────── */
+.empty-state {
+    text-align: center; padding: 48px 20px;
+    background: var(--card); border-radius: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 10px var(--shadow);
+}
+.empty-icon  { font-size: 52px; margin-bottom: 14px; }
+.empty-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+.empty-sub   { font-size: 14px; color: var(--muted); }
+
+/* ── LOADING ────────────────────────────────────────────────────────────────── */
+.loading {
+    text-align: center; padding: 48px 20px; color: var(--muted);
+}
+.spinner {
+    width: 32px; height: 32px; border: 3px solid var(--border);
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin: 0 auto 14px;
 }
 
-/* ── TOAST ──────────────────────────────────────────────────────────────────── */
-.toast {
-    position:fixed; bottom:calc(24px + env(safe-area-inset-bottom));
-    left:50%; transform:translateX(-50%);
-    background:#1e293b; color:white;
-    padding:10px 20px; border-radius:20px;
-    font-size:13px; font-weight:700;
-    opacity:0; transition:opacity 0.3s;
-    pointer-events:none; z-index:100; white-space:nowrap;
+/* ── STATUS BAR ─────────────────────────────────────────────────────────────── */
+#status-bar {
+    text-align: center; font-size: 12px; color: var(--muted);
+    font-weight: 600; padding: 8px 0 4px;
 }
-.toast.show { opacity:1; }
+
+/* ── NOTIFICATION OVERLAY ───────────────────────────────────────────────────── */
+.notif-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center; padding: 24px;
+}
+.notif-overlay.show { display: flex; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.notif-card {
+    background: var(--card); border-radius: 24px;
+    padding: 32px 28px; text-align: center;
+    width: 100%; max-width: 320px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    animation: popUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popUp { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+.notif-icon  { font-size: 56px; margin-bottom: 16px; }
+.notif-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+.notif-sub   { font-size: 14px; color: var(--muted); font-weight: 500; line-height: 1.5; margin-bottom: 24px; }
+.notif-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 14px;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 15px; font-weight: 800; cursor: pointer;
+    background: var(--primary); color: white;
+    transition: all 0.15s;
+}
+.notif-btn:active { transform: scale(0.97); }
+.notif-btn.green { background: var(--green); }
+.notif-btn.red   { background: var(--red); }
 </style>
 </head>
 <body>
@@ -273,7 +289,7 @@ body.dark #city-warning { background: #2d0a0a; border-color: #7f1d1d; color: #fc
     <div class="header-icon">🤖</div>
     <div class="header-text">
         <div class="header-title">Argati</div>
-        <div class="header-sub">Order Manager</div>
+        <div class="header-sub">Approval Center</div>
     </div>
     <div class="header-btns">
         <button class="icon-btn" id="theme-btn" title="Dark/Light">🌙</button>
@@ -281,12 +297,13 @@ body.dark #city-warning { background: #2d0a0a; border-color: #7f1d1d; color: #fc
     </div>
 </div>
 
-<div id="new-order-banner"></div>
-
 <div class="main">
 
+    <!-- NEW ORDER BANNER -->
+    <div id="new-order-banner"></div>
+
     <!-- STATS BAR -->
-    <div id="stats-bar" class="stats-bar">
+    <div class="stats-bar">
         <div class="stat-item">
             <span class="stat-num" id="stat-today">—</span>
             <span class="stat-label">Sot ✅</span>
@@ -296,62 +313,18 @@ body.dark #city-warning { background: #2d0a0a; border-color: #7f1d1d; color: #fc
             <span class="stat-num" id="stat-pending" style="color:var(--primary)">—</span>
             <span class="stat-label">Ne pritje 🕐</span>
         </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-num" id="stat-review" style="color:var(--amber)">—</span>
+            <span class="stat-label">Review ⚠️</span>
+        </div>
     </div>
 
-    <!-- ORDER INFO (active card + queue) -->
-    <div id="order-info"></div>
-
-    <!-- CITY WARNING -->
-    <div id="city-warning"></div>
-
-    <!-- TIMER -->
-    <div id="order-timer">
-        <span>⏱</span>
-        <span id="timer-display">00:00</span>
-        <span>duke procesuar...</span>
-    </div>
-
-    <!-- CHECKLIST -->
-    <div id="checklist" class="checklist">
-        <div class="step" id="step-1">○ Opening Product...</div>
-        <div class="step" id="step-2">○ Filling Customer Info...</div>
-        <div class="step" id="step-3">○ Selecting Payment...</div>
-        <div class="step" id="step-4">○ Recording Order ID...</div>
-    </div>
-
-    <!-- TOGGLES -->
-    <div class="toggle-row">
-        <span class="toggle-label" id="auto-queue-label">Automatik: OFF</span>
-        <label class="toggle-switch">
-            <input type="checkbox" id="auto-queue-toggle">
-            <span class="toggle-slider"></span>
-        </label>
-    </div>
-
-    <div class="toggle-row autopilot-row">
-        <span class="toggle-label" id="autopilot-label">Auto-Pilot: OFF</span>
-        <label class="toggle-switch">
-            <input type="checkbox" id="autopilot-toggle">
-            <span class="toggle-slider"></span>
-        </label>
-    </div>
-
-    <!-- PLACE ORDER -->
-    <button id="place-order" disabled>▶ Place Order</button>
-
-    <!-- ANALYTICS -->
-    <button class="panel-toggle" id="analytics-toggle">📊 Analitika</button>
-    <div class="panel-body" id="analytics-panel">
-        <div class="analytics-inner">
-            <p class="analytics-title">Porosi — 7 ditet e fundit</p>
-            <div class="chart-wrap" id="perf-chart"></div>
-            <div class="avg-row">
-                <span class="avg-label">Koha mesatare sot</span>
-                <div style="text-align:right">
-                    <div class="avg-value" id="avg-time-value">--:--</div>
-                    <div class="avg-sub"   id="avg-time-sub">asnje porosi ende</div>
-                </div>
-            </div>
+    <!-- ORDER LIST -->
+    <div id="order-list">
+        <div class="loading">
+            <div class="spinner"></div>
+            Duke ngarkuar...
         </div>
     </div>
 
@@ -363,71 +336,40 @@ body.dark #city-warning { background: #2d0a0a; border-color: #7f1d1d; color: #fc
         </div>
     </div>
 
-    <div id="status">Duke u lidhur...</div>
+    <div id="status-bar"></div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- NOTIFICATION OVERLAY -->
+<div class="notif-overlay" id="notif-overlay">
+    <div class="notif-card">
+        <div class="notif-icon"  id="notif-icon">✅</div>
+        <div class="notif-title" id="notif-title">Porosi e kryer!</div>
+        <div class="notif-sub"   id="notif-sub"></div>
+        <button class="notif-btn" id="notif-btn" onclick="closeNotif()">OK</button>
+    </div>
+</div>
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let currentOrder        = null;
-let allPendingOrders    = [];
-let autoQueueEnabled    = false;
-let autoPilotEnabled    = false;
-let isProcessing        = false;
-let lastKnownCount      = -1;
-let orderHistory        = [];
-let autoQueue           = [];
-let sessionTimings      = [];
-let weeklyChartData     = {};
-let timerInterval       = null;
-let timerStart          = null;
+let allOrders    = [];
+let lastCount    = -1;
+let orderHistory = [];
+let pendingNotif = null; // { rowNumber, name, product } — waiting for result
 
-const DAYS_SQ = ['Die','Hen','Mar','Mer','Enj','Pre','Sht'];
-
-// ─── PRODUCT MAP ──────────────────────────────────────────────────────────────
 const PRODUCTS = {
-    "105":{ name:"Pastrues Frenave 105",     url:"https://gjirafamall.com/pastrues-i-frenave-80100-pcl-005-105" },
-    "106":{ name:"DPF Additiv 106",           url:"https://gjirafamall.com/dpf-additiv-pcl-006-106" },
-    "107":{ name:"Pastrues DPF 107",          url:"https://gjirafamall.com/pastrues-i-dpf-parts-center-pcl007-107-300-ml" },
-    "201":{ name:"Super Diesel Additiv 201",  url:"https://gjirafamall.com/super-diesel-addetiv-pcs-001-201-300-ml" },
-    "204":{ name:"Pastrues Injektimit Dizel 204", url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-dizel-parts-center-204" },
-    "206":{ name:"Perforcues Oktani 206",     url:"https://gjirafamall.com/perforcues-i-oktanit-te-benzines-pcs-006-206" },
-    "207":{ name:"Additiv Vaj Motorik 207",   url:"https://gjirafamall.com/additiv-per-vaj-motorik-pcs-007-207" },
-    "209":{ name:"Super Benzin Additiv 209",  url:"https://gjirafamall.com/super-benzin-addetiv-pcs-009-209" },
-    "210":{ name:"Pastrues Injektimit Benzine 210", url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-benzine-pcs-010-210" },
+    "105":"Pastrues Frenave 105","106":"DPF Additiv 106","107":"Pastrues DPF 107",
+    "201":"Super Diesel Additiv 201","204":"Pastrues Injektimit Dizel 204",
+    "206":"Perforcues Oktani 206","207":"Additiv Vaj Motorik 207",
+    "209":"Super Benzin Additiv 209","210":"Pastrues Injektimit Benzine 210"
 };
-
-function resolveProduct(raw) {
-    if (!raw) return { name:'—', url:'' };
-    const code = raw.toString().trim();
-    if (PRODUCTS[code]) return PRODUCTS[code];
-    return { name: code, url: '' };
-}
-
-// ─── VALIDATORS ───────────────────────────────────────────────────────────────
-function validatePhone(raw) {
-    if (!raw) return { value:'', warning:'Numri i telefonit mungon!' };
-    let p = raw.toString().trim().replace(/[\s\-().]/g,'');
-    p = p.replace(/^\+3830?/,'0').replace(/^3830?/,'0');
-    if (!/^04\d{7}$/.test(p)) return { value:p, warning:'Numri '+p+' duket i gabuar' };
-    return { value:p, warning:null };
-}
-
-function normalizeAddress(raw) {
-    if (!raw) return { value:'', warning:'Adresa mungon!' };
-    let a = raw.toString().trim().replace(/\s+/g,' ');
-    return { value:a, warning:null };
-}
-
-// ─── TOAST ────────────────────────────────────────────────────────────────────
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.innerText = msg; t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2500);
+function getProduct(raw) {
+    if (!raw) return '—';
+    const c = raw.toString().trim();
+    if (c.includes('+')) return c.split('+').map(x => PRODUCTS[x.trim()]||x.trim()).join(' + ');
+    return PRODUCTS[c] || c;
 }
 
 // ─── DARK MODE ────────────────────────────────────────────────────────────────
@@ -436,144 +378,48 @@ function applyTheme(dark) {
     document.getElementById('theme-btn').innerText = dark ? '☀️' : '🌙';
     localStorage.setItem('darkMode', dark ? '1' : '');
 }
-document.getElementById('theme-btn').addEventListener('click', () => {
-    applyTheme(!document.body.classList.contains('dark'));
-});
+document.getElementById('theme-btn').addEventListener('click', () => applyTheme(!document.body.classList.contains('dark')));
 if (localStorage.getItem('darkMode')) applyTheme(true);
 
-// ─── RELOAD ───────────────────────────────────────────────────────────────────
-document.getElementById('reload-btn').addEventListener('click', () => {
-    if (isProcessing) return;
-    const btn = document.getElementById('reload-btn');
-    btn.classList.add('spinning');
-    btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once:true });
-    loadNextOrder();
+// ─── HISTORY TOGGLE ───────────────────────────────────────────────────────────
+document.getElementById('history-toggle').addEventListener('click', () => {
+    const panel = document.getElementById('history-panel');
+    const btn   = document.getElementById('history-toggle');
+    const open  = panel.style.display !== 'block';
+    panel.style.display = open ? 'block' : 'none';
+    btn.innerText = open ? '📋 Mbyll ✕' : '📋 Historiku';
 });
 
-// ─── PANEL TOGGLES ────────────────────────────────────────────────────────────
-function setupPanelToggle(toggleId, panelId, openLabel, closeLabel, onOpen) {
-    document.getElementById(toggleId).addEventListener('click', () => {
-        const panel  = document.getElementById(panelId);
-        const btn    = document.getElementById(toggleId);
-        const willOpen = panel.style.display !== 'block';
-        panel.style.display = willOpen ? 'block' : 'none';
-        btn.innerText = willOpen ? closeLabel : openLabel;
-        if (willOpen && onOpen) onOpen();
-    });
+// ─── NOTIFICATION OVERLAY ─────────────────────────────────────────────────────
+function showNotif(icon, title, sub, btnClass) {
+    document.getElementById('notif-icon').innerText  = icon;
+    document.getElementById('notif-title').innerText = title;
+    document.getElementById('notif-sub').innerText   = sub;
+    const btn = document.getElementById('notif-btn');
+    btn.className = 'notif-btn ' + (btnClass || '');
+    document.getElementById('notif-overlay').classList.add('show');
+    // Vibrate on iPhone (where supported)
+    if (navigator.vibrate) navigator.vibrate(btnClass === 'red' ? [100,50,100] : [100]);
 }
-setupPanelToggle('analytics-toggle','analytics-panel','📊 Analitika','📊 Mbyll ✕', () => {
-    renderChart(weeklyChartData); updateAvgTime();
-});
-setupPanelToggle('history-toggle','history-panel','📋 Historiku','📋 Mbyll ✕');
-
-// ─── AUTO-QUEUE & AUTO-PILOT TOGGLES ─────────────────────────────────────────
-document.getElementById('auto-queue-toggle').addEventListener('change', (e) => {
-    autoQueueEnabled = e.target.checked;
-    document.getElementById('auto-queue-label').innerText =
-        autoQueueEnabled ? 'Automatik: ON' : 'Automatik: OFF';
-    if (!autoQueueEnabled) autoQueue = [];
-    localStorage.setItem('autoQueue', autoQueueEnabled ? '1' : '');
-});
-document.getElementById('autopilot-toggle').addEventListener('change', (e) => {
-    autoPilotEnabled = e.target.checked;
-    document.getElementById('autopilot-label').innerText =
-        autoPilotEnabled ? 'Auto-Pilot: ON 🤖' : 'Auto-Pilot: OFF';
-    localStorage.setItem('autoPilot', autoPilotEnabled ? '1' : '');
-});
-
-// Restore preferences
-if (localStorage.getItem('autoQueue')) {
-    autoQueueEnabled = true;
-    document.getElementById('auto-queue-toggle').checked = true;
-    document.getElementById('auto-queue-label').innerText = 'Automatik: ON';
-}
-if (localStorage.getItem('autoPilot')) {
-    autoPilotEnabled = true;
-    document.getElementById('autopilot-toggle').checked = true;
-    document.getElementById('autopilot-label').innerText = 'Auto-Pilot: ON 🤖';
+function closeNotif() {
+    document.getElementById('notif-overlay').classList.remove('show');
+    pendingNotif = null;
 }
 
-// ─── ANALYTICS ────────────────────────────────────────────────────────────────
-function buildWeeklyData(orders) {
-    const result = {};
-    const today  = new Date();
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date(today); d.setDate(d.getDate() - i);
-        result[d.toDateString()] = 0;
-    }
-    orders.forEach(o => {
-        const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
-        if (!oid || oid.toLowerCase() === 'pending') return;
-        const placed = (o['PlacedDate'] || '').toString().trim();
-        if (!placed) return;
-        try { const ds = new Date(placed).toDateString(); if (ds in result) result[ds]++; } catch(e) {}
-    });
-    return result;
+// ─── ADD TO HISTORY ───────────────────────────────────────────────────────────
+function addHistory(order, success, orderId) {
+    const time = new Date().toLocaleTimeString('sq-AL', {hour:'2-digit', minute:'2-digit'});
+    orderHistory.unshift({ rowNumber: order.rowNumber, name: order.name,
+        product: order.product, time, success, orderId });
+    if (orderHistory.length > 30) orderHistory.pop();
+    renderHistory();
 }
 
-function renderChart(data) {
-    const wrap = document.getElementById('perf-chart');
-    if (!wrap) return;
-    const entries  = Object.entries(data);
-    const max      = Math.max(...entries.map(e => e[1]), 1);
-    const todayStr = new Date().toDateString();
-    wrap.innerHTML = entries.map(([ds, count]) => {
-        const isToday = ds === todayStr;
-        const barH = Math.max(Math.round((count/max)*100), count>0 ? 8 : 2);
-        return `<div class="chart-col">
-            <div class="chart-bar-wrap">
-                <div class="chart-bar${isToday?' today':''}${count===0?' zero':''}" style="height:${barH}%"></div>
-            </div>
-            <div class="chart-val">${count>0?count:''}</div>
-            <div class="chart-day${isToday?' today':''}">${isToday?'Sot':DAYS_SQ[new Date(ds).getDay()]}</div>
-        </div>`;
-    }).join('');
-}
-
-function updateAvgTime() {
-    const el    = document.getElementById('avg-time-value');
-    const subEl = document.getElementById('avg-time-sub');
-    if (!el||!subEl) return;
-    // Load from localStorage
-    const saved = JSON.parse(localStorage.getItem('sessionTimings')||'{}');
-    const today = new Date().toDateString();
-    if (saved.date === today && Array.isArray(saved.timings)) sessionTimings = saved.timings;
-    if (sessionTimings.length===0) { el.innerText='--:--'; subEl.innerText='asnje porosi ende'; return; }
-    const avg = Math.round(sessionTimings.reduce((a,b)=>a+b,0)/sessionTimings.length);
-    const mm = String(Math.floor(avg/60)).padStart(2,'0');
-    const ss = String(avg%60).padStart(2,'0');
-    el.innerText = mm+':'+ss;
-    subEl.innerText = 'bazuar ne '+sessionTimings.length+' porosi';
-}
-
-function saveTimings() {
-    localStorage.setItem('sessionTimings', JSON.stringify({
-        date: new Date().toDateString(), timings: sessionTimings
-    }));
-}
-
-// Load timings on startup
-(function() {
-    const saved = JSON.parse(localStorage.getItem('sessionTimings')||'{}');
-    if (saved.date === new Date().toDateString() && Array.isArray(saved.timings))
-        sessionTimings = saved.timings;
-})();
-
-// ─── HISTORY ──────────────────────────────────────────────────────────────────
-function addToHistory(order, orderId, elapsedSec) {
-    const mm   = String(Math.floor(elapsedSec/60)).padStart(2,'0');
-    const ss   = String(elapsedSec%60).padStart(2,'0');
-    const time = new Date().toLocaleTimeString('sq-AL',{hour:'2-digit',minute:'2-digit'});
-    orderHistory.unshift({
-        rowNumber: order.rowNumber,
-        name: (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(),
-        product: resolveProduct(order.Produkti).name,
-        orderId, time, elapsed: mm+':'+ss
-    });
-    if (orderHistory.length>20) orderHistory.pop();
-    const container = document.getElementById('history-list');
-    if (!container) return;
-    container.innerHTML = orderHistory.map(h => `
+function renderHistory() {
+    const c = document.getElementById('history-list');
+    if (!c) return;
+    if (!orderHistory.length) { c.innerHTML = '<div class="history-empty">Asnje porosi ende.</div>'; return; }
+    c.innerHTML = orderHistory.map(h => `
         <div class="history-item">
             <div class="history-top">
                 <span class="history-name">#${h.rowNumber} ${h.name}</span>
@@ -581,322 +427,260 @@ function addToHistory(order, orderId, elapsedSec) {
             </div>
             <div class="history-bottom">
                 <span class="history-product">${h.product}</span>
-                <span class="history-meta">${h.orderId} · ${h.elapsed}</span>
+                <span class="history-result ${h.success?'ok':'err'}">
+                    ${h.success ? '✅ ' + (h.orderId||'Aprovuar') : '❌ Deshtoi'}
+                </span>
             </div>
         </div>`).join('');
 }
 
-// ─── STATS BAR ────────────────────────────────────────────────────────────────
-function updateStatsBar(completedToday, pending) {
-    const t = document.getElementById('stat-today');
-    const p = document.getElementById('stat-pending');
-    if (t) t.innerText = completedToday;
-    if (p) {
-        p.innerText = pending;
-        p.style.color = pending > 0 ? 'var(--primary)' : 'var(--green)';
-    }
-}
-
-// ─── RENDER ORDER CARD ────────────────────────────────────────────────────────
-function renderCurrentOrder() {
-    const infoDiv = document.getElementById('order-info');
-    const btn     = document.getElementById('place-order');
-
-    if (!currentOrder) {
-        infoDiv.innerHTML = `<div class="active-order-box" style="text-align:center;padding:24px;">
-            <div style="font-size:32px;margin-bottom:8px;">🎉</div>
-            <div style="font-weight:800;font-size:16px;">Asnje porosi ne pritje!</div>
-        </div>`;
-        btn.disabled = true;
-        return;
-    }
-
-    const product    = resolveProduct(currentOrder.Produkti);
-    const rawProduct = (currentOrder.Produkti||'').toString().trim();
-    const isMulti    = rawProduct.includes('+');
-    const comment    = (currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
-    const phoneCheck = validatePhone(currentOrder.Telefoni);
-    const addrCheck  = normalizeAddress(currentOrder.Adresa);
-
-    infoDiv.innerHTML = `
-        <div class="active-order-box">
-            <p class="active-label">⚡ Detyra Aktive</p>
-            <div class="order-name-row">
-                <span class="order-row-num">#${currentOrder.rowNumber}</span>
-                <span class="order-fullname">${(currentOrder.Emri||'').trim()} ${(currentOrder.Mbiemri||'').trim()}</span>
-            </div>
-            <div class="order-detail-row">
-                <span class="detail-icon">📦</span>
-                <span class="detail-text">
-                    ${product.url
-                        ? '<a href="'+product.url+'" target="_blank">'+product.name+'</a>'
-                        : '<span style="color:#e63e00;font-weight:700;">⚠ '+rawProduct+'</span>'}
-                </span>
-            </div>
-            <div class="order-detail-row">
-                <span class="detail-icon">📍</span>
-                <span class="detail-text">${currentOrder.Qyteti||'—'}</span>
-            </div>
-            <div class="order-detail-row">
-                <span class="detail-icon">📞</span>
-                <span class="detail-text" style="color:${phoneCheck.warning?'#e63e00':'inherit'}">
-                    ${phoneCheck.warning ? '⚠ '+phoneCheck.warning : phoneCheck.value}
-                </span>
-            </div>
-            <div class="order-detail-row">
-                <span class="detail-icon">🏠</span>
-                <span class="detail-text">${addrCheck.value||'—'}</span>
-            </div>
-            ${isMulti ? `<div class="order-alert alert-multi">
-                <span>⚠️</span>
-                <div><strong>Kerkese speciale — shume produkte</strong>
-                <div class="alert-sub">${rawProduct.split('+').map(c=>c.trim()).join(' + ')}</div></div>
-            </div>` : ''}
-            ${comment ? `<div class="order-alert alert-comment">
-                <span>💬</span>
-                <div><strong>Ka koment</strong><div class="alert-sub">${comment}</div></div>
-            </div>` : ''}
-        </div>`;
-
-    btn.disabled = !product.url || !!phoneCheck.warning || isProcessing;
-}
-
-// ─── LOAD QUEUE ───────────────────────────────────────────────────────────────
-async function loadNextOrder(specificOrder = null, backgroundRefresh = false) {
-    const status = document.getElementById('status');
-    if (!backgroundRefresh) status.innerText = 'Duke u sinkronizuar...';
+// ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
+async function loadOrders(silent = false) {
+    const list = document.getElementById('order-list');
+    if (!silent) list.innerHTML = '<div class="loading"><div class="spinner"></div>Duke ngarkuar...</div>';
 
     try {
         const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
         const orders = await res.json();
-
-        allPendingOrders = orders.filter(o => {
-            const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
-            return oid === '' || oid.toLowerCase() === 'pending';
-        });
-
-        lastKnownCount = allPendingOrders.length;
 
         // Stats
         const todayStr = new Date().toDateString();
         const completedToday = orders.filter(o => {
-            const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
+            const oid = (o.OrderID||'').toString().trim();
             if (!oid || oid.toLowerCase()==='pending') return false;
-            const placed = (o['PlacedDate']||'').toString().trim();
-            if (!placed) return false;
-            try { return new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
+            const placed = (o.PlacedDate||'').toString().trim();
+            try { return placed && new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
         }).length;
-        updateStatsBar(completedToday, allPendingOrders.length);
 
-        weeklyChartData = buildWeeklyData(orders);
-        const analyticsEl = document.getElementById('analytics-panel');
-        if (analyticsEl && analyticsEl.style.display==='block') renderChart(weeklyChartData);
-
-        currentOrder = specificOrder || allPendingOrders[0];
-        renderCurrentOrder();
-
-        // Queue list
-        const infoDiv = document.getElementById('order-info');
-        const others  = allPendingOrders.filter(o => o.rowNumber !== currentOrder?.rowNumber);
-        if (currentOrder && others.length > 0) {
-            let q = '<p class="queue-label">Radha — kliko per ndryshim</p>';
-            others.slice(0,5).forEach(next => {
-                const np     = resolveProduct(next.Produkti);
-                const nPhone = validatePhone(next.Telefoni);
-                q += `<div class="next-up-card" data-row="${next.rowNumber}">
-                    <div>
-                        <div class="nuc-name"><b>#${next.rowNumber}</b> ${(next.Emri||'').trim()} ${(next.Mbiemri||'').trim()}</div>
-                        <div style="font-size:11px;color:var(--muted);margin-top:3px;">${np.name}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div class="nuc-city">${next.Qyteti||'—'}</div>
-                        ${nPhone.warning?'<div style="font-size:10px;color:#e63e00;margin-top:2px;">⚠ Tel</div>':''}
-                    </div>
-                </div>`;
-            });
-            infoDiv.innerHTML += q;
-        }
-
-        document.querySelectorAll('.next-up-card').forEach(card => {
-            card.addEventListener('click', () => {
-                if (isProcessing) return;
-                const rowId = card.getAttribute('data-row');
-                loadNextOrder(allPendingOrders.find(o => o.rowNumber == rowId));
-            });
+        allOrders = orders.filter(o => {
+            const oid = (o.OrderID||'').toString().trim();
+            return oid==='' || oid.toLowerCase()==='pending';
         });
 
-        if (!backgroundRefresh) {
-            status.innerText = allPendingOrders.length > 0
-                ? allPendingOrders.length + ' Porosi ne pritje' : '';
-        }
+        const reviewOrders = allOrders.filter(o => {
+            const hasComment = (o['Koment shtese (Nese ka)']||'').toString().trim() !== '';
+            const isMulti    = (o.Produkti||'').toString().includes('+');
+            return hasComment || isMulti;
+        });
 
-        // Auto-pilot check
-        if (autoPilotEnabled && !isProcessing && currentOrder) {
-            const rp      = (currentOrder.Produkti||'').toString().trim();
-            const cm      = (currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
-            const isClean = !rp.includes('+') && cm === '';
-            if (isClean) {
-                setTimeout(() => {
-                    if (!isProcessing && currentOrder && autoPilotEnabled) {
-                        status.innerText = '🤖 Auto-pilot: duke vendosur...';
-                        placeOrder(currentOrder);
-                    }
-                }, 3000);
-            }
+        document.getElementById('stat-today').innerText   = completedToday;
+        document.getElementById('stat-pending').innerText = allOrders.length;
+        document.getElementById('stat-review').innerText  = reviewOrders.length;
+
+        // Detect new orders
+        if (lastCount >= 0 && allOrders.length > lastCount) {
+            const diff = allOrders.length - lastCount;
+            const banner = document.getElementById('new-order-banner');
+            banner.innerText = '🔔 ' + diff + (diff===1?' porosi e re mbërriti!':" porosi të reja!");
+            banner.style.display = 'block';
+            setTimeout(() => { banner.style.display='none'; }, 5000);
+            if (navigator.vibrate) navigator.vibrate([200,100,200]);
         }
+        lastCount = allOrders.length;
+
+        renderOrderList(allOrders, reviewOrders);
 
     } catch(e) {
-        console.error(e);
-        document.getElementById('status').innerText = 'Gabim: ' + (e.message||'lidhje deshtoi');
+        if (!silent) list.innerHTML = '<div class="loading" style="color:var(--red)">⚠ Gabim: ' + e.message + '</div>';
     }
 }
 
-// ─── TIMER ────────────────────────────────────────────────────────────────────
-function startTimer() {
-    timerStart = Date.now();
-    if (timerInterval) clearInterval(timerInterval);
-    document.getElementById('order-timer').style.display = 'flex';
-    timerInterval = setInterval(() => {
-        const e  = Math.floor((Date.now()-timerStart)/1000);
-        const mm = String(Math.floor(e/60)).padStart(2,'0');
-        const ss = String(e%60).padStart(2,'0');
-        document.getElementById('timer-display').innerText = mm+':'+ss;
-    }, 1000);
+// ─── RENDER ORDER LIST ────────────────────────────────────────────────────────
+function renderOrderList(orders, reviewOrders) {
+    const list = document.getElementById('order-list');
+
+    if (!orders.length) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🎉</div>
+                <div class="empty-title">Asnje porosi ne pritje!</div>
+                <div class="empty-sub">Te gjitha porositë janë kryer.</div>
+            </div>`;
+        document.getElementById('status-bar').innerText = '';
+        return;
+    }
+
+    // Review orders first, then normal
+    const sorted = [
+        ...reviewOrders,
+        ...orders.filter(o => !reviewOrders.includes(o))
+    ];
+
+    // Active order (first in sorted list) — big card
+    const active = sorted[0];
+    const rest   = sorted.slice(1);
+
+    let html = '';
+
+    // ── ACTIVE CARD ──
+    const ap = (active.Produkti||'').toString().trim();
+    const ac = (active['Koment shtese (Nese ka)']||'').toString().trim();
+    const isReview = ap.includes('+') || ac !== '';
+    const productName = getProduct(ap);
+
+    html += `
+    <p class="section-label">⚡ Detyra Aktive</p>
+    <div class="order-card${isReview?' review':''}" id="card-${active.rowNumber}">
+        <div class="card-top">
+            <span class="card-badge">#${active.rowNumber}</span>
+            <span class="card-status">${isReview ? '⚠️ Kerkese speciale' : '🟢 Gati'}</span>
+        </div>
+        <div class="card-name">${(active.Emri||'').trim()} ${(active.Mbiemri||'').trim()}</div>
+        <div class="card-detail"><span class="icon">📦</span><span class="val">${productName}</span></div>
+        <div class="card-detail"><span class="icon">📍</span><span class="val">${active.Qyteti||'—'}</span></div>
+        <div class="card-detail"><span class="icon">📞</span><span class="val">${(active.Telefoni||'').toString().trim()||'—'}</span></div>
+        <div class="card-detail"><span class="icon">🏠</span><span class="val">${(active.Adresa||'').toString().trim()||'—'}</span></div>
+        ${ap.includes('+') ? `<div class="card-alert alert-multi">⚠️ <span>Produkte te shumta: <b>${ap.split('+').map(c=>c.trim()).join(' + ')}</b></span></div>` : ''}
+        ${ac ? `<div class="card-alert alert-comment">💬 <span>${ac}</span></div>` : ''}
+        <div class="card-result" id="result-${active.rowNumber}"></div>
+        <button class="approve-btn" id="btn-${active.rowNumber}"
+                onclick="approveOrder(${active.rowNumber}, '${(active.Emri||'').trim()} ${(active.Mbiemri||'').trim()}', '${productName.replace(/'/g,"\\'")}')">
+            ▶ Vendos Porosinë
+        </button>
+    </div>`;
+
+    // ── QUEUE ──
+    if (rest.length > 0) {
+        html += `<p class="section-label" style="margin-top:20px">Radha — ${rest.length} porosi</p>`;
+        rest.slice(0, 6).forEach(o => {
+            const p  = getProduct(o.Produkti||'');
+            const rc = (o['Koment shtese (Nese ka)']||'').toString().trim();
+            const rm = (o.Produkti||'').toString().includes('+') || rc !== '';
+            html += `
+            <div class="queue-card${rm?' review-q':''}">
+                <div class="qc-left">
+                    <div class="qc-num">#${o.rowNumber}</div>
+                    <div class="qc-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
+                    <div class="qc-prod">${p}</div>
+                </div>
+                <div class="qc-right">
+                    <div class="qc-city">${o.Qyteti||'—'}</div>
+                    ${rm ? '<div class="qc-flag">⚠ Review</div>' : ''}
+                </div>
+            </div>`;
+        });
+    }
+
+    list.innerHTML = html;
+    document.getElementById('status-bar').innerText =
+        allOrders.length + ' porosi ne pritje';
 }
 
-function stopTimer() {
-    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-    document.getElementById('order-timer').style.display = 'none';
-    const elapsed = timerStart ? Math.floor((Date.now()-timerStart)/1000) : 0;
-    timerStart = null;
-    return elapsed;
-}
+// ─── APPROVE ORDER ────────────────────────────────────────────────────────────
+async function approveOrder(rowNumber, name, product) {
+    const btn    = document.getElementById('btn-' + rowNumber);
+    const result = document.getElementById('result-' + rowNumber);
+    if (!btn || btn.disabled) return;
 
-// ─── PLACE ORDER ─────────────────────────────────────────────────────────────
-// On iPhone we can't inject scripts into other tabs.
-// So "placing order" means writing "Approved: YES" to the sheet,
-// which the desktop extension picks up and fires automatically.
-async function placeOrder(order) {
-    if (isProcessing) return;
-
-    const product    = resolveProduct(order.Produkti);
-    const phoneCheck = validatePhone(order.Telefoni);
-
-    if (!product.url)       { showToast('⚠ Produkti nuk u gjet!'); return; }
-    if (phoneCheck.warning) { showToast('⚠ ' + phoneCheck.warning); return; }
-
-    isProcessing = true;
-    document.getElementById('place-order').disabled = true;
-    document.getElementById('checklist').style.display = 'block';
-
-    const steps = ['Opening Product...','Filling Customer Info...','Selecting Payment...','Recording Order ID...'];
-    [1,2,3,4].forEach(i => {
-        const el = document.getElementById('step-'+i);
-        el.innerText = '○ ' + steps[i-1];
-        el.classList.remove('done');
-    });
-
-    document.getElementById('status').innerText = 'Duke aprovuar...';
-    startTimer();
+    btn.disabled  = true;
+    btn.innerText = '⏳ Duke derguar...';
+    btn.className = 'approve-btn pending';
 
     try {
-        // Write "Approved: YES" to sheet — desktop extension will auto-fire it
-        const res  = await fetch(SCRIPT_URL + '?action=approve&row=' + order.rowNumber + '&t=' + Date.now());
-        const data = await res.json();
+        const res = await fetch(
+            SCRIPT_URL + '?action=approve&row=' + rowNumber + '&t=' + Date.now(),
+            { redirect: 'follow' }
+        );
 
-        if (data.success) {
-            // Simulate step progress visually
-            const delays = [500, 1200, 2000, 2800];
-            delays.forEach((delay, i) => {
-                setTimeout(() => {
-                    const el = document.getElementById('step-'+(i+1));
-                    if (el) { el.innerText = '✅ ' + steps[i]; el.classList.add('done'); }
-                }, delay);
-            });
+        let success = false;
+        try {
+            const text = await res.text();
+            const data = JSON.parse(text);
+            success = data.success === true;
+        } catch(e) {
+            success = res.status >= 200 && res.status < 400;
+        }
 
-            setTimeout(() => {
-                const elapsed = stopTimer();
-                const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
-                const ss = String(elapsed%60).padStart(2,'0');
+        if (success) {
+            btn.innerText = '✅ Aprovuar — Desktop po vendos...';
+            btn.className = 'approve-btn done';
 
-                sessionTimings.push(elapsed);
-                saveTimings();
-                updateAvgTime();
+            // Store who we're waiting for so we can show result notification
+            pendingNotif = { rowNumber, name, product };
 
-                addToHistory(order, 'Aprovuar', elapsed);
-                isProcessing = false;
-
-                showToast('✅ Porosia #' + order.rowNumber + ' u aprovua!');
-                document.getElementById('status').innerText = '✅ Aprovuar ne ' + mm + ':' + ss;
-
-                if (autoQueueEnabled && autoQueue.length > 0) {
-                    const next = autoQueue.shift();
-                    setTimeout(() => {
-                        currentOrder = next;
-                        renderCurrentOrder();
-                        placeOrder(next);
-                    }, 2500);
-                } else {
-                    document.getElementById('place-order').disabled = false;
-                    setTimeout(() => loadNextOrder(null, true), 2000);
-                }
-            }, 3200);
+            // Start polling every 5s for the result (order ID written = success)
+            pollForResult(rowNumber, name, product);
 
         } else {
-            stopTimer();
-            isProcessing = false;
-            document.getElementById('place-order').disabled = false;
-            document.getElementById('status').innerText = '⚠ Gabim — provo perseri';
-            showToast('⚠ Aprovimi deshtoi');
+            btn.disabled  = false;
+            btn.innerText = '▶ Vendos Porosinë';
+            btn.className = 'approve-btn';
+            showNotif('❌', 'Aprovimi dështoi', 'Provo përsëri ose kontrollo lidhjen.', 'red');
         }
     } catch(e) {
-        stopTimer();
-        isProcessing = false;
-        document.getElementById('place-order').disabled = false;
-        document.getElementById('status').innerText = 'Gabim: ' + (e.message||'lidhje deshtoi');
-        showToast('⚠ ' + (e.message||'Gabim lidhjeje'));
+        btn.disabled  = false;
+        btn.innerText = '▶ Vendos Porosinë';
+        btn.className = 'approve-btn';
+        showNotif('❌', 'Gabim lidhjeje', e.message || 'Kontrollo internetin.', 'red');
     }
 }
 
-// ─── PLACE ORDER BUTTON ───────────────────────────────────────────────────────
-document.getElementById('place-order').addEventListener('click', () => {
-    if (!currentOrder || isProcessing) return;
+// ─── POLL FOR RESULT ──────────────────────────────────────────────────────────
+// After approval, poll every 5s to see if the desktop wrote an Order ID
+// That means the order was successfully placed
+function pollForResult(rowNumber, name, product, attempts = 0) {
+    const MAX_ATTEMPTS = 24; // 24 × 5s = 120s max wait
 
-    if (autoQueueEnabled && allPendingOrders.length > 1) {
-        autoQueue = allPendingOrders.filter(o => o.rowNumber !== currentOrder.rowNumber).slice();
-        document.getElementById('status').innerText = '▶ Auto-queue: ' + (autoQueue.length+1) + ' porosi...';
-    } else {
-        autoQueue = [];
-    }
-    placeOrder(currentOrder);
+    setTimeout(async () => {
+        try {
+            const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
+            const orders = await res.json();
+
+            // Find this row — if it now has an Order ID, it was placed successfully
+            const row = orders.find(o => o.rowNumber == rowNumber);
+
+            if (row) {
+                const oid = (row.OrderID||'').toString().trim();
+                const isPlaced = oid !== '' && oid.toLowerCase() !== 'pending';
+
+                if (isPlaced) {
+                    // SUCCESS
+                    addHistory({ rowNumber, name, product }, true, oid);
+                    showNotif(
+                        '✅',
+                        'Porosi e vendosur!',
+                        '#' + rowNumber + ' — ' + name + '\n' + product + '\nOrder ID: ' + oid,
+                        'green'
+                    );
+                    loadOrders(true);
+                    return;
+                }
+            }
+
+            // Not placed yet — retry if under max attempts
+            if (attempts < MAX_ATTEMPTS) {
+                pollForResult(rowNumber, name, product, attempts + 1);
+            } else {
+                // Timeout — desktop might be off or failed
+                addHistory({ rowNumber, name, product }, false, null);
+                showNotif(
+                    '⚠️',
+                    'Koha skadoi',
+                    'Porosia nuk u konfirmua brenda 2 minutave.\nKontrollo nëse laptopi është ndezur.',
+                    'red'
+                );
+            }
+        } catch(e) {
+            if (attempts < MAX_ATTEMPTS) {
+                pollForResult(rowNumber, name, product, attempts + 1);
+            }
+        }
+    }, 5000);
+}
+
+// ─── AUTO-DETECT NEW ORDERS (poll every 60s) ─────────────────────────────────
+setInterval(() => loadOrders(true), 60000);
+
+// ─── RELOAD BUTTON ────────────────────────────────────────────────────────────
+document.getElementById('reload-btn').addEventListener('click', () => {
+    const btn = document.getElementById('reload-btn');
+    btn.classList.add('spinning');
+    btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once: true });
+    loadOrders();
 });
 
-// ─── AUTO-DETECT NEW ORDERS ───────────────────────────────────────────────────
-async function pollForNewOrders() {
-    if (isProcessing) return;
-    try {
-        const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
-        const orders = await res.json();
-        const pending = orders.filter(o => {
-            const oid = o.OrderID != null ? o.OrderID.toString().trim() : '';
-            return oid === '' || oid.toLowerCase() === 'pending';
-        }).length;
-        if (lastKnownCount >= 0 && pending > lastKnownCount) {
-            const banner = document.getElementById('new-order-banner');
-            const count  = pending - lastKnownCount;
-            banner.innerText = '🔔 ' + count + (count===1 ? ' porosi e re!' : ' porosi te reja!');
-            banner.style.display = 'block';
-            setTimeout(() => { banner.style.display='none'; }, 6000);
-            loadNextOrder(null, true);
-        }
-        lastKnownCount = pending;
-    } catch(e) {}
-}
-setInterval(pollForNewOrders, 60000);
-
-// ─── STARTUP ─────────────────────────────────────────────────────────────────
-updateAvgTime();
-loadNextOrder();
+// ─── STARTUP ──────────────────────────────────────────────────────────────────
+loadOrders();
 </script>
 </body>
 </html>
