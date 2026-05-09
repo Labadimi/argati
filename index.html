@@ -21,7 +21,6 @@
     --green:         #10b981;
     --amber:         #f59e0b;
     --red:           #ef4444;
-    --blue:          #3b82f6;
 }
 body.dark {
     --primary:       #ff5722;
@@ -40,7 +39,7 @@ body {
     font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
     background: var(--bg); color: var(--text);
     min-height: 100vh;
-    padding-bottom: calc(32px + env(safe-area-inset-bottom));
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
     transition: background 0.25s, color 0.25s;
 }
 
@@ -50,8 +49,6 @@ body {
     background: var(--card); border-bottom: 1px solid var(--border);
     padding: calc(env(safe-area-inset-top) + 14px) 18px 14px;
     display: flex; align-items: center; gap: 12px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
 }
 .header-icon {
     width: 40px; height: 40px; background: var(--primary);
@@ -60,10 +57,9 @@ body {
     box-shadow: 0 4px 12px rgba(255,69,0,0.3);
 }
 .header-text { flex: 1; }
-.header-title { font-size: 17px; font-weight: 800; color: var(--text); line-height: 1.2; }
+.header-title { font-size: 17px; font-weight: 800; color: var(--text); }
 .header-sub   { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; }
-.header-btns  { display: flex; gap: 8px; align-items: center; }
-
+.header-btns  { display: flex; gap: 8px; }
 .icon-btn {
     width: 36px; height: 36px; border: 1.5px solid var(--border);
     border-radius: 10px; background: var(--card); color: var(--text);
@@ -71,23 +67,21 @@ body {
     font-size: 16px; cursor: pointer; padding: 0; line-height: 1;
     transition: all 0.15s;
 }
-.icon-btn:active { border-color: var(--primary); background: var(--primary-light); transform: scale(0.94); }
-
+.icon-btn:active { border-color: var(--primary); background: var(--primary-light); transform: scale(0.92); }
 #reload-btn.spinning { animation: spin 0.5s linear; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── MAIN ───────────────────────────────────────────────────────────────────── */
-.main { padding: 16px 18px; }
+.main { padding: 14px 16px; }
 
 /* ── NEW ORDER BANNER ───────────────────────────────────────────────────────── */
 #new-order-banner {
-    display: none;
-    background: var(--green); color: white;
+    display: none; background: var(--green); color: white;
     font-size: 13px; font-weight: 700; text-align: center;
-    padding: 11px 18px; margin-bottom: 14px;
-    border-radius: 14px; animation: slideDown 0.3s ease;
+    padding: 11px 18px; margin-bottom: 14px; border-radius: 14px;
+    animation: slideDown 0.3s ease;
 }
-@keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideDown { from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)} }
 
 /* ── STATS BAR ──────────────────────────────────────────────────────────────── */
 .stats-bar {
@@ -100,58 +94,75 @@ body {
 .stat-item  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .stat-num   { font-size: 26px; font-weight: 800; color: var(--green); line-height: 1; }
 .stat-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-.stat-divider { width: 1px; height: 36px; background: var(--border); margin: 0 12px; }
+.stat-divider { width: 1px; height: 36px; background: var(--border); margin: 0 10px; }
 
 /* ── SECTION LABEL ──────────────────────────────────────────────────────────── */
 .section-label {
     font-size: 10px; font-weight: 800; color: var(--muted);
-    text-transform: uppercase; letter-spacing: 0.1em;
-    margin: 0 0 10px 2px;
+    text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 10px 2px;
 }
 
 /* ── ORDER CARD ─────────────────────────────────────────────────────────────── */
 .order-card {
-    background: var(--card); border-radius: 20px;
-    padding: 18px; margin-bottom: 12px;
-    border-left: 4px solid var(--primary);
-    box-shadow: 0 3px 16px var(--shadow);
-    transition: transform 0.15s;
+    background: var(--card); border-radius: 18px;
+    padding: 16px; margin-bottom: 10px;
+    border: 2px solid var(--border);
+    box-shadow: 0 2px 12px var(--shadow);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
 }
-.order-card:active { transform: scale(0.99); }
-.order-card.review { border-left-color: var(--amber); }
-.order-card.placed { border-left-color: var(--green); opacity: 0.65; }
-.order-card.failed { border-left-color: var(--red); }
+.order-card:active { transform: scale(0.985); }
+.order-card.review { border-color: rgba(245,158,11,0.35); }
 
-/* card header row */
-.card-top {
-    display: flex; align-items: center;
-    justify-content: space-between; margin-bottom: 12px;
+/* Selected state */
+.order-card.selected {
+    border-color: var(--primary) !important;
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(255,69,0,0.15), 0 2px 12px var(--shadow);
 }
+.order-card.review.selected { box-shadow: 0 0 0 3px rgba(245,158,11,0.2), 0 2px 12px var(--shadow); }
+
+/* Checkbox tick in top-right corner */
+.card-check {
+    position: absolute; top: 14px; right: 14px;
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.order-card.selected .card-check {
+    background: var(--primary); border-color: var(--primary); color: white;
+}
+
+.card-top  { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-right: 36px; }
 .card-badge {
     background: var(--primary-light); color: var(--primary);
-    font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 8px;
+    font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 8px; flex-shrink: 0;
 }
 .order-card.review .card-badge { background: rgba(245,158,11,0.12); color: var(--amber); }
-.card-status {
+.card-label {
     font-size: 11px; font-weight: 700; color: var(--muted);
-    display: flex; align-items: center; gap: 4px;
 }
+.order-card.selected .card-label { color: var(--primary); }
 
-.card-name { font-size: 18px; font-weight: 800; color: var(--text); margin-bottom: 12px; }
+.card-name { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
 
 .card-detail {
     display: flex; align-items: center; gap: 9px;
-    font-size: 13px; color: var(--muted); margin-bottom: 8px;
-    font-weight: 500;
+    font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 500;
 }
-.card-detail:last-of-type { margin-bottom: 0; }
-.card-detail .icon { font-size: 15px; flex-shrink: 0; }
+.card-detail .icon { font-size: 14px; flex-shrink: 0; }
 .card-detail .val  { color: var(--text); font-weight: 600; }
 
-/* alerts inside card */
 .card-alert {
-    display: flex; align-items: flex-start; gap: 9px;
-    margin-top: 12px; padding: 10px 12px; border-radius: 11px;
+    display: flex; align-items: flex-start; gap: 8px;
+    margin-top: 10px; padding: 9px 12px; border-radius: 11px;
     font-size: 12px; line-height: 1.5; font-weight: 600;
 }
 .alert-multi   { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
@@ -159,45 +170,47 @@ body {
 body.dark .alert-multi   { background: #2d1a0a; border-color: #7c3509; color: #fb923c; }
 body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #93c5fd; }
 
-/* result feedback inside card */
-.card-result {
-    display: none; align-items: center; gap: 9px;
-    margin-top: 12px; padding: 11px 13px; border-radius: 12px;
-    font-size: 13px; font-weight: 700;
+/* ── FLOATING ACTION BAR ────────────────────────────────────────────────────── */
+#fab {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 16px; right: 16px;
+    z-index: 100;
+    display: none;
+    animation: fabUp 0.25s cubic-bezier(0.34,1.56,0.64,1);
 }
-.card-result.success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--green); display: flex; }
-.card-result.failed  { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red);   display: flex; }
+@keyframes fabUp { from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)} }
 
-/* approve button */
-.approve-btn {
-    width: 100%; padding: 15px; margin-top: 14px;
-    background: var(--primary); color: white; border: none;
-    border-radius: 14px; font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 15px; font-weight: 800; letter-spacing: 0.04em;
-    text-transform: uppercase; cursor: pointer;
-    box-shadow: 0 4px 14px rgba(255,69,0,0.25);
-    transition: all 0.15s;
+.fab-inner {
+    background: var(--primary);
+    border-radius: 18px;
+    padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 8px 28px rgba(255,69,0,0.4);
 }
-.approve-btn:active:not(:disabled) { transform: scale(0.97); background: #e03d00; }
-.approve-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.approve-btn.pending  { background: var(--muted); }
-.approve-btn.done     { background: var(--green); box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
+.fab-left  { display: flex; flex-direction: column; gap: 1px; }
+.fab-count { font-size: 18px; font-weight: 800; color: white; line-height: 1; }
+.fab-sub   { font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 600; }
+.fab-btn {
+    background: white; color: var(--primary);
+    border: none; border-radius: 12px;
+    padding: 11px 20px; font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 14px; font-weight: 800; cursor: pointer; letter-spacing: 0.03em;
+    transition: transform 0.12s;
+}
+.fab-btn:active { transform: scale(0.95); }
+.fab-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── QUEUE SECTION ──────────────────────────────────────────────────────────── */
-.queue-card {
-    background: var(--card); border-radius: 14px; padding: 13px 16px;
-    margin-bottom: 8px; display: flex; justify-content: space-between;
-    align-items: center; border: 1px solid var(--border);
-    box-shadow: 0 1px 6px var(--shadow);
+/* deselect all pill */
+.fab-clear {
+    background: rgba(255,255,255,0.18); color: white;
+    border: none; border-radius: 8px;
+    padding: 6px 12px; font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 11px; font-weight: 700; cursor: pointer;
+    margin-top: 6px; display: block; width: 100%; text-align: center;
+    transition: background 0.15s;
 }
-.queue-card.review-q { border-color: rgba(245,158,11,0.4); }
-.qc-left  { flex: 1; }
-.qc-num   { font-size: 11px; font-weight: 800; color: var(--primary); margin-bottom: 3px; }
-.qc-name  { font-size: 14px; font-weight: 700; color: var(--text); }
-.qc-prod  { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.qc-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
-.qc-city  { font-size: 12px; color: var(--muted); font-weight: 600; }
-.qc-flag  { font-size: 11px; color: var(--amber); margin-top: 3px; font-weight: 700; }
+.fab-clear:active { background: rgba(255,255,255,0.3); }
 
 /* ── HISTORY ────────────────────────────────────────────────────────────────── */
 .panel-toggle {
@@ -205,81 +218,74 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
     border-radius: 14px; background: var(--card); color: var(--text);
     font-family: 'DM Sans', system-ui, sans-serif;
     font-size: 13px; font-weight: 700; cursor: pointer;
-    text-align: center; margin-bottom: 10px;
-    transition: all 0.15s;
+    text-align: center; margin-bottom: 10px; transition: all 0.15s;
 }
 .panel-toggle:active { border-color: var(--primary); background: var(--primary-light); }
 .panel-body { display: none; background: var(--card); border-radius: 16px; border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
 .history-item { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 12px; }
 .history-item:last-child { border-bottom: none; }
-.history-top    { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.history-name   { font-weight: 700; color: var(--text); font-size: 13px; }
-.history-time   { color: var(--muted); font-size: 11px; }
-.history-bottom { display: flex; justify-content: space-between; align-items: center; }
-.history-product { color: var(--muted); font-weight: 500; }
-.history-result  { font-size: 12px; font-weight: 800; }
-.history-result.ok  { color: var(--green); }
-.history-result.err { color: var(--red); }
-.history-empty  { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+.history-top    { display:flex; justify-content:space-between; margin-bottom:4px; }
+.history-name   { font-weight:700; color:var(--text); font-size:13px; }
+.history-time   { color:var(--muted); font-size:11px; }
+.history-bottom { display:flex; justify-content:space-between; align-items:center; }
+.history-product { color:var(--muted); font-weight:500; }
+.history-result  { font-size:12px; font-weight:800; }
+.history-result.ok  { color:var(--green); }
+.history-result.err { color:var(--red); }
+.history-empty  { padding:24px; text-align:center; color:var(--muted); font-size:13px; }
 
 /* ── EMPTY STATE ────────────────────────────────────────────────────────────── */
 .empty-state {
-    text-align: center; padding: 48px 20px;
-    background: var(--card); border-radius: 20px;
-    border: 1px solid var(--border);
-    box-shadow: 0 2px 10px var(--shadow);
+    text-align:center; padding:48px 20px;
+    background:var(--card); border-radius:20px;
+    border:1px solid var(--border); box-shadow:0 2px 10px var(--shadow);
 }
-.empty-icon  { font-size: 52px; margin-bottom: 14px; }
-.empty-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
-.empty-sub   { font-size: 14px; color: var(--muted); }
+.empty-icon  { font-size:52px; margin-bottom:14px; }
+.empty-title { font-size:18px; font-weight:800; margin-bottom:6px; }
+.empty-sub   { font-size:14px; color:var(--muted); }
 
 /* ── LOADING ────────────────────────────────────────────────────────────────── */
-.loading {
-    text-align: center; padding: 48px 20px; color: var(--muted);
-}
+.loading { text-align:center; padding:48px 20px; color:var(--muted); }
 .spinner {
-    width: 32px; height: 32px; border: 3px solid var(--border);
-    border-top-color: var(--primary); border-radius: 50%;
-    animation: spin 0.7s linear infinite; margin: 0 auto 14px;
+    width:32px; height:32px; border:3px solid var(--border);
+    border-top-color:var(--primary); border-radius:50%;
+    animation:spin 0.7s linear infinite; margin:0 auto 14px;
 }
 
-/* ── STATUS BAR ─────────────────────────────────────────────────────────────── */
-#status-bar {
-    text-align: center; font-size: 12px; color: var(--muted);
-    font-weight: 600; padding: 8px 0 4px;
-}
+/* ── STATUS ─────────────────────────────────────────────────────────────────── */
+#status-bar { text-align:center; font-size:12px; color:var(--muted); font-weight:600; padding:8px 0 4px; }
 
 /* ── NOTIFICATION OVERLAY ───────────────────────────────────────────────────── */
 .notif-overlay {
-    position: fixed; inset: 0; z-index: 200;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
-    display: none; align-items: center; justify-content: center; padding: 24px;
+    position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,0.65); backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    display:none; align-items:center; justify-content:center; padding:24px;
 }
-.notif-overlay.show { display: flex; animation: fadeIn 0.2s ease; }
-@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.notif-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0}to{opacity:1} }
 
 .notif-card {
-    background: var(--card); border-radius: 24px;
-    padding: 32px 28px; text-align: center;
-    width: 100%; max-width: 320px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-    animation: popUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    background:var(--card); border-radius:26px;
+    padding:32px 28px; text-align:center;
+    width:100%; max-width:320px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.4);
+    animation:popUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
-@keyframes popUp { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+@keyframes popUp { from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1} }
 
-.notif-icon  { font-size: 56px; margin-bottom: 16px; }
-.notif-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
-.notif-sub   { font-size: 14px; color: var(--muted); font-weight: 500; line-height: 1.5; margin-bottom: 24px; }
+.notif-icon  { font-size:56px; margin-bottom:16px; }
+.notif-title { font-size:22px; font-weight:800; margin-bottom:8px; }
+.notif-sub   { font-size:14px; color:var(--muted); font-weight:500; line-height:1.6; margin-bottom:24px; white-space:pre-line; }
 .notif-btn {
-    width: 100%; padding: 14px; border: none; border-radius: 14px;
-    font-family: 'DM Sans', system-ui, sans-serif;
-    font-size: 15px; font-weight: 800; cursor: pointer;
-    background: var(--primary); color: white;
-    transition: all 0.15s;
+    width:100%; padding:14px; border:none; border-radius:14px;
+    font-family:'DM Sans',system-ui,sans-serif;
+    font-size:15px; font-weight:800; cursor:pointer;
+    background:var(--primary); color:white; transition:all 0.15s;
 }
-.notif-btn:active { transform: scale(0.97); }
-.notif-btn.green { background: var(--green); }
-.notif-btn.red   { background: var(--red); }
+.notif-btn:active { transform:scale(0.97); }
+.notif-btn.green { background:var(--green); }
+.notif-btn.red   { background:var(--red); }
 </style>
 </head>
 <body>
@@ -292,17 +298,15 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
         <div class="header-sub">Approval Center</div>
     </div>
     <div class="header-btns">
-        <button class="icon-btn" id="theme-btn" title="Dark/Light">🌙</button>
-        <button class="icon-btn" id="reload-btn" title="Rifresko">↻</button>
+        <button class="icon-btn" id="theme-btn">🌙</button>
+        <button class="icon-btn" id="reload-btn">↻</button>
     </div>
 </div>
 
 <div class="main">
-
-    <!-- NEW ORDER BANNER -->
     <div id="new-order-banner"></div>
 
-    <!-- STATS BAR -->
+    <!-- STATS -->
     <div class="stats-bar">
         <div class="stat-item">
             <span class="stat-num" id="stat-today">—</span>
@@ -311,7 +315,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
         <div class="stat-divider"></div>
         <div class="stat-item">
             <span class="stat-num" id="stat-pending" style="color:var(--primary)">—</span>
-            <span class="stat-label">Ne pritje 🕐</span>
+            <span class="stat-label">Ne pritje</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
@@ -322,21 +326,28 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 
     <!-- ORDER LIST -->
     <div id="order-list">
-        <div class="loading">
-            <div class="spinner"></div>
-            Duke ngarkuar...
-        </div>
+        <div class="loading"><div class="spinner"></div>Duke ngarkuar...</div>
     </div>
 
     <!-- HISTORY -->
     <button class="panel-toggle" id="history-toggle">📋 Historiku</button>
     <div class="panel-body" id="history-panel">
-        <div id="history-list">
-            <div class="history-empty">Asnje porosi ende ne kete sesion.</div>
-        </div>
+        <div id="history-list"><div class="history-empty">Asnje porosi ende.</div></div>
     </div>
 
     <div id="status-bar"></div>
+</div>
+
+<!-- FLOATING ACTION BAR (appears when cards are selected) -->
+<div id="fab">
+    <div class="fab-inner">
+        <div class="fab-left">
+            <div class="fab-count" id="fab-count">0 zgjedhura</div>
+            <div class="fab-sub">Klikoni Vendos per t'i derguar</div>
+        </div>
+        <button class="fab-btn" id="fab-approve-btn" onclick="approveSelected()">▶ Vendos</button>
+    </div>
+    <button class="fab-clear" onclick="clearSelection()">✕ Hiq zgjedhjen</button>
 </div>
 
 <!-- NOTIFICATION OVERLAY -->
@@ -350,14 +361,13 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 </div>
 
 <script>
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let allOrders    = [];
+let allOrders    = [];  // all pending from sheet
+let selectedRows = new Set(); // rowNumbers currently selected
 let lastCount    = -1;
 let orderHistory = [];
-let pendingNotif = null; // { rowNumber, name, product } — waiting for result
+let processingQueue = []; // multi-select approve queue
 
 const PRODUCTS = {
     "105":"Pastrues Frenave 105","106":"DPF Additiv 106","107":"Pastrues DPF 107",
@@ -390,48 +400,72 @@ document.getElementById('history-toggle').addEventListener('click', () => {
     btn.innerText = open ? '📋 Mbyll ✕' : '📋 Historiku';
 });
 
-// ─── NOTIFICATION OVERLAY ─────────────────────────────────────────────────────
+// ─── NOTIFICATION ─────────────────────────────────────────────────────────────
 function showNotif(icon, title, sub, btnClass) {
     document.getElementById('notif-icon').innerText  = icon;
     document.getElementById('notif-title').innerText = title;
     document.getElementById('notif-sub').innerText   = sub;
-    const btn = document.getElementById('notif-btn');
-    btn.className = 'notif-btn ' + (btnClass || '');
+    document.getElementById('notif-btn').className   = 'notif-btn ' + (btnClass||'');
     document.getElementById('notif-overlay').classList.add('show');
-    // Vibrate on iPhone (where supported)
-    if (navigator.vibrate) navigator.vibrate(btnClass === 'red' ? [100,50,100] : [100]);
+    if (navigator.vibrate) navigator.vibrate(btnClass === 'red' ? [100,50,100] : [80]);
 }
 function closeNotif() {
     document.getElementById('notif-overlay').classList.remove('show');
-    pendingNotif = null;
 }
 
-// ─── ADD TO HISTORY ───────────────────────────────────────────────────────────
-function addHistory(order, success, orderId) {
-    const time = new Date().toLocaleTimeString('sq-AL', {hour:'2-digit', minute:'2-digit'});
-    orderHistory.unshift({ rowNumber: order.rowNumber, name: order.name,
-        product: order.product, time, success, orderId });
-    if (orderHistory.length > 30) orderHistory.pop();
-    renderHistory();
+// ─── SELECTION ────────────────────────────────────────────────────────────────
+function toggleSelect(rowNumber) {
+    // Instant visual — no reload needed
+    if (selectedRows.has(rowNumber)) {
+        selectedRows.delete(rowNumber);
+    } else {
+        selectedRows.add(rowNumber);
+    }
+    // Update just this card's visual state
+    const card = document.getElementById('card-' + rowNumber);
+    if (card) {
+        card.classList.toggle('selected', selectedRows.has(rowNumber));
+        const check = card.querySelector('.card-check');
+        if (check) check.innerText = selectedRows.has(rowNumber) ? '✓' : '';
+    }
+    updateFAB();
 }
 
-function renderHistory() {
-    const c = document.getElementById('history-list');
-    if (!c) return;
-    if (!orderHistory.length) { c.innerHTML = '<div class="history-empty">Asnje porosi ende.</div>'; return; }
-    c.innerHTML = orderHistory.map(h => `
-        <div class="history-item">
-            <div class="history-top">
-                <span class="history-name">#${h.rowNumber} ${h.name}</span>
-                <span class="history-time">${h.time}</span>
-            </div>
-            <div class="history-bottom">
-                <span class="history-product">${h.product}</span>
-                <span class="history-result ${h.success?'ok':'err'}">
-                    ${h.success ? '✅ ' + (h.orderId||'Aprovuar') : '❌ Deshtoi'}
-                </span>
-            </div>
-        </div>`).join('');
+function clearSelection() {
+    selectedRows.forEach(r => {
+        const card = document.getElementById('card-' + r);
+        if (card) {
+            card.classList.remove('selected');
+            const check = card.querySelector('.card-check');
+            if (check) check.innerText = '';
+        }
+    });
+    selectedRows.clear();
+    updateFAB();
+}
+
+function updateFAB() {
+    const fab   = document.getElementById('fab');
+    const count = selectedRows.size;
+    if (count === 0) {
+        fab.style.display = 'none';
+        return;
+    }
+    fab.style.display = 'block';
+    document.getElementById('fab-count').innerText =
+        count === 1 ? '1 porosi zgjedhur' : count + ' porosi zgjedhura';
+}
+
+// ─── STATS BAR ────────────────────────────────────────────────────────────────
+function updateStats(orders, completedToday) {
+    const reviewCount = orders.filter(o => {
+        const c = (o['Koment shtese (Nese ka)']||'').toString().trim();
+        const m = (o.Produkti||'').toString().includes('+');
+        return c !== '' || m;
+    }).length;
+    document.getElementById('stat-today').innerText   = completedToday;
+    document.getElementById('stat-pending').innerText = orders.length;
+    document.getElementById('stat-review').innerText  = reviewCount;
 }
 
 // ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
@@ -443,7 +477,6 @@ async function loadOrders(silent = false) {
         const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
         const orders = await res.json();
 
-        // Stats
         const todayStr = new Date().toDateString();
         const completedToday = orders.filter(o => {
             const oid = (o.OrderID||'').toString().trim();
@@ -457,218 +490,236 @@ async function loadOrders(silent = false) {
             return oid==='' || oid.toLowerCase()==='pending';
         });
 
-        const reviewOrders = allOrders.filter(o => {
-            const hasComment = (o['Koment shtese (Nese ka)']||'').toString().trim() !== '';
-            const isMulti    = (o.Produkti||'').toString().includes('+');
-            return hasComment || isMulti;
+        // Remove selections for orders that are no longer pending
+        selectedRows.forEach(r => {
+            if (!allOrders.find(o => o.rowNumber == r)) selectedRows.delete(r);
         });
-
-        document.getElementById('stat-today').innerText   = completedToday;
-        document.getElementById('stat-pending').innerText = allOrders.length;
-        document.getElementById('stat-review').innerText  = reviewOrders.length;
 
         // Detect new orders
         if (lastCount >= 0 && allOrders.length > lastCount) {
             const diff = allOrders.length - lastCount;
             const banner = document.getElementById('new-order-banner');
-            banner.innerText = '🔔 ' + diff + (diff===1?' porosi e re mbërriti!':" porosi të reja!");
+            banner.innerText = '🔔 ' + diff + (diff===1 ? ' porosi e re!' : ' porosi të reja!');
             banner.style.display = 'block';
             setTimeout(() => { banner.style.display='none'; }, 5000);
             if (navigator.vibrate) navigator.vibrate([200,100,200]);
         }
         lastCount = allOrders.length;
 
-        renderOrderList(allOrders, reviewOrders);
+        updateStats(allOrders, completedToday);
+        renderCards(allOrders);
+        updateFAB();
 
     } catch(e) {
         if (!silent) list.innerHTML = '<div class="loading" style="color:var(--red)">⚠ Gabim: ' + e.message + '</div>';
     }
 }
 
-// ─── RENDER ORDER LIST ────────────────────────────────────────────────────────
-function renderOrderList(orders, reviewOrders) {
+// ─── RENDER CARDS ─────────────────────────────────────────────────────────────
+function renderCards(orders) {
     const list = document.getElementById('order-list');
 
     if (!orders.length) {
-        list.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">🎉</div>
-                <div class="empty-title">Asnje porosi ne pritje!</div>
-                <div class="empty-sub">Te gjitha porositë janë kryer.</div>
-            </div>`;
+        list.innerHTML = `<div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <div class="empty-title">Asnje porosi ne pritje!</div>
+            <div class="empty-sub">Te gjitha porositë janë kryer.</div>
+        </div>`;
         document.getElementById('status-bar').innerText = '';
         return;
     }
 
-    // Review orders first, then normal
-    const sorted = [
-        ...reviewOrders,
-        ...orders.filter(o => !reviewOrders.includes(o))
-    ];
+    // Sort: review first, then normal
+    const sorted = [...orders].sort((a, b) => {
+        const aR = (a['Koment shtese (Nese ka)']||'').toString().trim()!=='' || (a.Produkti||'').toString().includes('+');
+        const bR = (b['Koment shtese (Nese ka)']||'').toString().trim()!=='' || (b.Produkti||'').toString().includes('+');
+        return (bR ? 1 : 0) - (aR ? 1 : 0);
+    });
 
-    // Active order (first in sorted list) — big card
-    const active = sorted[0];
-    const rest   = sorted.slice(1);
+    const selHint = orders.length > 1
+        ? '<p class="section-label" style="margin-bottom:10px">Tap per te zgjedhur — mund te zgjedhesh disa</p>'
+        : '<p class="section-label" style="margin-bottom:10px">Porosi ne pritje</p>';
 
-    let html = '';
+    list.innerHTML = selHint + sorted.map(o => buildCard(o)).join('');
 
-    // ── ACTIVE CARD ──
-    const ap = (active.Produkti||'').toString().trim();
-    const ac = (active['Koment shtese (Nese ka)']||'').toString().trim();
-    const isReview = ap.includes('+') || ac !== '';
-    const productName = getProduct(ap);
+    // Attach tap listeners
+    sorted.forEach(o => {
+        const card = document.getElementById('card-' + o.rowNumber);
+        if (card) card.addEventListener('click', () => toggleSelect(o.rowNumber));
+    });
 
-    html += `
-    <p class="section-label">⚡ Detyra Aktive</p>
-    <div class="order-card${isReview?' review':''}" id="card-${active.rowNumber}">
-        <div class="card-top">
-            <span class="card-badge">#${active.rowNumber}</span>
-            <span class="card-status">${isReview ? '⚠️ Kerkese speciale' : '🟢 Gati'}</span>
-        </div>
-        <div class="card-name">${(active.Emri||'').trim()} ${(active.Mbiemri||'').trim()}</div>
-        <div class="card-detail"><span class="icon">📦</span><span class="val">${productName}</span></div>
-        <div class="card-detail"><span class="icon">📍</span><span class="val">${active.Qyteti||'—'}</span></div>
-        <div class="card-detail"><span class="icon">📞</span><span class="val">${(active.Telefoni||'').toString().trim()||'—'}</span></div>
-        <div class="card-detail"><span class="icon">🏠</span><span class="val">${(active.Adresa||'').toString().trim()||'—'}</span></div>
-        ${ap.includes('+') ? `<div class="card-alert alert-multi">⚠️ <span>Produkte te shumta: <b>${ap.split('+').map(c=>c.trim()).join(' + ')}</b></span></div>` : ''}
-        ${ac ? `<div class="card-alert alert-comment">💬 <span>${ac}</span></div>` : ''}
-        <div class="card-result" id="result-${active.rowNumber}"></div>
-        <button class="approve-btn" id="btn-${active.rowNumber}"
-                onclick="approveOrder(${active.rowNumber}, '${(active.Emri||'').trim()} ${(active.Mbiemri||'').trim()}', '${productName.replace(/'/g,"\\'")}')">
-            ▶ Vendos Porosinë
-        </button>
-    </div>`;
+    // Restore selected state visually
+    selectedRows.forEach(r => {
+        const card = document.getElementById('card-' + r);
+        if (card) {
+            card.classList.add('selected');
+            const check = card.querySelector('.card-check');
+            if (check) check.innerText = '✓';
+        }
+    });
 
-    // ── QUEUE ──
-    if (rest.length > 0) {
-        html += `<p class="section-label" style="margin-top:20px">Radha — ${rest.length} porosi</p>`;
-        rest.slice(0, 6).forEach(o => {
-            const p  = getProduct(o.Produkti||'');
-            const rc = (o['Koment shtese (Nese ka)']||'').toString().trim();
-            const rm = (o.Produkti||'').toString().includes('+') || rc !== '';
-            html += `
-            <div class="queue-card${rm?' review-q':''}">
-                <div class="qc-left">
-                    <div class="qc-num">#${o.rowNumber}</div>
-                    <div class="qc-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
-                    <div class="qc-prod">${p}</div>
-                </div>
-                <div class="qc-right">
-                    <div class="qc-city">${o.Qyteti||'—'}</div>
-                    ${rm ? '<div class="qc-flag">⚠ Review</div>' : ''}
-                </div>
-            </div>`;
-        });
-    }
-
-    list.innerHTML = html;
-    document.getElementById('status-bar').innerText =
-        allOrders.length + ' porosi ne pritje';
+    document.getElementById('status-bar').innerText = orders.length + ' porosi ne pritje';
 }
 
-// ─── APPROVE ORDER ────────────────────────────────────────────────────────────
-async function approveOrder(rowNumber, name, product) {
-    const btn    = document.getElementById('btn-' + rowNumber);
-    const result = document.getElementById('result-' + rowNumber);
-    if (!btn || btn.disabled) return;
+function buildCard(o) {
+    const ap = (o.Produkti||'').toString().trim();
+    const ac = (o['Koment shtese (Nese ka)']||'').toString().trim();
+    const isReview  = ap.includes('+') || ac !== '';
+    const product   = getProduct(ap);
+    const isSelected = selectedRows.has(o.rowNumber);
 
+    return `
+    <div class="order-card${isReview?' review':''}${isSelected?' selected':''}" id="card-${o.rowNumber}">
+        <div class="card-check">${isSelected?'✓':''}</div>
+        <div class="card-top">
+            <span class="card-badge">#${o.rowNumber}</span>
+            <span class="card-label">${isReview ? '⚠️ Review' : '🟢 Normal'}</span>
+        </div>
+        <div class="card-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
+        <div class="card-detail"><span class="icon">📦</span><span class="val">${product}</span></div>
+        <div class="card-detail"><span class="icon">📍</span><span class="val">${o.Qyteti||'—'}</span></div>
+        <div class="card-detail"><span class="icon">📞</span><span class="val">${(o.Telefoni||'').toString().trim()||'—'}</span></div>
+        <div class="card-detail"><span class="icon">🏠</span><span class="val">${(o.Adresa||'').toString().trim()||'—'}</span></div>
+        ${ap.includes('+') ? `<div class="card-alert alert-multi">⚠️ <span>Produkte te shumta: <b>${ap.split('+').map(c=>c.trim()).join(' + ')}</b></span></div>` : ''}
+        ${ac ? `<div class="card-alert alert-comment">💬 <span>${ac}</span></div>` : ''}
+    </div>`;
+}
+
+// ─── APPROVE SELECTED ─────────────────────────────────────────────────────────
+async function approveSelected() {
+    if (selectedRows.size === 0) return;
+
+    const btn = document.getElementById('fab-approve-btn');
     btn.disabled  = true;
     btn.innerText = '⏳ Duke derguar...';
-    btn.className = 'approve-btn pending';
 
-    try {
-        const res = await fetch(
-            SCRIPT_URL + '?action=approve&row=' + rowNumber + '&t=' + Date.now(),
-            { redirect: 'follow' }
-        );
+    // Build queue from selected orders (preserve sorted order)
+    const toProcess = allOrders.filter(o => selectedRows.has(o.rowNumber));
+    const total     = toProcess.length;
+    let   completed = 0;
+    let   failed    = 0;
 
-        let success = false;
+    // Approve all selected rows at once (write flags to PropertiesService)
+    for (const order of toProcess) {
         try {
-            const text = await res.text();
-            const data = JSON.parse(text);
-            success = data.success === true;
+            const res = await fetch(
+                SCRIPT_URL + '?action=approve&row=' + order.rowNumber + '&t=' + Date.now(),
+                { redirect: 'follow' }
+            );
+            let success = false;
+            try {
+                const data = JSON.parse(await res.text());
+                success = data.success === true;
+            } catch(e) {
+                success = res.status >= 200 && res.status < 400;
+            }
+            if (!success) failed++;
         } catch(e) {
-            success = res.status >= 200 && res.status < 400;
+            failed++;
         }
+    }
 
-        if (success) {
-            btn.innerText = '✅ Aprovuar — Desktop po vendos...';
-            btn.className = 'approve-btn done';
+    // Clear selection visually
+    clearSelection();
+    btn.disabled  = false;
+    btn.innerText = '▶ Vendos';
 
-            // Store who we're waiting for so we can show result notification
-            pendingNotif = { rowNumber, name, product };
-
-            // Start polling every 5s for the result (order ID written = success)
-            pollForResult(rowNumber, name, product);
-
-        } else {
-            btn.disabled  = false;
-            btn.innerText = '▶ Vendos Porosinë';
-            btn.className = 'approve-btn';
-            showNotif('❌', 'Aprovimi dështoi', 'Provo përsëri ose kontrollo lidhjen.', 'red');
-        }
-    } catch(e) {
-        btn.disabled  = false;
-        btn.innerText = '▶ Vendos Porosinë';
-        btn.className = 'approve-btn';
-        showNotif('❌', 'Gabim lidhjeje', e.message || 'Kontrollo internetin.', 'red');
+    if (failed === 0) {
+        // All sent successfully — now poll for results
+        showNotif(
+            '📤',
+            total === 1 ? 'Porosia u dërgua!' : total + ' porosi u dërguan!',
+            'Desktop po i vendos njëra pas tjetrës.\nDo të njoftohesh kur të kryhen.',
+            'green'
+        );
+        // Poll for each order's result
+        toProcess.forEach(o => {
+            const name    = (o.Emri||'').trim() + ' ' + (o.Mbiemri||'').trim();
+            const product = getProduct(o.Produkti||'');
+            pollForResult(o.rowNumber, name, product, 0, total);
+        });
+    } else {
+        showNotif(
+            '⚠️',
+            'Disa aprovime dështuan',
+            failed + ' nga ' + total + ' dështuan.\nProvo përsëri.',
+            'red'
+        );
     }
 }
 
 // ─── POLL FOR RESULT ──────────────────────────────────────────────────────────
-// After approval, poll every 5s to see if the desktop wrote an Order ID
-// That means the order was successfully placed
-function pollForResult(rowNumber, name, product, attempts = 0) {
-    const MAX_ATTEMPTS = 24; // 24 × 5s = 120s max wait
+function pollForResult(rowNumber, name, product, attempts, total) {
+    const MAX = 24; // 24 × 5s = 2 min
 
     setTimeout(async () => {
         try {
             const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
             const orders = await res.json();
-
-            // Find this row — if it now has an Order ID, it was placed successfully
-            const row = orders.find(o => o.rowNumber == rowNumber);
+            const row    = orders.find(o => o.rowNumber == rowNumber);
 
             if (row) {
-                const oid = (row.OrderID||'').toString().trim();
+                const oid      = (row.OrderID||'').toString().trim();
                 const isPlaced = oid !== '' && oid.toLowerCase() !== 'pending';
 
                 if (isPlaced) {
-                    // SUCCESS
                     addHistory({ rowNumber, name, product }, true, oid);
-                    showNotif(
-                        '✅',
-                        'Porosi e vendosur!',
-                        '#' + rowNumber + ' — ' + name + '\n' + product + '\nOrder ID: ' + oid,
-                        'green'
-                    );
+                    if (navigator.vibrate) navigator.vibrate([80]);
+                    // Only show individual notif if single order; for multi just refresh
+                    if (total === 1) {
+                        showNotif('✅', 'Porosi e vendosur!',
+                            '#' + rowNumber + ' — ' + name + '\n' + product + '\nOrder ID: ' + oid,
+                            'green');
+                    } else {
+                        // Show a brief toast-style banner
+                        const banner = document.getElementById('new-order-banner');
+                        banner.innerText = '✅ #' + rowNumber + ' ' + name + ' — ' + oid;
+                        banner.style.background = 'var(--green)';
+                        banner.style.display = 'block';
+                        setTimeout(() => { banner.style.display='none'; banner.style.background=''; }, 4000);
+                    }
                     loadOrders(true);
                     return;
                 }
             }
 
-            // Not placed yet — retry if under max attempts
-            if (attempts < MAX_ATTEMPTS) {
-                pollForResult(rowNumber, name, product, attempts + 1);
+            if (attempts < MAX) {
+                pollForResult(rowNumber, name, product, attempts + 1, total);
             } else {
-                // Timeout — desktop might be off or failed
                 addHistory({ rowNumber, name, product }, false, null);
-                showNotif(
-                    '⚠️',
-                    'Koha skadoi',
-                    'Porosia nuk u konfirmua brenda 2 minutave.\nKontrollo nëse laptopi është ndezur.',
-                    'red'
-                );
+                showNotif('⚠️', 'Koha skadoi',
+                    '#' + rowNumber + ' — ' + name + '\nNuk u konfirmua brenda 2 min.\nKontrollo nëse laptopi është ndezur.',
+                    'red');
             }
         } catch(e) {
-            if (attempts < MAX_ATTEMPTS) {
-                pollForResult(rowNumber, name, product, attempts + 1);
-            }
+            if (attempts < MAX) pollForResult(rowNumber, name, product, attempts + 1, total);
         }
     }, 5000);
 }
 
-// ─── AUTO-DETECT NEW ORDERS (poll every 60s) ─────────────────────────────────
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function addHistory(order, success, orderId) {
+    const time = new Date().toLocaleTimeString('sq-AL', {hour:'2-digit', minute:'2-digit'});
+    orderHistory.unshift({ ...order, time, success, orderId });
+    if (orderHistory.length > 30) orderHistory.pop();
+    const c = document.getElementById('history-list');
+    if (!c) return;
+    c.innerHTML = orderHistory.map(h => `
+        <div class="history-item">
+            <div class="history-top">
+                <span class="history-name">#${h.rowNumber} ${h.name}</span>
+                <span class="history-time">${h.time}</span>
+            </div>
+            <div class="history-bottom">
+                <span class="history-product">${h.product}</span>
+                <span class="history-result ${h.success?'ok':'err'}">
+                    ${h.success ? '✅ ' + (h.orderId||'OK') : '❌ Deshtoi'}
+                </span>
+            </div>
+        </div>`).join('');
+}
+
+// ─── AUTO-DETECT NEW ORDERS ───────────────────────────────────────────────────
 setInterval(() => loadOrders(true), 60000);
 
 // ─── RELOAD BUTTON ────────────────────────────────────────────────────────────
