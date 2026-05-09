@@ -310,12 +310,12 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
     <div class="stats-bar">
         <div class="stat-item">
             <span class="stat-num" id="stat-today">—</span>
-            <span class="stat-label">Sot ✅</span>
+            <span class="stat-label">Today ✅</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
             <span class="stat-num" id="stat-pending" style="color:var(--primary)">—</span>
-            <span class="stat-label">Ne pritje</span>
+            <span class="stat-label">Pending</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
@@ -326,13 +326,13 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 
     <!-- ORDER LIST -->
     <div id="order-list">
-        <div class="loading"><div class="spinner"></div>Duke ngarkuar...</div>
+        <div class="loading"><div class="spinner"></div>Loading...</div>
     </div>
 
     <!-- HISTORY -->
-    <button class="panel-toggle" id="history-toggle">📋 Historiku</button>
+    <button class="panel-toggle" id="history-toggle">📋 History</button>
     <div class="panel-body" id="history-panel">
-        <div id="history-list"><div class="history-empty">Asnje porosi ende.</div></div>
+        <div id="history-list"><div class="history-empty">No orders yet.</div></div>
     </div>
 
     <div id="status-bar"></div>
@@ -343,11 +343,11 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
     <div class="fab-inner">
         <div class="fab-left">
             <div class="fab-count" id="fab-count">0 zgjedhura</div>
-            <div class="fab-sub">Klikoni Vendos per t'i derguar</div>
+            <div class="fab-sub">Tap Place to send them</div>
         </div>
-        <button class="fab-btn" id="fab-approve-btn" onclick="approveSelected()">▶ Vendos</button>
+        <button class="fab-btn" id="fab-approve-btn" onclick="approveSelected()">▶ Place Orders</button>
     </div>
-    <button class="fab-clear" onclick="clearSelection()">✕ Hiq zgjedhjen</button>
+    <button class="fab-clear" onclick="clearSelection()">✕ Clear selection</button>
 </div>
 
 <!-- NOTIFICATION OVERLAY -->
@@ -397,7 +397,7 @@ document.getElementById('history-toggle').addEventListener('click', () => {
     const btn   = document.getElementById('history-toggle');
     const open  = panel.style.display !== 'block';
     panel.style.display = open ? 'block' : 'none';
-    btn.innerText = open ? '📋 Mbyll ✕' : '📋 Historiku';
+    btn.innerText = open ? '📋 Close ✕' : '📋 History';
 });
 
 // ─── NOTIFICATION ─────────────────────────────────────────────────────────────
@@ -453,7 +453,7 @@ function updateFAB() {
     }
     fab.style.display = 'block';
     document.getElementById('fab-count').innerText =
-        count === 1 ? '1 porosi zgjedhur' : count + ' porosi zgjedhura';
+        count === 1 ? '1 order selected' : count + ' order selecteda';
 }
 
 // ─── STATS BAR ────────────────────────────────────────────────────────────────
@@ -471,7 +471,7 @@ function updateStats(orders, completedToday) {
 // ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
 async function loadOrders(silent = false) {
     const list = document.getElementById('order-list');
-    if (!silent) list.innerHTML = '<div class="loading"><div class="spinner"></div>Duke ngarkuar...</div>';
+    if (!silent) list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
     try {
         const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
@@ -499,7 +499,7 @@ async function loadOrders(silent = false) {
         if (lastCount >= 0 && allOrders.length > lastCount) {
             const diff = allOrders.length - lastCount;
             const banner = document.getElementById('new-order-banner');
-            banner.innerText = '🔔 ' + diff + (diff===1 ? ' porosi e re!' : ' porosi të reja!');
+            banner.innerText = '🔔 ' + diff + (diff===1 ? ' new order!' : ' new orders!');
             banner.style.display = 'block';
             setTimeout(() => { banner.style.display='none'; }, 5000);
             if (navigator.vibrate) navigator.vibrate([200,100,200]);
@@ -511,7 +511,7 @@ async function loadOrders(silent = false) {
         updateFAB();
 
     } catch(e) {
-        if (!silent) list.innerHTML = '<div class="loading" style="color:var(--red)">⚠ Gabim: ' + e.message + '</div>';
+        if (!silent) list.innerHTML = '<div class="loading" style="color:var(--red)">⚠ Error: ' + e.message + '</div>';
     }
 }
 
@@ -522,8 +522,8 @@ function renderCards(orders) {
     if (!orders.length) {
         list.innerHTML = `<div class="empty-state">
             <div class="empty-icon">🎉</div>
-            <div class="empty-title">Asnje porosi ne pritje!</div>
-            <div class="empty-sub">Te gjitha porositë janë kryer.</div>
+            <div class="empty-title">No pending orders!</div>
+            <div class="empty-sub">All orders have been placed.</div>
         </div>`;
         document.getElementById('status-bar').innerText = '';
         return;
@@ -537,8 +537,8 @@ function renderCards(orders) {
     });
 
     const selHint = orders.length > 1
-        ? '<p class="section-label" style="margin-bottom:10px">Tap per te zgjedhur — mund te zgjedhesh disa</p>'
-        : '<p class="section-label" style="margin-bottom:10px">Porosi ne pritje</p>';
+        ? '<p class="section-label" style="margin-bottom:10px">Tap to select — you can pick multiple</p>'
+        : '<p class="section-label" style="margin-bottom:10px">Orders pending</p>';
 
     list.innerHTML = selHint + sorted.map(o => buildCard(o)).join('');
 
@@ -558,7 +558,7 @@ function renderCards(orders) {
         }
     });
 
-    document.getElementById('status-bar').innerText = orders.length + ' porosi ne pritje';
+    document.getElementById('status-bar').innerText = orders.length + ' orders pending';
 }
 
 function buildCard(o) {
@@ -573,14 +573,14 @@ function buildCard(o) {
         <div class="card-check">${isSelected?'✓':''}</div>
         <div class="card-top">
             <span class="card-badge">#${o.rowNumber}</span>
-            <span class="card-label">${isReview ? '⚠️ Review' : '🟢 Normal'}</span>
+            <span class="card-label">${isReview ? '⚠️ Review' : '🟢 Ready'}</span>
         </div>
         <div class="card-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
         <div class="card-detail"><span class="icon">📦</span><span class="val">${product}</span></div>
         <div class="card-detail"><span class="icon">📍</span><span class="val">${o.Qyteti||'—'}</span></div>
         <div class="card-detail"><span class="icon">📞</span><span class="val">${(o.Telefoni||'').toString().trim()||'—'}</span></div>
         <div class="card-detail"><span class="icon">🏠</span><span class="val">${(o.Adresa||'').toString().trim()||'—'}</span></div>
-        ${ap.includes('+') ? `<div class="card-alert alert-multi">⚠️ <span>Produkte te shumta: <b>${ap.split('+').map(c=>c.trim()).join(' + ')}</b></span></div>` : ''}
+        ${ap.includes('+') ? `<div class="card-alert alert-multi">⚠️ <span>Multiple products: <b>${ap.split('+').map(c=>c.trim()).join(' + ')}</b></span></div>` : ''}
         ${ac ? `<div class="card-alert alert-comment">💬 <span>${ac}</span></div>` : ''}
     </div>`;
 }
@@ -622,13 +622,13 @@ async function approveSelected() {
     // Clear selection visually
     clearSelection();
     btn.disabled  = false;
-    btn.innerText = '▶ Vendos';
+    btn.innerText = '▶ Place Orders';
 
     if (failed === 0) {
         // All sent successfully — now poll for results
         showNotif(
             '📤',
-            total === 1 ? 'Porosia u dërgua!' : total + ' porosi u dërguan!',
+            total === 1 ? 'Porosia u dërgua!' : total + ' orders sent!',
             'Desktop po i vendos njëra pas tjetrës.\nDo të njoftohesh kur të kryhen.',
             'green'
         );
@@ -641,8 +641,8 @@ async function approveSelected() {
     } else {
         showNotif(
             '⚠️',
-            'Disa aprovime dështuan',
-            failed + ' nga ' + total + ' dështuan.\nProvo përsëri.',
+            'Some approvals failed',
+            failed + ' of ' + total + ' dështuan.\nProvo përsëri.',
             'red'
         );
     }
@@ -667,7 +667,7 @@ function pollForResult(rowNumber, name, product, attempts, total) {
                     if (navigator.vibrate) navigator.vibrate([80]);
                     // Only show individual notif if single order; for multi just refresh
                     if (total === 1) {
-                        showNotif('✅', 'Porosi e vendosur!',
+                        showNotif('✅', 'Order placed!',
                             '#' + rowNumber + ' — ' + name + '\n' + product + '\nOrder ID: ' + oid,
                             'green');
                     } else {
@@ -687,7 +687,7 @@ function pollForResult(rowNumber, name, product, attempts, total) {
                 pollForResult(rowNumber, name, product, attempts + 1, total);
             } else {
                 addHistory({ rowNumber, name, product }, false, null);
-                showNotif('⚠️', 'Koha skadoi',
+                showNotif('⚠️', 'Timed out',
                     '#' + rowNumber + ' — ' + name + '\nNuk u konfirmua brenda 2 min.\nKontrollo nëse laptopi është ndezur.',
                     'red');
             }
