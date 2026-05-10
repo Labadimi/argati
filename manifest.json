@@ -2,12 +2,13 @@
   "name": "Parts Center - Argati",
   "short_name": "Argati",
   "description": "Order notifications and management for Parts Center",
-  "start_url": "/",
+  "start_url": "/parts-center-pwa/",
   "display": "standalone",
   "background_color": "#f0f2f5",
   "theme_color": "#ff4500",
   "orientation": "portrait",
   "lang": "sq",
+  "scope": "/parts-center-pwa/",
   "icons": [
     {
       "src": "icon-192.png",
