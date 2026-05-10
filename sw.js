@@ -1,15 +1,36 @@
-// Argati Service Worker v2 — handles push notifications
-const CACHE = 'argati-v2';
+// Argati Service Worker v3 — Fixed for iOS Standalone Stability
+const CACHE_NAME = 'argati-v3';
+const ASSETS = [
+  './',
+  'index.html',
+  'manifest.json',
+  'icon.png'
+];
 
-self.addEventListener('install', e => { self.skipWaiting(); });
-self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+// Install: Cache essential UI assets
+self.addEventListener('install', e => {
+    e.waitUntil(
+        caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    );
+    self.skipWaiting();
+});
 
-// ── PUSH EVENT — fires when server sends a push ───────────────────────────────
+self.addEventListener('activate', e => { 
+    e.waitUntil(clients.claim()); 
+});
+
+// CRITICAL FIX: The Fetch handler prevents the "Stuck on Loading" issue
+self.addEventListener('fetch', e => {
+    e.respondWith(
+        fetch(e.request).catch(() => caches.match(e.request))
+    );
+});
+
+// PUSH EVENT
 self.addEventListener('push', e => {
     let title = 'Argati';
     let body  = 'New order arrived!';
     let data  = {};
-
     try {
         data  = e.data ? e.data.json() : {};
         title = data.title || title;
@@ -21,17 +42,16 @@ self.addEventListener('push', e => {
     e.waitUntil(
         self.registration.showNotification(title, {
             body,
-            icon:          'icon.png',
-            badge:         'icon.png',
-            tag:           'argati-order',
-            renotify:      true,
-            requireInteraction: false,
-            data:          { url: self.location.origin }
+            icon: 'icon.png',
+            badge: 'icon.png',
+            tag: 'argati-order',
+            renotify: true,
+            data: { url: self.location.origin }
         })
     );
 });
 
-// ── NOTIFICATION CLICK — open/focus the app ───────────────────────────────────
+// NOTIFICATION CLICK
 self.addEventListener('notificationclick', e => {
     e.notification.close();
     e.waitUntil(
