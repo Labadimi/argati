@@ -92,117 +92,114 @@ async function subscribe() {
     }
     
     if (!('PushManager' in window)) {
-        showToast('❌ Push notifications nuk suportohen');
+        showToast('❌ Push nuk suportohet');
         return;
     }
     
     try {
         console.log('Requesting notification permission...');
         const permission = await Notification.requestPermission();
-        console.log('Permission result:', permission);
+        console.log('Permission:', permission);
         
         if (permission !== 'granted') {
-            showToast('⚠️ Duhet të lejoni njoftimet në Settings');
+            showToast('⚠️ Duhet të lejoni njoftimet');
             return;
         }
         
-        console.log('Getting service worker registration...');
-        
-        // Get or create SW registration
-        let reg = await navigator.serviceWorker.getRegistration('/argati/');
-        
-        if (!reg) {
-            console.log('No existing registration, creating...');
-            reg = await navigator.serviceWorker.register('/argati/sw.js?v=' + Date.now(), { 
-                scope: '/argati/' 
-            });
+        // Unregister existing SW first
+        const oldReg = await navigator.serviceWorker.getRegistration('/argati/');
+        if (oldReg) {
+            console.log('Unregistering old SW...');
+            await oldReg.unregister();
+            await new Promise(r => setTimeout(r, 2000));
         }
         
-        console.log('SW registration obtained:', reg.scope);
+        // Register fresh SW with WebPushr
+        console.log('Registering WebPushr SW...');
+        const reg = await navigator.serviceWorker.register('/argati/sw.js?v=' + Date.now(), {
+            scope: '/argati/'
+        });
+        
+        console.log('SW registered:', reg.scope);
         
         // Wait for SW to be active
         if (reg.installing) {
-            console.log('Waiting for SW to finish installing...');
+            console.log('Waiting for SW install...');
             await new Promise((resolve) => {
-                reg.installing.addEventListener('statechange', function() {
-                    if (this.state === 'activated') resolve();
-                });
-                // Timeout
-                setTimeout(resolve, 5000);
+                const checkState = () => {
+                    if (reg.active) resolve();
+                    else if (reg.installing) {
+                        reg.installing.addEventListener('statechange', function() {
+                            if (this.state === 'activated') resolve();
+                        });
+                    } else {
+                        setTimeout(resolve, 3000);
+                    }
+                };
+                checkState();
             });
         }
         
         if (reg.waiting) {
-            console.log('Waiting SW found, skipping...');
+            console.log('Skipping waiting SW...');
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(r => setTimeout(r, 1000));
         }
         
-        console.log('SW state:', reg.active ? 'active' : 'not active');
+        console.log('SW state:', reg.active ? 'active' : reg.installing ? 'installing' : reg.waiting ? 'waiting' : 'unknown');
         
-        // Check existing subscription
-        let subscription = null;
-        if (reg.pushManager) {
-            subscription = await reg.pushManager.getSubscription();
+        // Now let WebPushr handle subscription via postMessage
+        console.log('Sending subscribe request to WebPushr SW...');
+        
+        if (reg.active) {
+            reg.active.postMessage({ 
+                type: 'webpushrPrompt',
+                action: 'subscribe'
+            });
+        } else if (reg.installing) {
+            reg.installing.postMessage({ 
+                type: 'webpushrPrompt',
+                action: 'subscribe'
+            });
         }
         
+        // Wait a bit for WebPushr to process
+        await new Promise(r => setTimeout(r, 3000));
+        
+        // Check subscription
+        const subscription = await reg.pushManager.getSubscription();
+        pushSubscribed = !!subscription;
+        
+        console.log('Push subscribed:', pushSubscribed);
         if (subscription) {
-            console.log('Already subscribed:', subscription.endpoint);
-            pushSubscribed = true;
-            updateNotifUI();
-            showToast('🔔 Tashmë i abonuar!');
-            return;
+            console.log('Endpoint:', subscription.endpoint);
         }
         
-        console.log('Creating new subscription...');
-        console.log('Public key length:', WEBPUSHR_PUBLIC_KEY.length);
-        
-        // Subscribe
-        subscription = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(WEBPUSHR_PUBLIC_KEY)
-        });
-        
-        console.log('✅ Subscription successful!');
-        console.log('Endpoint:', subscription.endpoint);
-        
-        pushSubscribed = true;
         updateNotifUI();
-        showToast('🔔 Njoftimet u aktivizuan!');
         
-        // Test notification after 2 seconds
-        setTimeout(async () => {
-            try {
-                const currentReg = await navigator.serviceWorker.getRegistration('/argati/');
-                if (currentReg) {
-                    await currentReg.showNotification('✅ Argati Gati!', {
-                        body: 'Do të njoftoheni për porositë e reja',
+        if (pushSubscribed) {
+            showToast('🔔 Njoftimet u aktivizuan!');
+            
+            // Test notification
+            setTimeout(async () => {
+                try {
+                    await reg.showNotification('✅ Argati Gati!', {
+                        body: 'Njoftimet funksionojnë!',
                         icon: '/argati/icon-192.png',
-                        badge: '/argati/icon-192.png',
-                        tag: 'welcome',
                         requireInteraction: true,
-                        vibrate: [200, 100, 200],
-                        timestamp: Date.now()
+                        vibrate: [200, 100, 200]
                     });
-                    console.log('Test notification sent');
+                } catch(e) {
+                    console.error('Test failed:', e);
                 }
-            } catch(e) {
-                console.error('Test notification failed:', e);
-            }
-        }, 2000);
+            }, 2000);
+        } else {
+            showToast('⚠️ Abonimi dështoi. Provoni përsëri.');
+        }
         
     } catch(e) {
         console.error('Subscribe error:', e);
-        console.error('Error name:', e.name);
-        console.error('Error message:', e.message);
-        
-        if (e.name === 'NotAllowedError') {
-            showToast('⚠️ Njoftimet u bllokuan');
-        } else if (e.name === 'InvalidStateError') {
-            showToast('❌ Tashmë jeni i regjistruar. Rifresko faqen.');
-        } else {
-            showToast('❌ ' + (e.message || 'Gabim i panjohur'));
-        }
+        showToast('❌ ' + (e.message || 'Gabim'));
     }
 }
 
