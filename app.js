@@ -12,17 +12,42 @@ async function init() {
     console.log('URL:', window.location.href);
     console.log('Standalone:', window.matchMedia('(display-mode: standalone)').matches || navigator.standalone);
     
-    // Register WebPushr's SW
+    // Register SW
     if ('serviceWorker' in navigator) {
         try {
-            const registration = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
+            // First unregister any old SW
+            const oldReg = await navigator.serviceWorker.getRegistration('/argati/');
+            if (oldReg) {
+                console.log('Unregistering old SW...');
+                await oldReg.unregister();
+                // Wait for it to fully unregister
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // Register fresh
+            console.log('Registering new SW...');
+            const registration = await navigator.serviceWorker.register('/argati/sw.js?v=' + Date.now(), { 
+                scope: '/argati/' 
+            });
             console.log('✅ SW registered:', registration.scope);
             
-            await navigator.serviceWorker.ready;
-            console.log('✅ SW ready');
+            // Wait for SW to be ready with timeout
+            console.log('Waiting for SW ready...');
+            const readyPromise = navigator.serviceWorker.ready;
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('SW ready timed out')), 10000)
+            );
+            
+            try {
+                await Promise.race([readyPromise, timeoutPromise]);
+                console.log('✅ SW ready');
+            } catch(timeoutErr) {
+                console.error('SW ready failed:', timeoutErr.message);
+                // Continue anyway - might still work
+            }
             
             // Check if already subscribed
-            if ('PushManager' in window) {
+            if ('PushManager' in window && registration.pushManager) {
                 try {
                     const subscription = await registration.pushManager.getSubscription();
                     pushSubscribed = !!subscription;
@@ -82,29 +107,57 @@ async function subscribe() {
         }
         
         console.log('Getting service worker registration...');
-        const reg = await navigator.serviceWorker.ready;
-        console.log('SW ready:', reg.scope);
         
-        // Check existing subscription first
-        let subscription = await reg.pushManager.getSubscription();
+        // Get or create SW registration
+        let reg = await navigator.serviceWorker.getRegistration('/argati/');
+        
+        if (!reg) {
+            console.log('No existing registration, creating...');
+            reg = await navigator.serviceWorker.register('/argati/sw.js?v=' + Date.now(), { 
+                scope: '/argati/' 
+            });
+        }
+        
+        console.log('SW registration obtained:', reg.scope);
+        
+        // Wait for SW to be active
+        if (reg.installing) {
+            console.log('Waiting for SW to finish installing...');
+            await new Promise((resolve) => {
+                reg.installing.addEventListener('statechange', function() {
+                    if (this.state === 'activated') resolve();
+                });
+                // Timeout
+                setTimeout(resolve, 5000);
+            });
+        }
+        
+        if (reg.waiting) {
+            console.log('Waiting SW found, skipping...');
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        console.log('SW state:', reg.active ? 'active' : 'not active');
+        
+        // Check existing subscription
+        let subscription = null;
+        if (reg.pushManager) {
+            subscription = await reg.pushManager.getSubscription();
+        }
         
         if (subscription) {
             console.log('Already subscribed:', subscription.endpoint);
             pushSubscribed = true;
             updateNotifUI();
             showToast('🔔 Tashmë i abonuar!');
-            
-            // Log subscription details for debugging
-            console.log('Endpoint:', subscription.endpoint);
-            console.log('p256dh:', btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')))));
-            console.log('auth:', btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')))));
             return;
         }
         
-        console.log('Subscribing with WebPushr public key...');
-        console.log('Public key:', WEBPUSHR_PUBLIC_KEY);
+        console.log('Creating new subscription...');
+        console.log('Public key length:', WEBPUSHR_PUBLIC_KEY.length);
         
-        // Subscribe using WebPushr's public key
+        // Subscribe
         subscription = await reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(WEBPUSHR_PUBLIC_KEY)
@@ -112,30 +165,31 @@ async function subscribe() {
         
         console.log('✅ Subscription successful!');
         console.log('Endpoint:', subscription.endpoint);
-        console.log('p256dh:', btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')))));
-        console.log('auth:', btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')))));
         
         pushSubscribed = true;
         updateNotifUI();
         showToast('🔔 Njoftimet u aktivizuan!');
         
-        // Test notification after 3 seconds
+        // Test notification after 2 seconds
         setTimeout(async () => {
             try {
-                await reg.showNotification('✅ Argati Gati!', {
-                    body: 'Do të njoftoheni për porositë e reja',
-                    icon: '/argati/icon-192.png',
-                    badge: '/argati/icon-192.png',
-                    tag: 'welcome',
-                    requireInteraction: true,
-                    vibrate: [200, 100, 200],
-                    timestamp: Date.now()
-                });
-                console.log('Test notification sent');
+                const currentReg = await navigator.serviceWorker.getRegistration('/argati/');
+                if (currentReg) {
+                    await currentReg.showNotification('✅ Argati Gati!', {
+                        body: 'Do të njoftoheni për porositë e reja',
+                        icon: '/argati/icon-192.png',
+                        badge: '/argati/icon-192.png',
+                        tag: 'welcome',
+                        requireInteraction: true,
+                        vibrate: [200, 100, 200],
+                        timestamp: Date.now()
+                    });
+                    console.log('Test notification sent');
+                }
             } catch(e) {
                 console.error('Test notification failed:', e);
             }
-        }, 3000);
+        }, 2000);
         
     } catch(e) {
         console.error('Subscribe error:', e);
@@ -143,24 +197,24 @@ async function subscribe() {
         console.error('Error message:', e.message);
         
         if (e.name === 'NotAllowedError') {
-            showToast('⚠️ Njoftimet u bllokuan. Shkoni te Settings > Notifications');
+            showToast('⚠️ Njoftimet u bllokuan');
         } else if (e.name === 'InvalidStateError') {
-            showToast('❌ Tashmë jeni i regjistruar');
-        } else if (e.name === 'TypeError') {
-            showToast('❌ Gabim teknik. Provoni përsëri.');
+            showToast('❌ Tashmë jeni i regjistruar. Rifresko faqen.');
         } else {
-            showToast('❌ Gabim: ' + (e.message || 'E panjohur'));
+            showToast('❌ ' + (e.message || 'Gabim i panjohur'));
         }
     }
 }
 
 async function unsubscribe() {
     try {
-        const reg = await navigator.serviceWorker.ready;
-        const subscription = await reg.pushManager.getSubscription();
-        if (subscription) {
-            await subscription.unsubscribe();
-            console.log('Unsubscribed');
+        const reg = await navigator.serviceWorker.getRegistration('/argati/');
+        if (reg && reg.pushManager) {
+            const subscription = await reg.pushManager.getSubscription();
+            if (subscription) {
+                await subscription.unsubscribe();
+                console.log('Unsubscribed');
+            }
         }
         pushSubscribed = false;
         updateNotifUI();
