@@ -1,25 +1,22 @@
 {
-  "name": "Argati",
-  "short_name": "Argati",
-  "id": "/argati/",
-  "start_url": "./index.html",
-  "scope": "./",
+  "name": "Parts Center Orders",
+  "short_name": "PartsCenter",
+  "description": "Order notifications for Parts Center",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f1117",
+  "background_color": "#ffffff",
   "theme_color": "#ff4500",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "icon.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "type": "image/png"
     }
   ]
 }
