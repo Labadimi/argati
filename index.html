@@ -483,9 +483,17 @@ async function loadOrders(silent = false) {
     try {
         const controller = new AbortController();
         const _timeout = setTimeout(() => controller.abort(), 15000);
-        const res = await fetch(SCRIPT_URL + '?t=' + Date.now(), { signal: controller.signal });
+        const res = await fetch(SCRIPT_URL + '?t=' + Date.now(), {
+            signal: controller.signal,
+            redirect: 'follow',
+            mode: 'cors'
+        });
         clearTimeout(_timeout);
-        const orders = await res.json();
+        if (!res.ok && res.type !== 'opaque') {
+            throw new Error('Server returned ' + res.status);
+        }
+        const text   = await res.text();
+        const orders = JSON.parse(text);
 
         const todayStr = new Date().toDateString();
         const completedToday = orders.filter(o => {
@@ -827,11 +835,21 @@ function playOrderSound() {
 }
 
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e));
-}
-checkNotifBar();
-loadOrders();
+try {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+} catch(e) {}
+
+try { checkNotifBar(); } catch(e) {}
+
+// Small delay to ensure DOM is fully ready
+setTimeout(() => {
+    try { loadOrders(); } catch(e) {
+        const list = document.getElementById('order-list');
+        if (list) list.innerHTML = '<div class="loading" style="color:var(--red)">Error: ' + e.message + '<br><button onclick="loadOrders()" style="margin-top:12px;background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:14px;">Retry</button></div>';
+    }
+}, 100);
 </script>
 </body>
 </html>
