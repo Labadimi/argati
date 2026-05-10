@@ -5,12 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#ff4500">
     <meta name="description" content="Parts Center Order Notifications">
     <title>Parts Center</title>
     <link rel="manifest" href="/argati/manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="/argati/icon-192.png">
+    
+    <!-- start webpushr tracking code -->
+    <script>
+    (function(w,d, s, id) {
+        if(typeof(w.webpushr)!=='undefined') return;
+        w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};
+        var js, fjs = d.getElementsByTagName(s)[0];
+        js = d.createElement(s); 
+        js.id = id;
+        js.async=1;
+        js.src = "https://cdn.webpushr.com/app.min.js";
+        js.onerror = function() {
+            console.error('❌ WebPushr script failed to load');
+        };
+        js.onload = function() {
+            console.log('✅ WebPushr script loaded');
+            webpushr('setup',{
+                'key':'BHVdCTPrQjCOIPfMKnc6_yqXF6iNhPoFDFPyPICll7_dEBWCVFgNwOscuAzwQsJQhD6mCK_NuH1dgYy4LT2oEGQ',
+                'prompt': false
+            });
+        };
+        fjs.parentNode.appendChild(js);
+    }(window,document, 'script', 'webpushr-jssdk'));
+    </script>
+    <!-- end webpushr tracking code -->
+    
     <style>
         :root {
             --primary: #ff4500;
@@ -354,11 +379,6 @@
             padding: 32px 20px;
         }
     </style>
-    <!-- start webpushr tracking code -->
-<script>(function(w,d, s, id) {if(typeof(w.webpushr)!=='undefined') return;w.webpushr=w.webpushr||function(){(w.webpushr.q=w.webpushr.q||[]).push(arguments)};var js, fjs = d.getElementsByTagName(s)[0];js = d.createElement(s); js.id = id;js.async=1;js.src = "https://cdn.webpushr.com/app.min.js";
-fjs.parentNode.appendChild(js);}(window,document, 'script', 'webpushr-jssdk'));
-webpushr('setup',{'key':'BHVdCTPrQjCOIPfMKnc6_yqXF6iNhPoFDFPyPICll7_dEBWCVFgNwOscuAzwQsJQhD6mCK_NuH1dgYy4LT2oEGQ' });</script>
-<!-- end webpushr tracking code -->
 </head>
 <body>
 
@@ -379,7 +399,7 @@ webpushr('setup',{'key':'BHVdCTPrQjCOIPfMKnc6_yqXF6iNhPoFDFPyPICll7_dEBWCVFgNwOs
     <!-- NOTIFICATION STATUS -->
     <div class="notif-bar inactive" id="notif-bar">
         <div class="notif-dot"></div>
-        <span id="notif-text">Njoftimet jo aktive</span>
+        <span id="notif-text">Kliko për të aktivizuar njoftimet</span>
         <button class="btn-subscribe enable" id="subscribe-btn" onclick="toggleNotifications()">
             🔔 Aktivizo
         </button>
@@ -409,6 +429,6 @@ webpushr('setup',{'key':'BHVdCTPrQjCOIPfMKnc6_yqXF6iNhPoFDFPyPICll7_dEBWCVFgNwOs
     <!-- TOAST -->
     <div id="toast"></div>
 
-    <script src="app.js"></script>
+    <script src="/argati/app.js"></script>
 </body>
 </html>
