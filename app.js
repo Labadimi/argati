@@ -1,57 +1,71 @@
-// ─── Parts Center PWA App ─────────────────────────────────────────────────────
+// ─── Parts Center PWA - App Logic ─────────────────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 const VAPID_PUBLIC_KEY = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
 
 let swRegistration = null;
 let pushSubscribed = false;
+let allOrders = [];
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
+// ─── INITIALIZATION ───────────────────────────────────────────────────────────
 async function init() {
-    // Register service worker
     if ('serviceWorker' in navigator) {
         try {
-            swRegistration = await navigator.serviceWorker.register('sw.js');
-            console.log('SW registered:', swRegistration.scope);
+            swRegistration = await navigator.serviceWorker.register('sw.js', { scope: '/' });
+            console.log('✅ Service Worker registered');
             
-            // Check existing subscription
+            // Check existing push subscription
             const subscription = await swRegistration.pushManager.getSubscription();
             pushSubscribed = !!subscription;
-            updateNotifStatus();
+            updateNotifUI();
             
             // Load orders
-            loadOrders();
+            await loadOrders();
             
-            // Auto-refresh every 30s
-            setInterval(loadOrders, 30000);
+            // Auto-refresh every 45 seconds
+            setInterval(loadOrders, 45000);
             
         } catch(e) {
             console.error('SW registration failed:', e);
             document.getElementById('pending-orders').innerHTML = 
-                '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Service Worker Error</div><p>' + e.message + '</p></div>';
+                `<div class="empty-state">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="empty-title">Gabim</div>
+                    <div class="empty-sub">${e.message}</div>
+                </div>`;
         }
     } else {
-        document.getElementById('notif-text').innerText = 'Push not supported on this device';
+        document.getElementById('notif-text').innerText = 'Nuk suportohet në këtë paisje';
+        document.getElementById('subscribe-btn').style.display = 'none';
     }
 }
 
-// ─── PUSH SUBSCRIPTION ────────────────────────────────────────────────────────
+// ─── NOTIFICATION TOGGLE ──────────────────────────────────────────────────────
+async function toggleNotifications() {
+    if (pushSubscribed) {
+        await unsubscribeFromPush();
+    } else {
+        await subscribeToPush();
+    }
+}
+
 async function subscribeToPush() {
     try {
+        // Request permission
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-            showToast('Please allow notifications in Settings');
+            showToast('⚠️ Ju lutemi lejoni njoftimet në Settings');
             return;
         }
         
+        // Subscribe with VAPID key
         const subscription = await swRegistration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
         });
         
-        // Save to server
+        // Save subscription to Google Apps Script
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            mode: 'cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'saveSub',
@@ -60,50 +74,50 @@ async function subscribeToPush() {
         });
         
         const data = await response.json();
+        
         if (data.saved) {
             pushSubscribed = true;
-            updateNotifStatus();
-            showToast('🔔 Notifications enabled!');
+            updateNotifUI();
+            showToast('🔔 Njoftimet u aktivizuan!');
         } else {
-            showToast('Failed to save subscription');
+            showToast('❌ Ruajtja dështoi, provoni përsëri');
         }
         
     } catch(e) {
         console.error('Subscribe error:', e);
-        showToast('Error: ' + e.message);
+        showToast('Gabim: ' + e.message);
     }
 }
 
 async function unsubscribeFromPush() {
-    const subscription = await swRegistration.pushManager.getSubscription();
-    if (subscription) {
-        await subscription.unsubscribe();
-        pushSubscribed = false;
-        updateNotifStatus();
-        showToast('Notifications disabled');
+    try {
+        const subscription = await swRegistration.pushManager.getSubscription();
+        if (subscription) {
+            await subscription.unsubscribe();
+            pushSubscribed = false;
+            updateNotifUI();
+            showToast('🔕 Njoftimet u çaktivizuan');
+        }
+    } catch(e) {
+        console.error('Unsubscribe error:', e);
     }
 }
 
-// ─── UI UPDATES ───────────────────────────────────────────────────────────────
-function updateNotifStatus() {
-    const statusEl = document.getElementById('notif-status');
-    const textEl = document.getElementById('notif-text');
-    const btnEl = document.getElementById('subscribe-btn');
+function updateNotifUI() {
+    const bar = document.getElementById('notif-bar');
+    const text = document.getElementById('notif-text');
+    const btn = document.getElementById('subscribe-btn');
     
     if (pushSubscribed) {
-        statusEl.className = 'notif-status active';
-        textEl.innerText = 'Notifications active';
-        btnEl.innerText = '🔕 Disable';
-        btnEl.onclick = unsubscribeFromPush;
-        btnEl.className = 'btn btn-secondary';
-        btnEl.style.marginLeft = 'auto';
+        bar.className = 'notif-bar active';
+        text.innerText = 'Njoftimet aktive';
+        btn.innerText = '🔕 Çaktivizo';
+        btn.className = 'btn-subscribe disable';
     } else {
-        statusEl.className = 'notif-status inactive';
-        textEl.innerText = 'Notifications inactive';
-        btnEl.innerText = '🔔 Enable';
-        btnEl.onclick = subscribeToPush;
-        btnEl.className = 'btn btn-primary';
-        btnEl.style.marginLeft = 'auto';
+        bar.className = 'notif-bar inactive';
+        text.innerText = 'Njoftimet jo aktive';
+        btn.innerText = '🔔 Aktivizo';
+        btn.className = 'btn-subscribe enable';
     }
 }
 
@@ -112,99 +126,118 @@ async function loadOrders() {
     const container = document.getElementById('pending-orders');
     
     try {
-        const response = await fetch(`${SCRIPT_URL}?action=pending&t=${Date.now()}`);
+        const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
         const orders = await response.json();
+        allOrders = orders;
         
-        if (!orders || orders.length === 0) {
+        // Calculate stats
+        const todayStr = new Date().toDateString();
+        const pendingOrders = orders.filter(o => {
+            const oid = (o.OrderID || '').toString().trim();
+            return !oid || oid.toLowerCase() === 'pending';
+        });
+        const completedToday = orders.filter(o => {
+            const oid = (o.OrderID || '').toString().trim();
+            if (!oid || oid.toLowerCase() === 'pending') return false;
+            const placed = (o.PlacedDate || '').toString().trim();
+            if (!placed) return false;
+            try { return new Date(placed).toDateString() === todayStr; } catch(e) { return false; }
+        });
+        
+        // Update stats
+        document.getElementById('stat-pending').innerText = pendingOrders.length;
+        document.getElementById('stat-done').innerText = completedToday.length;
+        document.getElementById('pending-count').innerText = pendingOrders.length;
+        
+        // Render pending orders
+        if (pendingOrders.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">🎉</div>
-                    <div class="empty-title">No pending orders</div>
-                    <p style="font-size:13px;margin-top:4px;">All orders have been processed</p>
+                    <div class="empty-title">Asnjë porosi në pritje</div>
+                    <div class="empty-sub">Të gjitha porositë janë përpunuar</div>
                 </div>`;
             return;
         }
         
-        container.innerHTML = orders.map(order => {
-            const name = `${order.Emri || ''} ${order.Mbiemri || ''}`.trim();
-            const product = order.Produkti || '—';
-            const city = order.Qyteti || '—';
-            const phone = order.Telefoni || '—';
-            const address = order.Adresa || '—';
-            const comment = order['Koment shtese (Nese ka)'] || '';
-            
-            return `
-                <div class="order-card" id="order-${order.rowNumber}">
-                    <div class="order-top">
-                        <div class="order-name">${name}</div>
-                        <div class="order-row">#${order.rowNumber}</div>
-                    </div>
-                    <div class="order-details">
-                        <div class="order-detail-item">📦 ${product}</div>
-                        <div class="order-detail-item">📍 ${city}</div>
-                    </div>
-                    <div class="order-details">
-                        <div class="order-detail-item">📞 ${phone}</div>
-                        <div class="order-detail-item">🏠 ${address}</div>
-                    </div>
-                    ${comment ? `<div style="background:#fef3c7; padding:6px 10px; border-radius:6px; font-size:11px; margin-bottom:8px;">💬 ${comment}</div>` : ''}
-                    <div class="order-actions">
-                        <button class="btn-approve" onclick="approveOrder(${order.rowNumber})">
-                            ✅ Approve
-                        </button>
-                        <button class="btn-skip" onclick="skipOrder(${order.rowNumber})">
-                            ➡️ Skip
-                        </button>
-                    </div>
-                </div>`;
-        }).join('');
+        container.innerHTML = pendingOrders.map(order => renderOrderCard(order)).join('');
         
     } catch(e) {
         console.error('Load orders error:', e);
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">⚠️</div>
-                <div class="empty-title">Connection Error</div>
-                <p style="font-size:13px;margin-top:4px;">${e.message}</p>
-                <button class="btn btn-primary" onclick="loadOrders()" style="margin-top:12px;">Retry</button>
+                <div class="empty-title">Gabim në lidhje</div>
+                <div class="empty-sub">${e.message}</div>
+                <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">Provo përsëri</button>
             </div>`;
     }
 }
 
-// ─── ORDER ACTIONS ────────────────────────────────────────────────────────────
+function renderOrderCard(order) {
+    const name = `${order.Emri || ''} ${order.Mbiemri || ''}`.trim() || '—';
+    const product = order.Produkti || '—';
+    const city = order.Qyteti || '—';
+    const phone = order.Telefoni || '—';
+    const address = order.Adresa || '—';
+    const comment = order['Koment shtese (Nese ka)'] || order.KomentshtesaNeseka || '';
+    const email = order['Email(Opsionale)'] || '';
+    
+    return `
+    <div class="order-card" id="order-${order.rowNumber}">
+        <div class="order-top">
+            <div class="order-name-row">
+                <span class="order-row-num">#${order.rowNumber}</span>
+                <span class="order-name">${name}</span>
+            </div>
+        </div>
+        <div class="order-details">
+            <div class="detail-item"><span class="detail-icon">📦</span>${product}</div>
+            <div class="detail-item"><span class="detail-icon">📍</span>${city}</div>
+            <div class="detail-item"><span class="detail-icon">📞</span>${phone}</div>
+            <div class="detail-item"><span class="detail-icon">🏠</span>${address}</div>
+            ${email ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-icon">📧</span>${email}</div>` : ''}
+        </div>
+        ${comment ? `<div class="order-comment">💬 <span>${comment}</span></div>` : ''}
+        <div class="order-action-row">
+            <button class="btn-approve" onclick="approveOrder(${order.rowNumber})">
+                ✅ Aprovo
+            </button>
+            <button class="btn-view" onclick="openInMaps('${address.replace(/'/g, "\\'")}', '${city.replace(/'/g, "\\'")}')">
+                🗺️ Harta
+            </button>
+        </div>
+    </div>`;
+}
+
+// ─── APPROVE ORDER ────────────────────────────────────────────────────────────
 async function approveOrder(rowNumber) {
     const card = document.getElementById(`order-${rowNumber}`);
-    if (card) card.style.opacity = '0.5';
+    if (card) card.classList.add('processing');
     
     try {
         const response = await fetch(`${SCRIPT_URL}?action=approve&row=${rowNumber}&t=${Date.now()}`);
         const data = await response.json();
         
         if (data.success) {
-            showToast('✅ Order #' + rowNumber + ' approved!');
-            // Reload after short delay
-            setTimeout(loadOrders, 1500);
+            showToast('✅ Porosia #' + rowNumber + ' u aprovua!');
+            // Reload after 2 seconds
+            setTimeout(loadOrders, 2000);
         } else {
-            showToast('Error: ' + (data.error || 'Unknown'));
-            if (card) card.style.opacity = '1';
+            showToast('❌ Gabim: ' + (data.error || 'E panjohur'));
+            if (card) card.classList.remove('processing');
         }
     } catch(e) {
-        showToast('Connection error');
-        if (card) card.style.opacity = '1';
+        showToast('❌ Gabim në lidhje');
+        if (card) card.classList.remove('processing');
     }
 }
 
-function skipOrder(rowNumber) {
-    // Just scroll to next order
-    const cards = document.querySelectorAll('.order-card');
-    let found = false;
-    for (let card of cards) {
-        if (found) {
-            card.scrollIntoView({ behavior: 'smooth' });
-            break;
-        }
-        if (card.id === `order-${rowNumber}`) found = true;
-    }
+// ─── OPEN IN MAPS ─────────────────────────────────────────────────────────────
+function openInMaps(address, city) {
+    const query = encodeURIComponent(`${address}, ${city}, Kosova`);
+    const url = `https://maps.apple.com/?q=${query}`;
+    window.open(url, '_blank');
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
@@ -212,15 +245,14 @@ function showToast(message) {
     const toast = document.getElementById('toast');
     toast.innerText = message;
     toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2500);
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
-// ─── UTIL ─────────────────────────────────────────────────────────────────────
+// ─── UTILITY ──────────────────────────────────────────────────────────────────
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
     const rawData = window.atob(base64);
     const outputArray = new Uint8Array(rawData.length);
     for (let i = 0; i < rawData.length; ++i) {
