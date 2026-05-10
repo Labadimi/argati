@@ -1,76 +1,70 @@
-// ─── Parts Center PWA - App Logic ─────────────────────────────────────────────
+// ─── Parts Center PWA - App Logic (Safe Version) ─────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 const VAPID_PUBLIC_KEY = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
 
 let swRegistration = null;
 let pushSubscribed = false;
 let allOrders = [];
+let pushSupported = false;
 
 // ─── INITIALIZATION ───────────────────────────────────────────────────────────
 async function init() {
-    // First, check if service workers are supported
-    if (!('serviceWorker' in navigator)) {
-        showError('Service Worker nuk suportohet në këtë shfletues');
-        return;
-    }
-
-    // Check if Push API is supported
-    if (!('PushManager' in window)) {
-        showError('Push notifications nuk suportohen në këtë paisje');
-        document.getElementById('subscribe-btn').style.display = 'none';
-        document.getElementById('notif-text').innerText = 'Njoftimet nuk suportohen';
-        await loadOrders();
-        return;
-    }
-
-    try {
-        // Register service worker
-        swRegistration = await navigator.serviceWorker.register('sw.js', { 
-            scope: '/' 
-        });
-        console.log('✅ Service Worker registered:', swRegistration.scope);
-        
-        // Wait for service worker to be ready
-        await navigator.serviceWorker.ready;
-        console.log('✅ Service Worker ready');
-        
-        // Now safely check push subscription
-        if (swRegistration && swRegistration.pushManager) {
-            try {
-                const subscription = await swRegistration.pushManager.getSubscription();
-                pushSubscribed = !!subscription;
-                console.log('Push subscribed:', pushSubscribed);
-            } catch(pushErr) {
-                console.warn('Push check failed:', pushErr);
-                pushSubscribed = false;
+    console.log('🚀 Init starting...');
+    console.log('User Agent:', navigator.userAgent);
+    console.log('Standalone mode:', window.matchMedia('(display-mode: standalone)').matches);
+    
+    // Check what's available
+    const hasSW = 'serviceWorker' in navigator;
+    const hasPush = 'PushManager' in window;
+    const hasNotif = 'Notification' in window;
+    
+    console.log('ServiceWorker supported:', hasSW);
+    console.log('PushManager supported:', hasPush);
+    console.log('Notification supported:', hasNotif);
+    
+    pushSupported = hasSW && hasPush && hasNotif;
+    
+    if (hasSW) {
+        try {
+            swRegistration = await navigator.serviceWorker.register('sw.js', { scope: '/' });
+            console.log('✅ Service Worker registered');
+            
+            // Wait for it to be ready
+            await navigator.serviceWorker.ready;
+            console.log('✅ Service Worker ready');
+            
+            // Check if already subscribed to push
+            if (hasPush && swRegistration.pushManager) {
+                try {
+                    const subscription = await swRegistration.pushManager.getSubscription();
+                    pushSubscribed = !!subscription;
+                    console.log('Push already subscribed:', pushSubscribed);
+                    if (subscription) {
+                        console.log('Endpoint:', subscription.endpoint);
+                    }
+                } catch(e) {
+                    console.log('Push check failed (may not be supported):', e.message);
+                    pushSubscribed = false;
+                    pushSupported = false;
+                }
+            } else {
+                console.log('PushManager not available on this device');
+                pushSupported = false;
             }
+        } catch(e) {
+            console.error('SW registration failed:', e);
+            swRegistration = null;
+            pushSupported = false;
         }
-        
-        updateNotifUI();
-        
-        // Load orders
-        await loadOrders();
-        
-        // Auto-refresh every 45 seconds
-        setInterval(loadOrders, 45000);
-        
-    } catch(e) {
-        console.error('Init error:', e);
-        showError(e.message || 'Gabim i panjohur gjatë inicializimit');
     }
-}
-
-// ─── SHOW ERROR ───────────────────────────────────────────────────────────────
-function showError(message) {
-    document.getElementById('pending-orders').innerHTML = `
-        <div class="empty-state">
-            <div class="empty-icon">⚠️</div>
-            <div class="empty-title">Gabim</div>
-            <div class="empty-sub">${message}</div>
-            <button class="btn-subscribe enable" onclick="location.reload()" style="margin-top:12px;">
-                Rifresko faqen
-            </button>
-        </div>`;
+    
+    updateNotifUI();
+    await loadOrders();
+    
+    // Auto-refresh every 45 seconds
+    setInterval(loadOrders, 45000);
+    
+    console.log('✅ Init complete. Push supported:', pushSupported, 'Subscribed:', pushSubscribed);
 }
 
 // ─── NOTIFICATION TOGGLE ──────────────────────────────────────────────────────
@@ -83,43 +77,53 @@ async function toggleNotifications() {
 }
 
 async function subscribeToPush() {
+    console.log('📱 Attempting to subscribe to push...');
+    
+    if (!pushSupported || !swRegistration) {
+        showToast('❌ Njoftimet nuk suportohen në këtë paisje/shfletues');
+        console.log('Push not supported - swRegistration:', !!swRegistration, 'pushSupported:', pushSupported);
+        return;
+    }
+    
     try {
-        // Check if we have service worker registration
-        if (!swRegistration) {
-            showToast('❌ Service Worker nuk është gati. Rifresko faqen.');
-            return;
-        }
-
-        if (!swRegistration.pushManager) {
-            showToast('❌ PushManager nuk suportohet');
-            return;
-        }
-        
         // Request permission
+        console.log('Requesting notification permission...');
         const permission = await Notification.requestPermission();
+        console.log('Permission result:', permission);
+        
         if (permission !== 'granted') {
-            showToast('⚠️ Ju lutemi lejoni njoftimet në Settings të iPhone');
+            showToast('⚠️ Ju lutemi lejoni njoftimet në Settings');
             return;
         }
         
-        console.log('Subscribing with VAPID key...');
+        // Check pushManager exists
+        if (!swRegistration.pushManager) {
+            console.error('pushManager is null/undefined');
+            showToast('❌ Push Manager nuk është i disponueshëm');
+            return;
+        }
         
-        // Subscribe with VAPID key
+        console.log('VAPID key:', VAPID_PUBLIC_KEY);
+        
+        // Subscribe
         const subscription = await swRegistration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
         });
         
-        console.log('Subscription created:', subscription.endpoint);
+        console.log('✅ Subscription created:', subscription.endpoint);
         
-        // Save subscription to Google Apps Script
+        // Save to Google Apps Script
+        const savePayload = {
+            action: 'saveSub',
+            subscription: subscription.toJSON()
+        };
+        console.log('Saving subscription...', JSON.stringify(savePayload).substring(0, 100) + '...');
+        
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'saveSub',
-                subscription: subscription.toJSON()
-            })
+            body: JSON.stringify(savePayload)
         });
         
         const data = await response.json();
@@ -129,35 +133,42 @@ async function subscribeToPush() {
             pushSubscribed = true;
             updateNotifUI();
             showToast('🔔 Njoftimet u aktivizuan!');
+            
+            // Test notification after 3 seconds
+            setTimeout(() => {
+                console.log('Testing - you should receive a push soon...');
+            }, 3000);
         } else {
-            showToast('❌ Ruajtja dështoi. Provoni përsëri.');
+            showToast('❌ Ruajtja dështoi: ' + JSON.stringify(data));
         }
         
     } catch(e) {
         console.error('Subscribe error:', e);
+        console.error('Error name:', e.name);
+        console.error('Error message:', e.message);
         
         if (e.name === 'NotAllowedError') {
-            showToast('⚠️ Njoftimet u bllokuan. Kontrolloni Settings.');
+            showToast('⚠️ Njoftimet u bllokuan. Shkoni te Settings > Safari > Notifications');
         } else if (e.name === 'InvalidStateError') {
-            showToast('❌ Regjistrimi ekziston. Rifresko faqen.');
+            showToast('❌ Tashmë jeni i regjistruar. Rifresko faqen.');
+        } else if (e.name === 'TypeError') {
+            showToast('❌ Gabim teknik. Kjo paisje mund të mos suportojë push.');
+            pushSupported = false;
+            updateNotifUI();
         } else {
-            showToast('Gabim: ' + (e.message || 'E panjohur'));
+            showToast('❌ Gabim: ' + (e.message || 'E panjohur'));
         }
     }
 }
 
 async function unsubscribeFromPush() {
     try {
-        if (!swRegistration || !swRegistration.pushManager) {
-            pushSubscribed = false;
-            updateNotifUI();
-            return;
-        }
-
-        const subscription = await swRegistration.pushManager.getSubscription();
-        if (subscription) {
-            await subscription.unsubscribe();
-            console.log('Unsubscribed');
+        if (swRegistration && swRegistration.pushManager) {
+            const subscription = await swRegistration.pushManager.getSubscription();
+            if (subscription) {
+                await subscription.unsubscribe();
+                console.log('Unsubscribed');
+            }
         }
         pushSubscribed = false;
         updateNotifUI();
@@ -176,29 +187,41 @@ function updateNotifUI() {
     
     if (!bar || !text || !btn) return;
     
+    if (!pushSupported) {
+        bar.className = 'notif-bar inactive';
+        text.innerText = 'Njoftimet nuk suportohen në këtë paisje';
+        btn.innerText = 'ℹ️ Info';
+        btn.className = 'btn-subscribe disable';
+        btn.onclick = () => showToast('Njoftimet kërkojnë iOS 16.4+ dhe PWA të instaluar');
+        return;
+    }
+    
     if (pushSubscribed) {
         bar.className = 'notif-bar active';
         text.innerText = 'Njoftimet aktive';
         btn.innerText = '🔕 Çaktivizo';
         btn.className = 'btn-subscribe disable';
+        btn.onclick = toggleNotifications;
     } else {
         bar.className = 'notif-bar inactive';
         text.innerText = 'Njoftimet jo aktive';
         btn.innerText = '🔔 Aktivizo';
         btn.className = 'btn-subscribe enable';
+        btn.onclick = toggleNotifications;
     }
 }
 
 // ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
 async function loadOrders() {
     const container = document.getElementById('pending-orders');
+    if (!container) return;
     
     try {
         const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
         const orders = await response.json();
         
         if (!Array.isArray(orders)) {
-            throw new Error('Invalid response format');
+            throw new Error('Invalid response: ' + typeof orders);
         }
         
         allOrders = orders;
@@ -218,15 +241,11 @@ async function loadOrders() {
         });
         
         // Update stats
-        const statPending = document.getElementById('stat-pending');
-        const statDone = document.getElementById('stat-done');
-        const pendingCount = document.getElementById('pending-count');
+        document.getElementById('stat-pending').innerText = pendingOrders.length;
+        document.getElementById('stat-done').innerText = completedToday.length;
+        document.getElementById('pending-count').innerText = pendingOrders.length;
         
-        if (statPending) statPending.innerText = pendingOrders.length;
-        if (statDone) statDone.innerText = completedToday.length;
-        if (pendingCount) pendingCount.innerText = pendingOrders.length;
-        
-        // Render pending orders
+        // Render
         if (pendingOrders.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -245,8 +264,10 @@ async function loadOrders() {
             <div class="empty-state">
                 <div class="empty-icon">⚠️</div>
                 <div class="empty-title">Gabim në lidhje</div>
-                <div class="empty-sub">${e.message || 'Nuk mund të lidhet me serverin'}</div>
-                <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">Provo përsëri</button>
+                <div class="empty-sub">Kontrolloni lidhjen e internetit</div>
+                <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">
+                    🔄 Provo përsëri
+                </button>
             </div>`;
     }
 }
@@ -260,34 +281,40 @@ function renderOrderCard(order) {
     const comment = order['Koment shtese (Nese ka)'] || order.KomentshtesaNeseka || '';
     const email = order['Email(Opsionale)'] || '';
     
-    const safeAddress = address.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-    const safeCity = city.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const safeAddr = address.replace(/'/g, "\\'");
+    const safeCity = city.replace(/'/g, "\\'");
     
     return `
     <div class="order-card" id="order-${order.rowNumber}">
         <div class="order-top">
             <div class="order-name-row">
                 <span class="order-row-num">#${order.rowNumber}</span>
-                <span class="order-name">${name}</span>
+                <span class="order-name">${escapeHtml(name)}</span>
             </div>
         </div>
         <div class="order-details">
-            <div class="detail-item"><span class="detail-icon">📦</span>${product}</div>
-            <div class="detail-item"><span class="detail-icon">📍</span>${city}</div>
-            <div class="detail-item"><span class="detail-icon">📞</span>${phone}</div>
-            <div class="detail-item"><span class="detail-icon">🏠</span>${address}</div>
-            ${email ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-icon">📧</span>${email}</div>` : ''}
+            <div class="detail-item"><span class="detail-icon">📦</span>${escapeHtml(product)}</div>
+            <div class="detail-item"><span class="detail-icon">📍</span>${escapeHtml(city)}</div>
+            <div class="detail-item"><span class="detail-icon">📞</span>${escapeHtml(phone)}</div>
+            <div class="detail-item"><span class="detail-icon">🏠</span>${escapeHtml(address)}</div>
+            ${email ? `<div class="detail-item" style="grid-column:1/-1;"><span class="detail-icon">📧</span>${escapeHtml(email)}</div>` : ''}
         </div>
-        ${comment ? `<div class="order-comment">💬 <span>${comment}</span></div>` : ''}
+        ${comment ? `<div class="order-comment">💬 <span>${escapeHtml(comment)}</span></div>` : ''}
         <div class="order-action-row">
             <button class="btn-approve" onclick="approveOrder(${order.rowNumber})">
                 ✅ Aprovo
             </button>
-            <button class="btn-view" onclick="openInMaps('${safeAddress}', '${safeCity}')">
+            <button class="btn-view" onclick="openInMaps('${safeAddr}', '${safeCity}')">
                 🗺️ Harta
             </button>
         </div>
     </div>`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ─── APPROVE ORDER ────────────────────────────────────────────────────────────
@@ -325,14 +352,14 @@ function showToast(message) {
     toast.innerText = message;
     toast.classList.add('show');
     clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
+    toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 // ─── UTILITY ──────────────────────────────────────────────────────────────────
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
+    const rawData = atob(base64);
     const outputArray = new Uint8Array(rawData.length);
     for (let i = 0; i < rawData.length; ++i) {
         outputArray[i] = rawData.charCodeAt(i);
