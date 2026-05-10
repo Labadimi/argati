@@ -1,79 +1,44 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
-const VAPID_PUBLIC_KEY = 'BJ7TcIy_DwcitAe01lyoE2FKZxo5qsaUu0o-GfKLul0rEAYzMQqSIvb0q3pi8fVAqEG0GxxEeHTarzTseOWNtwA';
-
-let pushSubscribed = false;
+let badgeCount = 0;
 
 async function init() {
+    // Register SW
     if ('serviceWorker' in navigator) {
         try {
-            const reg = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
+            await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
             await navigator.serviceWorker.ready;
-            if (reg.pushManager) {
-                const sub = await reg.pushManager.getSubscription();
-                pushSubscribed = !!sub;
+            
+            // Start badge polling
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'START_BADGE' });
             }
         } catch(e) { console.error('SW error:', e); }
     }
-    updateUI();
+    
+    // Listen for badge updates from SW
+    navigator.serviceWorker?.addEventListener('message', event => {
+        if (event.data?.type === 'BADGE_UPDATED') {
+            badgeCount = event.data.count;
+            updateBadgeDisplay();
+        }
+    });
+    
     await loadOrders();
     setInterval(loadOrders, 60000);
-    document.getElementById('subscribe-btn').addEventListener('click', toggleNotifications);
+    
+    // Initial badge update
+    updateBadgeDisplay();
 }
 
-async function toggleNotifications() {
-    if (pushSubscribed) {
-        const reg = await navigator.serviceWorker.getRegistration('/argati/');
-        if (reg) {
-            const sub = await reg.pushManager.getSubscription();
-            if (sub) await sub.unsubscribe();
-        }
-        pushSubscribed = false;
-        updateUI();
-        showToast('🔕 Çaktivizuar');
+function updateBadgeDisplay() {
+    const badgeEl = document.getElementById('app-badge');
+    if (!badgeEl) return;
+    
+    if (badgeCount > 0) {
+        badgeEl.innerText = badgeCount > 99 ? '99+' : badgeCount;
+        badgeEl.style.display = 'flex';
     } else {
-        try {
-            const perm = await Notification.requestPermission();
-            if (perm !== 'granted') { showToast('⚠️ Duhet të lejoni'); return; }
-            
-            const reg = await navigator.serviceWorker.ready;
-            const sub = await reg.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-            });
-            
-            // Save subscription to GAS
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'saveSub',
-                    subscription: sub.toJSON()
-                })
-            });
-            
-            pushSubscribed = true;
-            updateUI();
-            showToast('🔔 Aktivizuar!');
-        } catch(e) {
-            showToast('❌ ' + e.message);
-        }
-    }
-}
-
-function updateUI() {
-    const bar = document.getElementById('notif-bar');
-    const text = document.getElementById('notif-text');
-    const btn = document.getElementById('subscribe-btn');
-    if (pushSubscribed) {
-        bar.className = 'notif-bar active';
-        text.innerText = 'Njoftimet aktive ✅';
-        btn.innerText = '🔕 Çaktivizo';
-        btn.className = 'btn-subscribe disable';
-    } else {
-        bar.className = 'notif-bar inactive';
-        text.innerText = 'Kliko për të aktivizuar';
-        btn.innerText = '🔔 Aktivizo';
-        btn.className = 'btn-subscribe enable';
+        badgeEl.style.display = 'none';
     }
 }
 
@@ -88,6 +53,14 @@ async function loadOrders() {
             const oid = (o.OrderID||'').toString().trim();
             return !oid || oid.toLowerCase() === 'pending';
         });
+        
+        badgeCount = pending.length;
+        updateBadgeDisplay();
+        
+        // Tell SW to update badge too
+        if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'UPDATE_BADGE' });
+        }
         
         const today = new Date().toDateString();
         const done = orders.filter(o => {
@@ -132,29 +105,20 @@ function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.tex
 
 async function approveOrder(row) {
     const card = document.getElementById('order-'+row);
-    if (card) card.classList.add('processing');
+    if(card) card.classList.add('processing');
     try {
         const r = await fetch(`${SCRIPT_URL}?action=approve&row=${row}`);
         const d = await r.json();
-        if (d.success) { showToast('✅ Aprovuar!'); setTimeout(loadOrders, 2000); }
+        if(d.success) { showToast('✅ Aprovuar!'); setTimeout(loadOrders,2000); }
         else { showToast('❌ Gabim'); if(card) card.classList.remove('processing'); }
     } catch(e) { showToast('❌ Gabim'); if(card) card.classList.remove('processing'); }
 }
 
 function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.innerText = msg; t.classList.add('show');
+    const t=document.getElementById('toast');
+    t.innerText=msg; t.classList.add('show');
     clearTimeout(t._tid);
-    t._tid = setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    const o = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) o[i] = rawData.charCodeAt(i);
-    return o;
+    t._tid=setTimeout(()=>t.classList.remove('show'),3000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
