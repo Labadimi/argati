@@ -1,148 +1,141 @@
-// ─── Parts Center PWA - Polling-Based Notifications ───────────────────────────
+// ─── Parts Center PWA - Aggressive Background Polling ─────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 
 let notificationEnabled = false;
 let lastNotificationId = null;
-let pollingInterval = null;
+let keepAliveInterval = null;
+let notificationInterval = null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
     console.log('🚀 PWA Starting...');
     
-    // Register Service Worker
+    // Register SW
     if ('serviceWorker' in navigator) {
         try {
-            const registration = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
-            console.log('✅ SW registered:', registration.scope);
+            const reg = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
+            console.log('✅ SW registered');
             await navigator.serviceWorker.ready;
             console.log('✅ SW ready');
         } catch(e) {
-            console.error('SW registration failed:', e);
+            console.error('SW error:', e);
         }
     }
     
-    // Check notification permission
+    // Check permission
     if ('Notification' in window) {
         notificationEnabled = Notification.permission === 'granted';
-        console.log('Notification permission:', Notification.permission);
     }
     
     updateNotifUI();
     await loadOrders();
-    
-    // Poll for new orders every 60 seconds
     setInterval(loadOrders, 60000);
     
-    // Poll for notifications every 15 seconds (more frequent)
-    pollingInterval = setInterval(checkNotifications, 15000);
+    // If notifications enabled, start aggressive polling
+    if (notificationEnabled) {
+        startBackgroundPolling();
+    }
     
-    // First notification check after 3 seconds
-    setTimeout(checkNotifications, 3000);
+    // Keep-alive: ping SW every 10 seconds to prevent iOS from killing it
+    keepAliveInterval = setInterval(() => {
+        if (navigator.serviceWorker?.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'KEEP_ALIVE' });
+        }
+    }, 10000);
+}
+
+// ─── START BACKGROUND POLLING ─────────────────────────────────────────────────
+function startBackgroundPolling() {
+    if (notificationInterval) clearInterval(notificationInterval);
+    
+    // Poll every 15 seconds
+    notificationInterval = setInterval(checkNotifications, 15000);
+    
+    // First check immediately
+    checkNotifications();
+    
+    // Also tell SW to poll
+    if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({ 
+            type: 'START_POLLING',
+            scriptUrl: SCRIPT_URL
+        });
+    }
+}
+
+// ─── CHECK NOTIFICATIONS ──────────────────────────────────────────────────────
+async function checkNotifications() {
+    if (!notificationEnabled) return;
+    
+    try {
+        const res = await fetch(`${SCRIPT_URL}?action=notifications&t=${Date.now()}`);
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        if (!data.notifications?.length) return;
+        
+        for (const notif of data.notifications) {
+            if (notif.id !== lastNotificationId) {
+                // Show via SW for lock screen delivery
+                if (navigator.serviceWorker?.ready) {
+                    const reg = await navigator.serviceWorker.ready;
+                    await reg.showNotification(notif.title, {
+                        body: notif.body,
+                        icon: '/argati/icon-192.png',
+                        badge: '/argati/icon-192.png',
+                        tag: 'order-' + notif.id,
+                        requireInteraction: true,
+                        vibrate: [200, 100, 200, 100, 200],
+                        silent: false
+                    });
+                    console.log('📱 Notification sent:', notif.title);
+                }
+                lastNotificationId = notif.id;
+            }
+        }
+    } catch(e) {
+        console.log('Poll error:', e.message);
+    }
 }
 
 // ─── NOTIFICATION PERMISSION ──────────────────────────────────────────────────
 async function toggleNotifications() {
     if (notificationEnabled) {
         notificationEnabled = false;
+        if (notificationInterval) clearInterval(notificationInterval);
         updateNotifUI();
-        showToast('🔕 Njoftimet u çaktivizuan');
+        showToast('🔕 Çaktivizuar');
     } else {
         if (!('Notification' in window)) {
-            showToast('❌ Njoftimet nuk suportohen');
+            showToast('❌ Nuk suportohet');
             return;
         }
         
-        try {
-            const permission = await Notification.requestPermission();
-            console.log('Permission result:', permission);
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+            notificationEnabled = true;
+            updateNotifUI();
+            startBackgroundPolling();
+            showToast('🔔 Aktivizuar!');
             
-            if (permission === 'granted') {
-                notificationEnabled = true;
-                updateNotifUI();
-                showToast('🔔 Njoftimet u aktivizuan!');
-                
-                // Test notification via SW after 2 seconds
-                setTimeout(() => {
-                    showNotificationViaSW('✅ Argati Gati!', 'Do të njoftoheni për porositë e reja');
-                }, 2000);
-            } else {
-                showToast('⚠️ Duhet të lejoni njoftimet në Settings të iPhone');
-            }
-        } catch(e) {
-            console.error('Permission error:', e);
-            showToast('❌ Gabim: ' + e.message);
+            // Test notification
+            setTimeout(async () => {
+                if (navigator.serviceWorker?.ready) {
+                    const reg = await navigator.serviceWorker.ready;
+                    await reg.showNotification('✅ Argati Gati!', {
+                        body: 'Njoftimet janë aktive',
+                        icon: '/argati/icon-192.png',
+                        requireInteraction: true
+                    });
+                }
+            }, 2000);
+        } else {
+            showToast('⚠️ Duhet të lejoni njoftimet');
         }
     }
 }
 
-// ─── CHECK FOR NEW NOTIFICATIONS (POLLING) ────────────────────────────────────
-async function checkNotifications() {
-    if (!notificationEnabled) return;
-    
-    try {
-        const res = await fetch(`${SCRIPT_URL}?action=notifications&t=${Date.now()}`);
-        
-        if (!res.ok) {
-            console.log('Poll HTTP error:', res.status);
-            return;
-        }
-        
-        const data = await res.json();
-        
-        if (!data.notifications || data.notifications.length === 0) return;
-        
-        // Show each notification via Service Worker
-        data.notifications.forEach(notif => {
-            if (notif.id !== lastNotificationId) {
-                showNotificationViaSW(notif.title, notif.body);
-                lastNotificationId = notif.id;
-            }
-        });
-        
-    } catch(e) {
-        console.log('Poll error (will retry):', e.message);
-    }
-}
-
-// ─── SHOW NOTIFICATION VIA SERVICE WORKER ─────────────────────────────────────
-function showNotificationViaSW(title, body) {
-    if (!notificationEnabled) return;
-    
-    if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
-        console.log('SW not ready yet');
-        return;
-    }
-    
-    // Send message to Service Worker to show notification
-    navigator.serviceWorker.ready.then(registration => {
-        // Method 1: Direct SW notification (works in background)
-        registration.showNotification(title, {
-            body: body,
-            icon: '/argati/icon-192.png',
-            badge: '/argati/icon-192.png',
-            tag: 'order-' + Date.now(),
-            requireInteraction: true,
-            vibrate: [200, 100, 200, 100, 200],
-            timestamp: Date.now(),
-            silent: false,
-            data: {
-                url: self.location.origin + '/argati/',
-                timestamp: Date.now()
-            }
-        });
-        console.log('📱 Notification sent via SW:', title);
-    }).catch(err => {
-        console.error('SW notification failed:', err);
-        // Fallback to regular notification
-        try {
-            new Notification(title, { body: body, icon: '/argati/icon-192.png', requireInteraction: true });
-        } catch(e) {
-            console.error('Fallback notification failed:', e);
-        }
-    });
-}
-
-// ─── UI UPDATE ────────────────────────────────────────────────────────────────
+// ─── UI ───────────────────────────────────────────────────────────────────────
 function updateNotifUI() {
     const bar = document.getElementById('notif-bar');
     const text = document.getElementById('notif-text');
@@ -164,7 +157,7 @@ function updateNotifUI() {
         btn.className = 'btn-subscribe disable';
     } else {
         bar.className = 'notif-bar inactive';
-        text.innerText = 'Kliko për të aktivizuar njoftimet';
+        text.innerText = 'Kliko për të aktivizuar';
         btn.innerText = '🔔 Aktivizo';
         btn.className = 'btn-subscribe enable';
     }
@@ -178,9 +171,8 @@ async function loadOrders() {
     try {
         const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        
         const orders = await res.json();
-        if (!Array.isArray(orders)) throw new Error('Përgjigje e pavlefshme');
+        if (!Array.isArray(orders)) throw new Error('Invalid data');
         
         const pending = orders.filter(o => {
             const oid = (o.OrderID || '').toString().trim();
@@ -199,11 +191,7 @@ async function loadOrders() {
         document.getElementById('pending-count').innerText = pending.length;
         
         if (pending.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">🎉</div>
-                    <div class="empty-title">Asnjë porosi në pritje</div>
-                </div>`;
+            container.innerHTML = '<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">Asnjë porosi në pritje</div></div>';
             return;
         }
         
@@ -224,17 +212,9 @@ async function loadOrders() {
                 <div class="order-action-row">
                     <button class="btn-approve" onclick="approveOrder(${o.rowNumber})">✅ Aprovo</button>
                 </div>
-            </div>
-        `).join('');
-        
+            </div>`).join('');
     } catch(e) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">⚠️</div>
-                <div class="empty-title">Gabim në ngarkim</div>
-                <div class="empty-sub">${esc(e.message)}</div>
-                <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">🔄 Provo përsëri</button>
-            </div>`;
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Gabim</div><div class="empty-sub">${esc(e.message)}</div></div>`;
     }
 }
 
@@ -245,25 +225,15 @@ function esc(s) {
     return d.innerHTML;
 }
 
-// ─── APPROVE ORDER ────────────────────────────────────────────────────────────
 async function approveOrder(row) {
     const card = document.getElementById('order-' + row);
     if (card) card.classList.add('processing');
-    
     try {
         const r = await fetch(`${SCRIPT_URL}?action=approve&row=${row}&t=${Date.now()}`);
         const d = await r.json();
-        if (d.success) {
-            showToast('✅ Porosia #' + row + ' u aprovua!');
-            setTimeout(loadOrders, 2000);
-        } else {
-            showToast('❌ Gabim');
-            if (card) card.classList.remove('processing');
-        }
-    } catch(e) {
-        showToast('❌ Gabim lidhjeje');
-        if (card) card.classList.remove('processing');
-    }
+        if (d.success) { showToast('✅ Aprovuar!'); setTimeout(loadOrders, 2000); }
+        else { showToast('❌ Gabim'); if (card) card.classList.remove('processing'); }
+    } catch(e) { showToast('❌ Gabim'); if (card) card.classList.remove('processing'); }
 }
 
 function showToast(msg) {
@@ -274,6 +244,15 @@ function showToast(msg) {
     clearTimeout(t._tid);
     t._tid = setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+// ─── PAGE VISIBILITY ──────────────────────────────────────────────────────────
+// When page becomes visible, check notifications immediately
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && notificationEnabled) {
+        checkNotifications();
+        loadOrders();
+    }
+});
 
 // ─── START ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', init);
