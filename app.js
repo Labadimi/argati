@@ -8,35 +8,69 @@ let allOrders = [];
 
 // ─── INITIALIZATION ───────────────────────────────────────────────────────────
 async function init() {
-    if ('serviceWorker' in navigator) {
-        try {
-            swRegistration = await navigator.serviceWorker.register('sw.js', { scope: '/' });
-            console.log('✅ Service Worker registered');
-            
-            // Check existing push subscription
-            const subscription = await swRegistration.pushManager.getSubscription();
-            pushSubscribed = !!subscription;
-            updateNotifUI();
-            
-            // Load orders
-            await loadOrders();
-            
-            // Auto-refresh every 45 seconds
-            setInterval(loadOrders, 45000);
-            
-        } catch(e) {
-            console.error('SW registration failed:', e);
-            document.getElementById('pending-orders').innerHTML = 
-                `<div class="empty-state">
-                    <div class="empty-icon">⚠️</div>
-                    <div class="empty-title">Gabim</div>
-                    <div class="empty-sub">${e.message}</div>
-                </div>`;
-        }
-    } else {
-        document.getElementById('notif-text').innerText = 'Nuk suportohet në këtë paisje';
-        document.getElementById('subscribe-btn').style.display = 'none';
+    // First, check if service workers are supported
+    if (!('serviceWorker' in navigator)) {
+        showError('Service Worker nuk suportohet në këtë shfletues');
+        return;
     }
+
+    // Check if Push API is supported
+    if (!('PushManager' in window)) {
+        showError('Push notifications nuk suportohen në këtë paisje');
+        document.getElementById('subscribe-btn').style.display = 'none';
+        document.getElementById('notif-text').innerText = 'Njoftimet nuk suportohen';
+        await loadOrders();
+        return;
+    }
+
+    try {
+        // Register service worker
+        swRegistration = await navigator.serviceWorker.register('sw.js', { 
+            scope: '/' 
+        });
+        console.log('✅ Service Worker registered:', swRegistration.scope);
+        
+        // Wait for service worker to be ready
+        await navigator.serviceWorker.ready;
+        console.log('✅ Service Worker ready');
+        
+        // Now safely check push subscription
+        if (swRegistration && swRegistration.pushManager) {
+            try {
+                const subscription = await swRegistration.pushManager.getSubscription();
+                pushSubscribed = !!subscription;
+                console.log('Push subscribed:', pushSubscribed);
+            } catch(pushErr) {
+                console.warn('Push check failed:', pushErr);
+                pushSubscribed = false;
+            }
+        }
+        
+        updateNotifUI();
+        
+        // Load orders
+        await loadOrders();
+        
+        // Auto-refresh every 45 seconds
+        setInterval(loadOrders, 45000);
+        
+    } catch(e) {
+        console.error('Init error:', e);
+        showError(e.message || 'Gabim i panjohur gjatë inicializimit');
+    }
+}
+
+// ─── SHOW ERROR ───────────────────────────────────────────────────────────────
+function showError(message) {
+    document.getElementById('pending-orders').innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <div class="empty-title">Gabim</div>
+            <div class="empty-sub">${message}</div>
+            <button class="btn-subscribe enable" onclick="location.reload()" style="margin-top:12px;">
+                Rifresko faqen
+            </button>
+        </div>`;
 }
 
 // ─── NOTIFICATION TOGGLE ──────────────────────────────────────────────────────
@@ -50,18 +84,33 @@ async function toggleNotifications() {
 
 async function subscribeToPush() {
     try {
+        // Check if we have service worker registration
+        if (!swRegistration) {
+            showToast('❌ Service Worker nuk është gati. Rifresko faqen.');
+            return;
+        }
+
+        if (!swRegistration.pushManager) {
+            showToast('❌ PushManager nuk suportohet');
+            return;
+        }
+        
         // Request permission
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-            showToast('⚠️ Ju lutemi lejoni njoftimet në Settings');
+            showToast('⚠️ Ju lutemi lejoni njoftimet në Settings të iPhone');
             return;
         }
+        
+        console.log('Subscribing with VAPID key...');
         
         // Subscribe with VAPID key
         const subscription = await swRegistration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
         });
+        
+        console.log('Subscription created:', subscription.endpoint);
         
         // Save subscription to Google Apps Script
         const response = await fetch(SCRIPT_URL, {
@@ -74,32 +123,49 @@ async function subscribeToPush() {
         });
         
         const data = await response.json();
+        console.log('Save response:', data);
         
-        if (data.saved) {
+        if (data && data.saved) {
             pushSubscribed = true;
             updateNotifUI();
             showToast('🔔 Njoftimet u aktivizuan!');
         } else {
-            showToast('❌ Ruajtja dështoi, provoni përsëri');
+            showToast('❌ Ruajtja dështoi. Provoni përsëri.');
         }
         
     } catch(e) {
         console.error('Subscribe error:', e);
-        showToast('Gabim: ' + e.message);
+        
+        if (e.name === 'NotAllowedError') {
+            showToast('⚠️ Njoftimet u bllokuan. Kontrolloni Settings.');
+        } else if (e.name === 'InvalidStateError') {
+            showToast('❌ Regjistrimi ekziston. Rifresko faqen.');
+        } else {
+            showToast('Gabim: ' + (e.message || 'E panjohur'));
+        }
     }
 }
 
 async function unsubscribeFromPush() {
     try {
+        if (!swRegistration || !swRegistration.pushManager) {
+            pushSubscribed = false;
+            updateNotifUI();
+            return;
+        }
+
         const subscription = await swRegistration.pushManager.getSubscription();
         if (subscription) {
             await subscription.unsubscribe();
-            pushSubscribed = false;
-            updateNotifUI();
-            showToast('🔕 Njoftimet u çaktivizuan');
+            console.log('Unsubscribed');
         }
+        pushSubscribed = false;
+        updateNotifUI();
+        showToast('🔕 Njoftimet u çaktivizuan');
     } catch(e) {
         console.error('Unsubscribe error:', e);
+        pushSubscribed = false;
+        updateNotifUI();
     }
 }
 
@@ -107,6 +173,8 @@ function updateNotifUI() {
     const bar = document.getElementById('notif-bar');
     const text = document.getElementById('notif-text');
     const btn = document.getElementById('subscribe-btn');
+    
+    if (!bar || !text || !btn) return;
     
     if (pushSubscribed) {
         bar.className = 'notif-bar active';
@@ -128,6 +196,11 @@ async function loadOrders() {
     try {
         const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
         const orders = await response.json();
+        
+        if (!Array.isArray(orders)) {
+            throw new Error('Invalid response format');
+        }
+        
         allOrders = orders;
         
         // Calculate stats
@@ -145,9 +218,13 @@ async function loadOrders() {
         });
         
         // Update stats
-        document.getElementById('stat-pending').innerText = pendingOrders.length;
-        document.getElementById('stat-done').innerText = completedToday.length;
-        document.getElementById('pending-count').innerText = pendingOrders.length;
+        const statPending = document.getElementById('stat-pending');
+        const statDone = document.getElementById('stat-done');
+        const pendingCount = document.getElementById('pending-count');
+        
+        if (statPending) statPending.innerText = pendingOrders.length;
+        if (statDone) statDone.innerText = completedToday.length;
+        if (pendingCount) pendingCount.innerText = pendingOrders.length;
         
         // Render pending orders
         if (pendingOrders.length === 0) {
@@ -168,20 +245,23 @@ async function loadOrders() {
             <div class="empty-state">
                 <div class="empty-icon">⚠️</div>
                 <div class="empty-title">Gabim në lidhje</div>
-                <div class="empty-sub">${e.message}</div>
+                <div class="empty-sub">${e.message || 'Nuk mund të lidhet me serverin'}</div>
                 <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">Provo përsëri</button>
             </div>`;
     }
 }
 
 function renderOrderCard(order) {
-    const name = `${order.Emri || ''} ${order.Mbiemri || ''}`.trim() || '—';
+    const name = `${order.Emri || ''} ${order.Mbiemri || ''}`.trim() || 'Pa emër';
     const product = order.Produkti || '—';
     const city = order.Qyteti || '—';
     const phone = order.Telefoni || '—';
     const address = order.Adresa || '—';
     const comment = order['Koment shtese (Nese ka)'] || order.KomentshtesaNeseka || '';
     const email = order['Email(Opsionale)'] || '';
+    
+    const safeAddress = address.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const safeCity = city.replace(/'/g, "\\'").replace(/"/g, '&quot;');
     
     return `
     <div class="order-card" id="order-${order.rowNumber}">
@@ -203,7 +283,7 @@ function renderOrderCard(order) {
             <button class="btn-approve" onclick="approveOrder(${order.rowNumber})">
                 ✅ Aprovo
             </button>
-            <button class="btn-view" onclick="openInMaps('${address.replace(/'/g, "\\'")}', '${city.replace(/'/g, "\\'")}')">
+            <button class="btn-view" onclick="openInMaps('${safeAddress}', '${safeCity}')">
                 🗺️ Harta
             </button>
         </div>
@@ -221,7 +301,6 @@ async function approveOrder(rowNumber) {
         
         if (data.success) {
             showToast('✅ Porosia #' + rowNumber + ' u aprovua!');
-            // Reload after 2 seconds
             setTimeout(loadOrders, 2000);
         } else {
             showToast('❌ Gabim: ' + (data.error || 'E panjohur'));
@@ -236,13 +315,13 @@ async function approveOrder(rowNumber) {
 // ─── OPEN IN MAPS ─────────────────────────────────────────────────────────────
 function openInMaps(address, city) {
     const query = encodeURIComponent(`${address}, ${city}, Kosova`);
-    const url = `https://maps.apple.com/?q=${query}`;
-    window.open(url, '_blank');
+    window.open(`https://maps.apple.com/?q=${query}`, '_blank');
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
 function showToast(message) {
     const toast = document.getElementById('toast');
+    if (!toast) return;
     toast.innerText = message;
     toast.classList.add('show');
     clearTimeout(toast._timeout);
