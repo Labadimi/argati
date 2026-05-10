@@ -3,17 +3,28 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0q
 
 let notificationEnabled = false;
 let lastNotificationId = null;
+let pollingInterval = null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
     console.log('🚀 PWA Starting...');
     
-    // Check if notifications are already permitted
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
+            console.log('✅ SW registered:', registration.scope);
+            await navigator.serviceWorker.ready;
+            console.log('✅ SW ready');
+        } catch(e) {
+            console.error('SW registration failed:', e);
+        }
+    }
+    
+    // Check notification permission
     if ('Notification' in window) {
         notificationEnabled = Notification.permission === 'granted';
         console.log('Notification permission:', Notification.permission);
-    } else {
-        console.log('Notification API not available');
     }
     
     updateNotifUI();
@@ -22,11 +33,11 @@ async function init() {
     // Poll for new orders every 60 seconds
     setInterval(loadOrders, 60000);
     
-    // Poll for notifications every 20 seconds
-    setInterval(checkNotifications, 20000);
+    // Poll for notifications every 15 seconds (more frequent)
+    pollingInterval = setInterval(checkNotifications, 15000);
     
-    // First check after 5 seconds
-    setTimeout(checkNotifications, 5000);
+    // First notification check after 3 seconds
+    setTimeout(checkNotifications, 3000);
 }
 
 // ─── NOTIFICATION PERMISSION ──────────────────────────────────────────────────
@@ -37,7 +48,7 @@ async function toggleNotifications() {
         showToast('🔕 Njoftimet u çaktivizuan');
     } else {
         if (!('Notification' in window)) {
-            showToast('❌ Njoftimet nuk suportohen në këtë paisje');
+            showToast('❌ Njoftimet nuk suportohen');
             return;
         }
         
@@ -50,12 +61,12 @@ async function toggleNotifications() {
                 updateNotifUI();
                 showToast('🔔 Njoftimet u aktivizuan!');
                 
-                // Show a test notification after 2 seconds
+                // Test notification via SW after 2 seconds
                 setTimeout(() => {
-                    showLocalNotification('✅ Argati Gati!', 'Do të njoftoheni për porositë e reja');
+                    showNotificationViaSW('✅ Argati Gati!', 'Do të njoftoheni për porositë e reja');
                 }, 2000);
             } else {
-                showToast('⚠️ Duhet të lejoni njoftimet në Settings');
+                showToast('⚠️ Duhet të lejoni njoftimet në Settings të iPhone');
             }
         } catch(e) {
             console.error('Permission error:', e);
@@ -66,31 +77,24 @@ async function toggleNotifications() {
 
 // ─── CHECK FOR NEW NOTIFICATIONS (POLLING) ────────────────────────────────────
 async function checkNotifications() {
-    if (!notificationEnabled) {
-        console.log('Notifications disabled, skipping poll');
-        return;
-    }
+    if (!notificationEnabled) return;
     
     try {
         const res = await fetch(`${SCRIPT_URL}?action=notifications&t=${Date.now()}`);
         
         if (!res.ok) {
-            console.log('Poll response not OK:', res.status);
+            console.log('Poll HTTP error:', res.status);
             return;
         }
         
         const data = await res.json();
-        console.log('Notification poll result:', data);
         
-        if (!data.notifications || data.notifications.length === 0) {
-            return;
-        }
+        if (!data.notifications || data.notifications.length === 0) return;
         
-        // Show each notification
+        // Show each notification via Service Worker
         data.notifications.forEach(notif => {
             if (notif.id !== lastNotificationId) {
-                console.log('Showing notification:', notif.title);
-                showLocalNotification(notif.title, notif.body);
+                showNotificationViaSW(notif.title, notif.body);
                 lastNotificationId = notif.id;
             }
         });
@@ -100,53 +104,42 @@ async function checkNotifications() {
     }
 }
 
-// ─── SHOW LOCAL NOTIFICATION ──────────────────────────────────────────────────
-function showLocalNotification(title, body) {
-    if (!notificationEnabled) {
-        console.log('Notifications disabled, cannot show');
+// ─── SHOW NOTIFICATION VIA SERVICE WORKER ─────────────────────────────────────
+function showNotificationViaSW(title, body) {
+    if (!notificationEnabled) return;
+    
+    if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+        console.log('SW not ready yet');
         return;
     }
     
-    if (!('Notification' in window)) {
-        console.log('Notification API not available');
-        return;
-    }
-    
-    try {
-        // Use Service Worker if available (works in background)
-        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(registration => {
-                registration.showNotification(title, {
-                    body: body,
-                    icon: '/argati/icon-192.png',
-                    badge: '/argati/icon-192.png',
-                    tag: 'order-' + Date.now(),
-                    requireInteraction: true,
-                    vibrate: [200, 100, 200],
-                    timestamp: Date.now()
-                });
-                console.log('📱 SW notification shown:', title);
-            }).catch(err => {
-                console.log('SW notification failed:', err);
-                // Fallback
-                new Notification(title, {
-                    body: body,
-                    icon: '/argati/icon-192.png',
-                    requireInteraction: true
-                });
-            });
-        } else {
-            // Fallback: regular notification
-            const notif = new Notification(title, {
-                body: body,
-                icon: '/argati/icon-192.png',
-                requireInteraction: true
-            });
-            console.log('📱 Regular notification shown:', title);
+    // Send message to Service Worker to show notification
+    navigator.serviceWorker.ready.then(registration => {
+        // Method 1: Direct SW notification (works in background)
+        registration.showNotification(title, {
+            body: body,
+            icon: '/argati/icon-192.png',
+            badge: '/argati/icon-192.png',
+            tag: 'order-' + Date.now(),
+            requireInteraction: true,
+            vibrate: [200, 100, 200, 100, 200],
+            timestamp: Date.now(),
+            silent: false,
+            data: {
+                url: self.location.origin + '/argati/',
+                timestamp: Date.now()
+            }
+        });
+        console.log('📱 Notification sent via SW:', title);
+    }).catch(err => {
+        console.error('SW notification failed:', err);
+        // Fallback to regular notification
+        try {
+            new Notification(title, { body: body, icon: '/argati/icon-192.png', requireInteraction: true });
+        } catch(e) {
+            console.error('Fallback notification failed:', e);
         }
-    } catch(e) {
-        console.error('Notification error:', e);
-    }
+    });
 }
 
 // ─── UI UPDATE ────────────────────────────────────────────────────────────────
@@ -161,7 +154,6 @@ function updateNotifUI() {
         text.innerText = 'Njoftimet nuk suportohen';
         btn.innerText = 'ℹ️';
         btn.className = 'btn-subscribe disable';
-        btn.onclick = () => showToast('Njoftimet kërkojnë iOS të instaluar si PWA');
         return;
     }
     
@@ -170,13 +162,11 @@ function updateNotifUI() {
         text.innerText = 'Njoftimet aktive ✅';
         btn.innerText = '🔕 Çaktivizo';
         btn.className = 'btn-subscribe disable';
-        btn.onclick = toggleNotifications;
     } else {
         bar.className = 'notif-bar inactive';
         text.innerText = 'Kliko për të aktivizuar njoftimet';
         btn.innerText = '🔔 Aktivizo';
         btn.className = 'btn-subscribe enable';
-        btn.onclick = toggleNotifications;
     }
 }
 
