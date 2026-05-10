@@ -1,149 +1,182 @@
-// ─── Parts Center PWA - App Logic ─────────────────────────────────────────────
+// ─── Parts Center PWA - Polling-Based Notifications ───────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
-const VAPID_PUBLIC_KEY = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
 
-let swRegistration = null;
-let pushSubscribed = false;
-let pushSupported = false;
+let notificationEnabled = false;
+let lastNotificationId = null;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-    const hasSW = 'serviceWorker' in navigator;
-    const hasPush = 'PushManager' in window;
-    const hasNotif = 'Notification' in window;
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-    const isHTTPS = location.protocol === 'https:';
+    console.log('🚀 PWA Starting...');
     
-    pushSupported = hasSW && hasPush && hasNotif && isStandalone && isHTTPS;
-    
-    console.log('Push supported:', pushSupported);
-    
-    // Register service worker
-    if (hasSW) {
-        try {
-            swRegistration = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
-            console.log('✅ SW registered');
-            await navigator.serviceWorker.ready;
-            
-            if (swRegistration.pushManager) {
-                try {
-                    const sub = await swRegistration.pushManager.getSubscription();
-                    pushSubscribed = !!sub;
-                    console.log('Already subscribed:', pushSubscribed);
-                } catch(e) {
-                    console.log('Push check:', e.message);
-                }
-            }
-        } catch(e) {
-            console.error('SW error:', e);
-        }
+    // Check if notifications are already permitted
+    if ('Notification' in window) {
+        notificationEnabled = Notification.permission === 'granted';
+        console.log('Notification permission:', Notification.permission);
+    } else {
+        console.log('Notification API not available');
     }
     
     updateNotifUI();
     await loadOrders();
     
-    // Auto-refresh every 45 seconds
-    setInterval(loadOrders, 45000);
+    // Poll for new orders every 60 seconds
+    setInterval(loadOrders, 60000);
+    
+    // Poll for notifications every 20 seconds
+    setInterval(checkNotifications, 20000);
+    
+    // First check after 5 seconds
+    setTimeout(checkNotifications, 5000);
 }
 
-// ─── NOTIFICATION TOGGLE ──────────────────────────────────────────────────────
+// ─── NOTIFICATION PERMISSION ──────────────────────────────────────────────────
 async function toggleNotifications() {
-    if (pushSubscribed) {
-        await unsubscribeFromPush();
+    if (notificationEnabled) {
+        notificationEnabled = false;
+        updateNotifUI();
+        showToast('🔕 Njoftimet u çaktivizuan');
     } else {
-        await subscribeToPush();
+        if (!('Notification' in window)) {
+            showToast('❌ Njoftimet nuk suportohen në këtë paisje');
+            return;
+        }
+        
+        try {
+            const permission = await Notification.requestPermission();
+            console.log('Permission result:', permission);
+            
+            if (permission === 'granted') {
+                notificationEnabled = true;
+                updateNotifUI();
+                showToast('🔔 Njoftimet u aktivizuan!');
+                
+                // Show a test notification after 2 seconds
+                setTimeout(() => {
+                    showLocalNotification('✅ Argati Gati!', 'Do të njoftoheni për porositë e reja');
+                }, 2000);
+            } else {
+                showToast('⚠️ Duhet të lejoni njoftimet në Settings');
+            }
+        } catch(e) {
+            console.error('Permission error:', e);
+            showToast('❌ Gabim: ' + e.message);
+        }
     }
 }
 
-async function subscribeToPush() {
-    if (!pushSupported || !swRegistration) {
-        showToast('❌ Njoftimet nuk suportohen');
+// ─── CHECK FOR NEW NOTIFICATIONS (POLLING) ────────────────────────────────────
+async function checkNotifications() {
+    if (!notificationEnabled) {
+        console.log('Notifications disabled, skipping poll');
         return;
     }
     
     try {
-        const permission = await Notification.requestPermission();
-        console.log('Permission:', permission);
+        const res = await fetch(`${SCRIPT_URL}?action=notifications&t=${Date.now()}`);
         
-        if (permission !== 'granted') {
-            showToast('⚠️ Duhet të lejoni njoftimet në Settings');
+        if (!res.ok) {
+            console.log('Poll response not OK:', res.status);
             return;
         }
         
-        const subscription = await swRegistration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        });
+        const data = await res.json();
+        console.log('Notification poll result:', data);
         
-        console.log('Subscription created:', subscription.endpoint);
-        
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'saveSub',
-                subscription: subscription.toJSON()
-            })
-        });
-        
-        const data = await response.json();
-        console.log('Save result:', data);
-        
-        if (data && data.saved) {
-            pushSubscribed = true;
-            updateNotifUI();
-            showToast('🔔 Njoftimet u aktivizuan!');
-        } else {
-            showToast('❌ Nuk u ruajt. Provoni përsëri.');
+        if (!data.notifications || data.notifications.length === 0) {
+            return;
         }
+        
+        // Show each notification
+        data.notifications.forEach(notif => {
+            if (notif.id !== lastNotificationId) {
+                console.log('Showing notification:', notif.title);
+                showLocalNotification(notif.title, notif.body);
+                lastNotificationId = notif.id;
+            }
+        });
+        
     } catch(e) {
-        console.error('Subscribe error:', e);
-        if (e.name === 'NotAllowedError') {
-            showToast('⚠️ Njoftimet u refuzuan. Shkoni te Settings > Notifications > Argati');
-        } else {
-            showToast('❌ ' + e.message);
-        }
+        console.log('Poll error (will retry):', e.message);
     }
 }
 
-async function unsubscribeFromPush() {
+// ─── SHOW LOCAL NOTIFICATION ──────────────────────────────────────────────────
+function showLocalNotification(title, body) {
+    if (!notificationEnabled) {
+        console.log('Notifications disabled, cannot show');
+        return;
+    }
+    
+    if (!('Notification' in window)) {
+        console.log('Notification API not available');
+        return;
+    }
+    
     try {
-        if (swRegistration?.pushManager) {
-            const sub = await swRegistration.pushManager.getSubscription();
-            if (sub) await sub.unsubscribe();
+        // Use Service Worker if available (works in background)
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, {
+                    body: body,
+                    icon: '/argati/icon-192.png',
+                    badge: '/argati/icon-192.png',
+                    tag: 'order-' + Date.now(),
+                    requireInteraction: true,
+                    vibrate: [200, 100, 200],
+                    timestamp: Date.now()
+                });
+                console.log('📱 SW notification shown:', title);
+            }).catch(err => {
+                console.log('SW notification failed:', err);
+                // Fallback
+                new Notification(title, {
+                    body: body,
+                    icon: '/argati/icon-192.png',
+                    requireInteraction: true
+                });
+            });
+        } else {
+            // Fallback: regular notification
+            const notif = new Notification(title, {
+                body: body,
+                icon: '/argati/icon-192.png',
+                requireInteraction: true
+            });
+            console.log('📱 Regular notification shown:', title);
         }
-        pushSubscribed = false;
-        updateNotifUI();
-        showToast('🔕 Njoftimet u çaktivizuan');
     } catch(e) {
-        console.error(e);
+        console.error('Notification error:', e);
     }
 }
 
+// ─── UI UPDATE ────────────────────────────────────────────────────────────────
 function updateNotifUI() {
     const bar = document.getElementById('notif-bar');
     const text = document.getElementById('notif-text');
     const btn = document.getElementById('subscribe-btn');
     if (!bar || !text || !btn) return;
     
-    if (!pushSupported) {
+    if (!('Notification' in window)) {
         bar.className = 'notif-bar inactive';
         text.innerText = 'Njoftimet nuk suportohen';
         btn.innerText = 'ℹ️';
         btn.className = 'btn-subscribe disable';
+        btn.onclick = () => showToast('Njoftimet kërkojnë iOS të instaluar si PWA');
         return;
     }
     
-    if (pushSubscribed) {
+    if (notificationEnabled) {
         bar.className = 'notif-bar active';
         text.innerText = 'Njoftimet aktive ✅';
         btn.innerText = '🔕 Çaktivizo';
         btn.className = 'btn-subscribe disable';
+        btn.onclick = toggleNotifications;
     } else {
         bar.className = 'notif-bar inactive';
-        text.innerText = 'Njoftimet gati për aktivizim';
+        text.innerText = 'Kliko për të aktivizuar njoftimet';
         btn.innerText = '🔔 Aktivizo';
         btn.className = 'btn-subscribe enable';
+        btn.onclick = toggleNotifications;
     }
 }
 
@@ -153,36 +186,11 @@ async function loadOrders() {
     if (!container) return;
     
     try {
-        console.log('Loading orders from:', SCRIPT_URL);
-        
         const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         
-        if (!res.ok) {
-            throw new Error('HTTP ' + res.status);
-        }
-        
-        const text = await res.text();
-        console.log('Raw response:', text.substring(0, 200));
-        
-        let orders;
-        try {
-            orders = JSON.parse(text);
-        } catch(e) {
-            throw new Error('Invalid JSON response');
-        }
-        
-        if (!Array.isArray(orders)) {
-            // Maybe it's wrapped in an object
-            if (orders && Array.isArray(orders.data)) {
-                orders = orders.data;
-            } else if (orders && Array.isArray(orders.orders)) {
-                orders = orders.orders;
-            } else {
-                throw new Error('Response is not an array');
-            }
-        }
-        
-        console.log('Orders loaded:', orders.length);
+        const orders = await res.json();
+        if (!Array.isArray(orders)) throw new Error('Përgjigje e pavlefshme');
         
         const pending = orders.filter(o => {
             const oid = (o.OrderID || '').toString().trim();
@@ -205,7 +213,6 @@ async function loadOrders() {
                 <div class="empty-state">
                     <div class="empty-icon">🎉</div>
                     <div class="empty-title">Asnjë porosi në pritje</div>
-                    <div class="empty-sub">Kontrolloni përsëri më vonë</div>
                 </div>`;
             return;
         }
@@ -215,16 +222,15 @@ async function loadOrders() {
                 <div class="order-top">
                     <div class="order-name-row">
                         <span class="order-row-num">#${o.rowNumber}</span>
-                        <span class="order-name">${escapeHtml(o.Emri||'')} ${escapeHtml(o.Mbiemri||'')}</span>
+                        <span class="order-name">${esc(o.Emri||'')} ${esc(o.Mbiemri||'')}</span>
                     </div>
                 </div>
                 <div class="order-details">
-                    <div class="detail-item">📦 ${escapeHtml(o.Produkti||'—')}</div>
-                    <div class="detail-item">📍 ${escapeHtml(o.Qyteti||'—')}</div>
-                    <div class="detail-item">📞 ${escapeHtml(o.Telefoni||'—')}</div>
-                    <div class="detail-item">🏠 ${escapeHtml(o.Adresa||'—')}</div>
+                    <div class="detail-item">📦 ${esc(o.Produkti||'—')}</div>
+                    <div class="detail-item">📍 ${esc(o.Qyteti||'—')}</div>
+                    <div class="detail-item">📞 ${esc(o.Telefoni||'—')}</div>
+                    <div class="detail-item">🏠 ${esc(o.Adresa||'—')}</div>
                 </div>
-                ${o['Koment shtese (Nese ka)'] ? `<div class="order-comment">💬 ${escapeHtml(o['Koment shtese (Nese ka)'])}</div>` : ''}
                 <div class="order-action-row">
                     <button class="btn-approve" onclick="approveOrder(${o.rowNumber})">✅ Aprovo</button>
                 </div>
@@ -232,24 +238,21 @@ async function loadOrders() {
         `).join('');
         
     } catch(e) {
-        console.error('Load error:', e);
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">⚠️</div>
-                <div class="empty-title">Nuk u ngarkuan porositë</div>
-                <div class="empty-sub">${e.message}</div>
-                <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">
-                    🔄 Provo përsëri
-                </button>
+                <div class="empty-title">Gabim në ngarkim</div>
+                <div class="empty-sub">${esc(e.message)}</div>
+                <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">🔄 Provo përsëri</button>
             </div>`;
     }
 }
 
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text.toString();
-    return div.innerHTML;
+function esc(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s.toString();
+    return d.innerHTML;
 }
 
 // ─── APPROVE ORDER ────────────────────────────────────────────────────────────
@@ -264,16 +267,15 @@ async function approveOrder(row) {
             showToast('✅ Porosia #' + row + ' u aprovua!');
             setTimeout(loadOrders, 2000);
         } else {
-            showToast('❌ Gabim: ' + (d.error || 'E panjohur'));
+            showToast('❌ Gabim');
             if (card) card.classList.remove('processing');
         }
     } catch(e) {
-        showToast('❌ Gabim në lidhje');
+        showToast('❌ Gabim lidhjeje');
         if (card) card.classList.remove('processing');
     }
 }
 
-// ─── TOAST ────────────────────────────────────────────────────────────────────
 function showToast(msg) {
     const t = document.getElementById('toast');
     if (!t) return;
@@ -281,16 +283,6 @@ function showToast(msg) {
     t.classList.add('show');
     clearTimeout(t._tid);
     t._tid = setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// ─── UTILITY ──────────────────────────────────────────────────────────────────
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-    return outputArray;
 }
 
 // ─── START ────────────────────────────────────────────────────────────────────
