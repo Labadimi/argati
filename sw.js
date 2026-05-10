@@ -1,25 +1,43 @@
 // ─── Service Worker - Parts Center PWA ────────────────────────────────────────
-const SW_VERSION = '2.2.0';
+const SW_VERSION = '2.3.0';
 
+// Load WebPushr
 try {
     importScripts('https://cdn.webpushr.com/sw-server.min.js');
-    console.log('WebPushr loaded');
+    console.log('✅ WebPushr SW loaded');
 } catch(e) {
-    console.error('WebPushr failed:', e);
+    console.error('❌ WebPushr SW failed:', e);
 }
 
 self.addEventListener('install', event => {
-    console.log('SW install v' + SW_VERSION);
+    console.log('✅ Install v' + SW_VERSION);
     self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
-    console.log('SW activate v' + SW_VERSION);
+    console.log('✅ Activate v' + SW_VERSION);
     event.waitUntil(clients.claim());
 });
 
+// Handle messages from the page
+self.addEventListener('message', event => {
+    console.log('📨 SW message:', event.data);
+    
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    
+    // Forward to WebPushr if needed
+    if (event.data && event.data.type === 'webpushrPrompt') {
+        console.log('WebPushr prompt received');
+        // WebPushr script handles this automatically
+    }
+});
+
+// Push event
 self.addEventListener('push', event => {
-    console.log('Push received');
+    console.log('📲 Push received');
+    
     let title = 'Parts Center';
     let body = 'Porosi e re!';
     
@@ -40,7 +58,8 @@ self.addEventListener('push', event => {
             badge: '/argati/icon-192.png',
             requireInteraction: true,
             vibrate: [200, 100, 200],
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            data: { url: self.registration.scope }
         })
     );
 });
@@ -57,3 +76,5 @@ self.addEventListener('notificationclick', event => {
             })
     );
 });
+
+console.log('🚀 SW v' + SW_VERSION + ' ready');
