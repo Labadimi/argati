@@ -1,85 +1,69 @@
-// ─── Parts Center PWA - WebPushr Integration ──────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
+const VAPID_PUBLIC_KEY = 'BJ7TcIy_DwcitAe01lyoE2FKZxo5qsaUu0o-GfKLul0rEAYzMQqSIvb0q3pi8fVAqEG0GxxEeHTarzTseOWNtwA';
 
 let pushSubscribed = false;
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-    console.log('🚀 PWA Starting...');
-    
-    // Register SW
     if ('serviceWorker' in navigator) {
         try {
-            await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
-            console.log('✅ SW registered');
+            const reg = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
             await navigator.serviceWorker.ready;
-            console.log('✅ SW ready');
-            
-            // Check subscription
-            const reg = await navigator.serviceWorker.getRegistration('/argati/');
-            if (reg && reg.pushManager) {
+            if (reg.pushManager) {
                 const sub = await reg.pushManager.getSubscription();
                 pushSubscribed = !!sub;
-                console.log('Push subscribed:', pushSubscribed);
             }
-        } catch(e) {
-            console.error('SW error:', e);
-        }
+        } catch(e) { console.error('SW error:', e); }
     }
-    
-    updateNotifUI();
+    updateUI();
     await loadOrders();
     setInterval(loadOrders, 60000);
-    
-    // Listen for WebPushr subscription changes
-    if (window.webpushr) {
-        webpushr('onReady', function() {
-            console.log('WebPushr ready');
-        });
-        
-        webpushr('onSubscribe', function() {
-            console.log('WebPushr subscribed!');
-            pushSubscribed = true;
-            updateNotifUI();
-        });
-    }
+    document.getElementById('subscribe-btn').addEventListener('click', toggleNotifications);
 }
 
-// ─── TOGGLE ───────────────────────────────────────────────────────────────────
 async function toggleNotifications() {
     if (pushSubscribed) {
-        if (window.webpushr) {
-            webpushr('unsubscribe');
+        const reg = await navigator.serviceWorker.getRegistration('/argati/');
+        if (reg) {
+            const sub = await reg.pushManager.getSubscription();
+            if (sub) await sub.unsubscribe();
         }
         pushSubscribed = false;
-        updateNotifUI();
+        updateUI();
         showToast('🔕 Çaktivizuar');
     } else {
-        if (window.webpushr) {
-            webpushr('subscribe');
-        } else {
-            // Fallback manual subscribe
+        try {
             const perm = await Notification.requestPermission();
-            if (perm === 'granted') {
-                const reg = await navigator.serviceWorker.ready;
-                const sub = await reg.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array('BHVdCTPrQjCOIPfMKnc6_yqXF6iNhPoFDFPyPICll7_dEBWCVFgNwOscuAzwQsJQhD6mCK_NuH1dgYy4LT2oEGQ')
-                });
-                pushSubscribed = !!sub;
-            }
+            if (perm !== 'granted') { showToast('⚠️ Duhet të lejoni'); return; }
+            
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            });
+            
+            // Save subscription to GAS
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'saveSub',
+                    subscription: sub.toJSON()
+                })
+            });
+            
+            pushSubscribed = true;
+            updateUI();
+            showToast('🔔 Aktivizuar!');
+        } catch(e) {
+            showToast('❌ ' + e.message);
         }
-        updateNotifUI();
     }
 }
 
-// ─── UI ───────────────────────────────────────────────────────────────────────
-function updateNotifUI() {
+function updateUI() {
     const bar = document.getElementById('notif-bar');
     const text = document.getElementById('notif-text');
     const btn = document.getElementById('subscribe-btn');
-    if (!bar || !text || !btn) return;
-    
     if (pushSubscribed) {
         bar.className = 'notif-bar active';
         text.innerText = 'Njoftimet aktive ✅';
@@ -93,27 +77,23 @@ function updateNotifUI() {
     }
 }
 
-// ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
 async function loadOrders() {
     const container = document.getElementById('pending-orders');
-    if (!container) return;
-    
     try {
         const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
         const orders = await res.json();
-        if (!Array.isArray(orders)) throw new Error('Invalid data');
+        if (!Array.isArray(orders)) throw new Error('Invalid');
         
         const pending = orders.filter(o => {
-            const oid = (o.OrderID || '').toString().trim();
+            const oid = (o.OrderID||'').toString().trim();
             return !oid || oid.toLowerCase() === 'pending';
         });
         
-        const todayStr = new Date().toDateString();
+        const today = new Date().toDateString();
         const done = orders.filter(o => {
-            const oid = (o.OrderID || '').toString().trim();
+            const oid = (o.OrderID||'').toString().trim();
             if (!oid || oid.toLowerCase() === 'pending') return false;
-            try { return new Date(o.PlacedDate || '').toDateString() === todayStr; } catch(e) { return false; }
+            try { return new Date(o.PlacedDate||'').toDateString() === today; } catch(e) { return false; }
         });
         
         document.getElementById('stat-pending').innerText = pending.length;
@@ -144,28 +124,26 @@ async function loadOrders() {
                 </div>
             </div>`).join('');
     } catch(e) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Gabim</div></div>`;
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Gabim</div></div>';
     }
 }
 
 function esc(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s.toString(); return d.innerHTML; }
 
 async function approveOrder(row) {
-    const card = document.getElementById('order-' + row);
+    const card = document.getElementById('order-'+row);
     if (card) card.classList.add('processing');
     try {
-        const r = await fetch(`${SCRIPT_URL}?action=approve&row=${row}&t=${Date.now()}`);
+        const r = await fetch(`${SCRIPT_URL}?action=approve&row=${row}`);
         const d = await r.json();
         if (d.success) { showToast('✅ Aprovuar!'); setTimeout(loadOrders, 2000); }
-        else { showToast('❌ Gabim'); if (card) card.classList.remove('processing'); }
-    } catch(e) { showToast('❌ Gabim'); if (card) card.classList.remove('processing'); }
+        else { showToast('❌ Gabim'); if(card) card.classList.remove('processing'); }
+    } catch(e) { showToast('❌ Gabim'); if(card) card.classList.remove('processing'); }
 }
 
 function showToast(msg) {
     const t = document.getElementById('toast');
-    if (!t) return;
-    t.innerText = msg;
-    t.classList.add('show');
+    t.innerText = msg; t.classList.add('show');
     clearTimeout(t._tid);
     t._tid = setTimeout(() => t.classList.remove('show'), 3000);
 }
@@ -174,9 +152,9 @@ function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
     const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-    return outputArray;
+    const o = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) o[i] = rawData.charCodeAt(i);
+    return o;
 }
 
 document.addEventListener('DOMContentLoaded', init);
