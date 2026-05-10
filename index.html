@@ -287,6 +287,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 .notif-btn.green { background:var(--green); }
 .notif-btn.red   { background:var(--red); }
 </style>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 
@@ -305,6 +306,12 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 
 <div class="main">
     <div id="new-order-banner"></div>
+
+    <!-- Notification permission request bar — shown until granted -->
+    <div id="notif-request" style="display:none;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span style="font-size:12px;color:#94a3b8;font-weight:600;">🔔 Enable notifications for new orders</span>
+        <button onclick="requestNotifPermission()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Enable</button>
+    </div>
 
     <!-- STATS -->
     <div class="stats-bar">
@@ -498,11 +505,19 @@ async function loadOrders(silent = false) {
         // Detect new orders
         if (lastCount >= 0 && allOrders.length > lastCount) {
             const diff = allOrders.length - lastCount;
+            const msg  = diff === 1 ? '1 new order arrived!' : diff + ' new orders arrived!';
+
+            // In-app banner
             const banner = document.getElementById('new-order-banner');
-            banner.innerText = '🔔 ' + diff + (diff===1 ? ' new order arrived!' : ' new orders arrived!');
+            banner.innerText = '🔔 ' + msg;
             banner.style.display = 'block';
-            setTimeout(() => { banner.style.display='none'; }, 5000);
-            if (navigator.vibrate) navigator.vibrate([200,100,200]);
+            setTimeout(() => { banner.style.display='none'; }, 6000);
+
+            // Native iOS notification (works when app is in background)
+            showNativeNotif('🛒 Argati — New Order', msg, true);
+
+            // Vibrate
+            if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 200]);
         }
         lastCount = allOrders.length;
 
@@ -730,7 +745,91 @@ document.getElementById('reload-btn').addEventListener('click', () => {
     loadOrders();
 });
 
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+
+// Register service worker for push notifications (iOS 16.4+ PWA requirement)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Check notification permission on load
+function checkNotifPermission() {
+    if (!('Notification' in window)) return; // not supported
+    const bar = document.getElementById('notif-request');
+    if (!bar) return;
+    if (Notification.permission === 'granted') {
+        bar.style.display = 'none';
+    } else if (Notification.permission === 'denied') {
+        bar.style.display = 'none'; // can't ask again
+    } else {
+        // 'default' — show the enable bar
+        bar.style.display = 'flex';
+    }
+}
+
+async function requestNotifPermission() {
+    if (!('Notification' in window)) {
+        alert('Notifications are not supported on this browser.\nMake sure you added this page to your Home Screen from Safari.');
+        return;
+    }
+    const result = await Notification.requestPermission();
+    checkNotifPermission();
+    if (result === 'granted') {
+        // Test notification
+        showNativeNotif('🤖 Argati', 'Notifications enabled! You will be notified of new orders.', false);
+    }
+}
+
+// Show a native iOS notification
+function showNativeNotif(title, body, playSound = true) {
+    if (Notification.permission !== 'granted') return;
+    const notif = new Notification(title, {
+        body,
+        icon: 'icon.png',
+        badge: 'icon.png',
+        tag: 'argati-order',   // replaces previous notification of same tag
+        renotify: true,        // always play sound even if same tag
+        requireInteraction: false,
+        silent: false          // allow system sound
+    });
+    // Auto close after 8s
+    setTimeout(() => notif.close(), 8000);
+    // Tap opens the app
+    notif.onclick = () => { window.focus(); notif.close(); };
+
+    if (playSound) playOrderSound();
+}
+
+// Play a distinct two-tone chime using Web Audio API
+function playOrderSound() {
+    try {
+        const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+
+        function tone(freq, startTime, duration, gain) {
+            const osc  = ctx.createOscillator();
+            const vol  = ctx.createGain();
+            osc.connect(vol);
+            vol.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, startTime);
+            vol.gain.setValueAtTime(0, startTime);
+            vol.gain.linearRampToValueAtTime(gain, startTime + 0.02);
+            vol.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        const t = ctx.currentTime;
+        // Three ascending tones: E5 → G#5 → B5 (major triad — pleasant alert)
+        tone(659.25, t,        0.18, 0.4);  // E5
+        tone(830.61, t + 0.20, 0.18, 0.4);  // G#5
+        tone(987.77, t + 0.40, 0.28, 0.5);  // B5 (held longer)
+    } catch(e) {}
+}
+
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
+// Check notification permission on startup
+checkNotifPermission();
 loadOrders();
 </script>
 </body>
