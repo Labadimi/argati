@@ -1,36 +1,281 @@
-// ... (Keep your existing functions like loadOrders, buildCard, etc.)
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Argati">
+<title>Argati</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --primary:       #ff4500;
+    --primary-light: rgba(255,69,0,0.09);
+    --bg:            #f0f2f5;
+    --card:          #ffffff;
+    --text:          #0f172a;
+    --muted:         #94a3b8;
+    --border:        #e8ecf0;
+    --shadow:        rgba(0,0,0,0.07);
+    --green:         #10b981;
+    --amber:         #f59e0b;
+    --red:           #ef4444;
+}
+body.dark {
+    --primary:       #ff5722;
+    --primary-light: rgba(255,87,34,0.12);
+    --bg:            #0f1117;
+    --card:          #1a1d27;
+    --text:          #e2e8f0;
+    --muted:         #64748b;
+    --border:        #2a2d3a;
+    --shadow:        rgba(0,0,0,0.5);
+}
 
-// ─── UPDATED STARTUP (Non-Blocking) ──────────────────────────────────────────
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+    font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+    transition: background 0.25s, color 0.25s;
+}
+
+/* HEADER */
+.header {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: calc(env(safe-area-inset-top) + 14px) 18px 14px;
+    display: flex; align-items: center; gap: 12px;
+}
+.header-icon {
+    width: 40px; height: 40px; background: var(--primary);
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(255,69,0,0.3);
+}
+.header-text { flex: 1; }
+.header-title { font-size: 17px; font-weight: 800; color: var(--text); }
+.header-sub   { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+.header-btns  { display: flex; gap: 8px; }
+.icon-btn {
+    width: 36px; height: 36px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--card); color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer; padding: 0; line-height: 1;
+    transition: all 0.15s;
+}
+.icon-btn:active { border-color: var(--primary); background: var(--primary-light); transform: scale(0.92); }
+#reload-btn.spinning { animation: spin 0.5s linear; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.main { padding: 14px 16px; }
+
+#new-order-banner {
+    display: none; background: var(--green); color: white;
+    font-size: 13px; font-weight: 700; text-align: center;
+    padding: 11px 18px; margin-bottom: 14px; border-radius: 14px;
+    animation: slideDown 0.3s ease;
+}
+@keyframes slideDown { from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)} }
+
+.stats-bar {
+    display: flex; align-items: center;
+    background: var(--card); border-radius: 16px;
+    padding: 14px 16px; margin-bottom: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 10px var(--shadow);
+}
+.stat-item  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stat-num   { font-size: 26px; font-weight: 800; color: var(--green); line-height: 1; }
+.stat-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-divider { width: 1px; height: 36px; background: var(--border); margin: 0 10px; }
+
+.section-label {
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 10px 2px;
+}
+
+.order-card {
+    background: var(--card); border-radius: 18px;
+    padding: 16px; margin-bottom: 10px;
+    border: 2px solid var(--border);
+    box-shadow: 0 2px 12px var(--shadow);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.order-card:active { transform: scale(0.985); }
+.order-card.review { border-color: rgba(245,158,11,0.35); }
+.order-card.selected {
+    border-color: var(--primary) !important;
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(255,69,0,0.15), 0 2px 12px var(--shadow);
+}
+.card-check {
+    position: absolute; top: 14px; right: 14px;
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800;
+}
+.order-card.selected .card-check { background: var(--primary); border-color: var(--primary); color: white; }
+
+.card-top  { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding-right: 36px; }
+.card-badge {
+    background: var(--primary-light); color: var(--primary);
+    font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 8px; flex-shrink: 0;
+}
+.card-name { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
+.card-detail { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 600; }
+.card-detail .icon { font-size: 14px; }
+.card-detail .val  { color: var(--text); }
+
+#fab {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 16px; right: 16px;
+    z-index: 100; display: none;
+}
+.fab-inner {
+    background: var(--primary); border-radius: 18px; padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 8px 28px rgba(255,69,0,0.4);
+}
+.fab-btn {
+    background: white; color: var(--primary); border: none; border-radius: 12px;
+    padding: 11px 20px; font-size: 14px; font-weight: 800;
+}
+
+.loading { text-align:center; padding:48px 20px; color:var(--muted); }
+.spinner {
+    width:32px; height:32px; border:3px solid var(--border);
+    border-top-color:var(--primary); border-radius:50%;
+    animation:spin 0.7s linear infinite; margin:0 auto 14px;
+}
+#notif-bar { 
+    background:#1e293b; border:1px solid #334155; border-radius:12px; 
+    padding:10px 14px; margin-bottom:12px; display:flex; align-items:center; 
+    justify-content:space-between; gap:10px; 
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-icon">🤖</div>
+    <div class="header-text">
+        <div class="header-title">Argati</div>
+        <div class="header-sub">Approval Center</div>
+    </div>
+    <div class="header-btns">
+        <button class="icon-btn" id="theme-btn">🌙</button>
+        <button class="icon-btn" id="reload-btn">↻</button>
+    </div>
+</div>
+
+<div class="main">
+    <div id="notif-bar" style="display:none;">
+        <span style="font-size:12px;color:#94a3b8;font-weight:600;">🔔 Enable Argati notifications</span>
+        <button id="enable-notif-btn" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;">Enable</button>
+    </div>
+
+    <div id="new-order-banner"></div>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-num" id="stat-today">—</span>
+            <span class="stat-label">Today ✅</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-num" id="stat-pending" style="color:var(--primary)">—</span>
+            <span class="stat-label">Pending</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+            <span class="stat-num" id="stat-review" style="color:var(--amber)">—</span>
+            <span class="stat-label">Review ⚠️</span>
+        </div>
+    </div>
+
+    <div id="order-list">
+        <div class="loading"><div class="spinner"></div>Loading...</div>
+    </div>
+
+    <button class="panel-toggle" id="history-toggle" style="width:100%; padding:12px; border-radius:12px; margin-top:10px; border:1px solid var(--border); background:var(--card); color:var(--text); font-weight:700;">📋 History</button>
+    <div id="history-panel" style="display:none; margin-top:10px;">
+        <div id="history-list" style="background:var(--card); border-radius:12px; border:1px solid var(--border); padding:10px;">No history yet.</div>
+    </div>
+
+    <div id="status-bar" style="text-align:center; font-size:12px; color:var(--muted); margin-top:20px;"></div>
+</div>
+
+<div id="fab">
+    <div class="fab-inner">
+        <div class="fab-left" style="color:white;">
+            <div id="fab-count" style="font-weight:800;">0 selected</div>
+            <div style="font-size:10px; opacity:0.8;">Tap Place to send</div>
+        </div>
+        <button class="fab-btn" onclick="approveSelected()">▶ Place Orders</button>
+    </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
+const VAPID_PUBLIC_KEY = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
+
+let allOrders = [];
+let selectedRows = new Set();
+let lastCount = -1;
+
+// ─── STARTUP LOGIC ───────────────────────────────────────────────────────────
 async function initApp() {
-    // 1. Load data immediately so the user sees something
-    try { 
-        loadOrders(); 
-    } catch(e) { console.error("Initial load failed", e); }
+    // 1. Fetch data immediately
+    loadOrders();
 
-    // 2. Register SW in the background
+    // 2. Register Service Worker in background
     if ('serviceWorker' in navigator) {
         try {
             await navigator.serviceWorker.register('sw.js');
-            console.log("Service Worker Active");
-        } catch(e) {
-            console.error("SW Registration failed", e);
-        }
+            console.log("SW Registered");
+        } catch(e) { console.error("SW failed", e); }
     }
     
-    // 3. Check UI elements
-    try { checkNotifBar(); } catch(e) {}
+    checkNotifBar();
 }
 
-// Run init when window loads
 window.addEventListener('load', initApp);
 
-// ─── UPDATED NOTIFICATION SUBSCRIBE (iOS Optimized) ──────────────────────────
-async function subscribeToNotifications() {
-    // iOS check: must be in standalone mode for PushManager to exist
+// ─── NOTIFICATION LOGIC ──────────────────────────────────────────────────────
+function checkNotifBar() {
+    const bar = document.getElementById('notif-bar');
+    if (!('Notification' in window)) return;
+    
+    // On iOS, notifications only work in standalone mode
     const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
     
+    if (Notification.permission === 'default') {
+        bar.style.display = 'flex';
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+document.getElementById('enable-notif-btn').addEventListener('click', subscribeToNotifications);
+
+async function subscribeToNotifications() {
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+    
+    // Guard for iOS standalone requirement
     if (!isStandalone && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        alert('Please tap the Share icon and "Add to Home Screen" to enable notifications.');
+        alert('Ju lutem shtoni aplikacionin në "Home Screen" që të merrni njoftime.');
         return;
     }
 
@@ -39,8 +284,8 @@ async function subscribeToNotifications() {
         if (perm !== 'granted') return;
 
         const reg = await navigator.serviceWorker.ready;
-        
         let sub = await reg.pushManager.getSubscription();
+        
         if (!sub) {
             sub = await reg.pushManager.subscribe({
                 userVisibleOnly: true,
@@ -48,15 +293,82 @@ async function subscribeToNotifications() {
             });
         }
 
-        await fetch(SCRIPT_URL + '?action=saveSub&t=' + Date.now(), {
+        // Save to Google Sheets
+        await fetch(SCRIPT_URL + '?action=saveSub', {
             method: 'POST',
             body: JSON.stringify(sub)
         });
 
-        checkNotifBar();
-        reg.showNotification('Argati', { body: 'Notifications enabled!' });
+        document.getElementById('notif-bar').style.display = 'none';
+        reg.showNotification('Argati', { body: 'Njoftimet u aktivizuan!' });
     } catch(err) {
-        console.error('Push failed:', err);
         alert('Error: ' + err.message);
     }
 }
+
+// ─── DATA LOADING ────────────────────────────────────────────────────────────
+async function loadOrders(silent = false) {
+    const list = document.getElementById('order-list');
+    try {
+        const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
+        const orders = await res.json();
+        
+        allOrders = orders.filter(o => !o.OrderID || o.OrderID === 'pending');
+        renderCards(allOrders);
+        updateStats(orders);
+    } catch(e) {
+        list.innerHTML = '<div class="loading">Dështoi ngarkimi. Provo përsëri.</div>';
+    }
+}
+
+function renderCards(orders) {
+    const list = document.getElementById('order-list');
+    if (orders.length === 0) {
+        list.innerHTML = '<div class="loading">Nuk ka porosi në pritje.</div>';
+        return;
+    }
+    list.innerHTML = orders.map(o => `
+        <div class="order-card ${selectedRows.has(o.rowNumber) ? 'selected' : ''}" id="card-${o.rowNumber}" onclick="toggleSelect(${o.rowNumber})">
+            <div class="card-check">${selectedRows.has(o.rowNumber) ? '✓' : ''}</div>
+            <div class="card-top"><span class="card-badge">#${o.rowNumber}</span></div>
+            <div class="card-name">${o.Emri} ${o.Mbiemri}</div>
+            <div class="card-detail">📦 ${o.Produkti}</div>
+            <div class="card-detail">📍 ${o.Qyteti}</div>
+        </div>
+    `).join('');
+}
+
+function toggleSelect(row) {
+    if (selectedRows.has(row)) selectedRows.delete(row);
+    else selectedRows.add(row);
+    
+    renderCards(allOrders);
+    const fab = document.getElementById('fab');
+    fab.style.display = selectedRows.size > 0 ? 'block' : 'none';
+    document.getElementById('fab-count').innerText = `${selectedRows.size} porosi`;
+}
+
+// UTILS
+function urlBase64ToUint8Array(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g,'+').replace(/_/g,'/'));
+    return Uint8Array.from({length: raw.length}, (_,i) => raw.charCodeAt(i));
+}
+
+function updateStats(orders) {
+    document.getElementById('stat-pending').innerText = allOrders.length;
+    document.getElementById('stat-today').innerText = orders.length - allOrders.length;
+}
+
+// THEME
+document.getElementById('theme-btn').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    document.getElementById('theme-btn').innerText = isDark ? '☀️' : '🌙';
+    localStorage.setItem('darkMode', isDark ? '1' : '0');
+});
+if (localStorage.getItem('darkMode') === '1') document.body.classList.add('dark');
+
+</script>
+</body>
+</html>
