@@ -481,7 +481,10 @@ async function loadOrders(silent = false) {
     if (!silent) list.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
     try {
-        const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
+        const controller = new AbortController();
+        const _timeout = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch(SCRIPT_URL + '?t=' + Date.now(), { signal: controller.signal });
+        clearTimeout(_timeout);
         const orders = await res.json();
 
         const todayStr = new Date().toDateString();
@@ -519,7 +522,10 @@ async function loadOrders(silent = false) {
         updateFAB();
 
     } catch(e) {
-        if (!silent) list.innerHTML = '<div class="loading" style="color:var(--red)">⚠ Error: ' + e.message + '</div>';
+        if (!silent) {
+            const msg = e.name === 'AbortError' ? 'Connection timed out. Check your internet.' : e.message;
+            list.innerHTML = '<div class="loading" style="color:var(--red)">⚠ ' + msg + '<br><br><button onclick="loadOrders()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:8px 16px;font-weight:700;cursor:pointer;">Retry</button></div>';
+        }
     }
 }
 
@@ -751,8 +757,7 @@ async function registerSW() {
     if (!('serviceWorker' in navigator)) return null;
     try {
         const reg = await navigator.serviceWorker.register('sw.js');
-        await navigator.serviceWorker.ready;
-        return reg;
+        return reg; // don't await ready — can hang on first install
     } catch(e) { return null; }
 }
 
@@ -785,11 +790,12 @@ async function subscribeToNotifications() {
             });
         }
         // Save subscription to Apps Script
-        await fetch(SCRIPT_URL + '?action=saveSub&t=' + Date.now(), {
+        fetch(SCRIPT_URL + '?action=saveSub&t=' + Date.now(), {
             method: 'POST',
+            mode: 'no-cors',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(sub.toJSON())
-        });
+        }).catch(() => {});
         checkNotifBar();
         // Show test notification
         reg.showNotification('Argati', {
@@ -821,7 +827,9 @@ function playOrderSound() {
 }
 
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
-registerSW();
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e));
+}
 checkNotifBar();
 loadOrders();
 </script>
