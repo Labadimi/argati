@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Argati">
 <title>Argati</title>
+<link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -287,7 +288,6 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 .notif-btn.green { background:var(--green); }
 .notif-btn.red   { background:var(--red); }
 </style>
-<link rel="manifest" href="manifest.json">
 </head>
 <body>
 
@@ -305,13 +305,13 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 </div>
 
 <div class="main">
-    <div id="new-order-banner"></div>
-
-    <!-- Notification permission request bar — shown until granted -->
-    <div id="notif-request" style="display:none;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span style="font-size:12px;color:#94a3b8;font-weight:600;">🔔 Enable notifications for new orders</span>
-        <button onclick="requestNotifPermission()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Enable</button>
+    <!-- Enable notifications bar -->
+    <div id="notif-bar" style="display:none;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span style="font-size:12px;color:#94a3b8;font-weight:600;">🔔 Enable Argati notifications</span>
+        <button onclick="subscribeToNotifications()" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;">Enable</button>
     </div>
+
+    <div id="new-order-banner"></div>
 
     <!-- STATS -->
     <div class="stats-bar">
@@ -505,19 +505,12 @@ async function loadOrders(silent = false) {
         // Detect new orders
         if (lastCount >= 0 && allOrders.length > lastCount) {
             const diff = allOrders.length - lastCount;
-            const msg  = diff === 1 ? '1 new order arrived!' : diff + ' new orders arrived!';
-
-            // In-app banner
             const banner = document.getElementById('new-order-banner');
-            banner.innerText = '🔔 ' + msg;
+            banner.innerText = '🔔 ' + diff + (diff===1 ? ' new order arrived!' : ' new orders arrived!');
             banner.style.display = 'block';
-            setTimeout(() => { banner.style.display='none'; }, 6000);
-
-            // Native iOS notification (works when app is in background)
-            showNativeNotif('🛒 Argati — New Order', msg, true);
-
-            // Vibrate
-            if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 200]);
+            setTimeout(() => { banner.style.display='none'; }, 5000);
+            if (navigator.vibrate) navigator.vibrate([200,100,200]);
+            playOrderSound();
         }
         lastCount = allOrders.length;
 
@@ -745,91 +738,91 @@ document.getElementById('reload-btn').addEventListener('click', () => {
     loadOrders();
 });
 
-// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+// ─── WEB PUSH NOTIFICATIONS ──────────────────────────────────────────────────
+const VAPID_PUBLIC_KEY = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
 
-// Register service worker for push notifications (iOS 16.4+ PWA requirement)
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+function urlBase64ToUint8Array(b64) {
+    const pad = '='.repeat((4 - b64.length % 4) % 4);
+    const raw = atob((b64 + pad).replace(/-/g,'+').replace(/_/g,'/'));
+    return Uint8Array.from({length: raw.length}, (_,i) => raw.charCodeAt(i));
 }
 
-// Check notification permission on load
-function checkNotifPermission() {
-    if (!('Notification' in window)) return; // not supported
-    const bar = document.getElementById('notif-request');
+async function registerSW() {
+    if (!('serviceWorker' in navigator)) return null;
+    try {
+        const reg = await navigator.serviceWorker.register('sw.js');
+        await navigator.serviceWorker.ready;
+        return reg;
+    } catch(e) { return null; }
+}
+
+function checkNotifBar() {
+    const bar = document.getElementById('notif-bar');
     if (!bar) return;
-    if (Notification.permission === 'granted') {
-        bar.style.display = 'none';
-    } else if (Notification.permission === 'denied') {
-        bar.style.display = 'none'; // can't ask again
-    } else {
-        // 'default' — show the enable bar
-        bar.style.display = 'flex';
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        bar.style.display = 'none'; return;
     }
+    bar.style.display = Notification.permission === 'default' ? 'flex' : 'none';
 }
 
-async function requestNotifPermission() {
+async function subscribeToNotifications() {
     if (!('Notification' in window)) {
-        alert('Notifications are not supported on this browser.\nMake sure you added this page to your Home Screen from Safari.');
+        alert('Please add this app to your Home Screen from Safari first.');
         return;
     }
-    const result = await Notification.requestPermission();
-    checkNotifPermission();
-    if (result === 'granted') {
-        // Test notification
-        showNativeNotif('🤖 Argati', 'Notifications enabled! You will be notified of new orders.', false);
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { checkNotifBar(); return; }
+
+    const reg = await registerSW();
+    if (!reg) { alert('Service worker not available. Open from Home Screen icon.'); return; }
+
+    try {
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+            sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+            });
+        }
+        // Save subscription to Apps Script
+        await fetch(SCRIPT_URL + '?action=saveSub&t=' + Date.now(), {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(sub.toJSON())
+        });
+        checkNotifBar();
+        // Show test notification
+        reg.showNotification('Argati', {
+            body: 'Notifications enabled! You will be alerted for new orders.',
+            icon: 'icon.png', tag: 'argati-test'
+        });
+    } catch(err) {
+        console.error('Push subscribe failed:', err);
+        alert('Setup failed: ' + err.message + '
+Make sure you opened this from the Home Screen icon.');
     }
 }
 
-// Show a native iOS notification
-function showNativeNotif(title, body, playSound = true) {
-    if (Notification.permission !== 'granted') return;
-    const notif = new Notification(title, {
-        body,
-        icon: 'icon.png',
-        badge: 'icon.png',
-        tag: 'argati-order',   // replaces previous notification of same tag
-        renotify: true,        // always play sound even if same tag
-        requireInteraction: false,
-        silent: false          // allow system sound
-    });
-    // Auto close after 8s
-    setTimeout(() => notif.close(), 8000);
-    // Tap opens the app
-    notif.onclick = () => { window.focus(); notif.close(); };
-
-    if (playSound) playOrderSound();
-}
-
-// Play a distinct two-tone chime using Web Audio API
 function playOrderSound() {
     try {
-        const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-
-        function tone(freq, startTime, duration, gain) {
-            const osc  = ctx.createOscillator();
-            const vol  = ctx.createGain();
-            osc.connect(vol);
-            vol.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, startTime);
-            vol.gain.setValueAtTime(0, startTime);
-            vol.gain.linearRampToValueAtTime(gain, startTime + 0.02);
-            vol.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-            osc.start(startTime);
-            osc.stop(startTime + duration);
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        function tone(f,t,d,v) {
+            const o=ctx.createOscillator(), g=ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type='sine'; o.frequency.setValueAtTime(f,t);
+            g.gain.setValueAtTime(0,t);
+            g.gain.linearRampToValueAtTime(v,t+0.02);
+            g.gain.exponentialRampToValueAtTime(0.001,t+d);
+            o.start(t); o.stop(t+d);
         }
-
-        const t = ctx.currentTime;
-        // Three ascending tones: E5 → G#5 → B5 (major triad — pleasant alert)
-        tone(659.25, t,        0.18, 0.4);  // E5
-        tone(830.61, t + 0.20, 0.18, 0.4);  // G#5
-        tone(987.77, t + 0.40, 0.28, 0.5);  // B5 (held longer)
+        const t=ctx.currentTime;
+        tone(659.25,t,0.18,0.4); tone(830.61,t+0.20,0.18,0.4); tone(987.77,t+0.40,0.28,0.5);
     } catch(e) {}
 }
 
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
-// Check notification permission on startup
-checkNotifPermission();
+registerSW();
+checkNotifBar();
 loadOrders();
 </script>
 </body>
