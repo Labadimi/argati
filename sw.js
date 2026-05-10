@@ -1,7 +1,5 @@
 // ─── Service Worker - Parts Center PWA ────────────────────────────────────────
-const VAPID_PUBLIC_KEY = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
-
-const SW_VERSION = '1.0.0';
+const SW_VERSION = '1.0.1';
 
 // ─── INSTALL ──────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
@@ -17,38 +15,36 @@ self.addEventListener('activate', (event) => {
 
 // ─── PUSH NOTIFICATION ────────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-    if (!event.data) {
-        console.warn('Push event received but no data');
-        return;
-    }
+    console.log('Push event received');
+    
+    let notificationData = {
+        title: 'Parts Center',
+        body: 'Porosi e re u regjistrua',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png'
+    };
 
-    let title, body, icon, badge;
-
-    try {
-        // Try JSON format
-        const data = event.data.json();
-        title = data.title || 'Parts Center';
-        body = data.body || 'Porosi e re u regjistrua';
-        icon = data.icon || '/icon-192.png';
-        badge = data.badge || '/icon-192.png';
-    } catch(e) {
-        // Plain text fallback
-        title = 'Parts Center';
-        body = event.data.text() || 'Porosi e re!';
-        icon = '/icon-192.png';
-        badge = '/icon-192.png';
+    if (event.data) {
+        try {
+            const data = event.data.json();
+            notificationData.title = data.title || notificationData.title;
+            notificationData.body = data.body || notificationData.body;
+        } catch(e) {
+            // Plain text
+            notificationData.body = event.data.text() || notificationData.body;
+        }
     }
 
     const options = {
-        body,
-        icon,
-        badge,
+        body: notificationData.body,
+        icon: notificationData.icon,
+        badge: notificationData.badge,
         tag: 'order-' + Date.now(),
         requireInteraction: true,
         vibrate: [200, 100, 200],
         timestamp: Date.now(),
         data: {
-            url: self.location.origin + '/',
+            url: self.registration.scope,
             dateOfArrival: Date.now()
         },
         actions: [
@@ -60,14 +56,13 @@ self.addEventListener('push', (event) => {
     };
 
     event.waitUntil(
-        self.registration.showNotification(title, options)
+        self.registration.showNotification(notificationData.title, options)
     );
 });
 
 // ─── NOTIFICATION CLICK ───────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
-    console.log('Notification clicked:', event.action);
-    
+    console.log('Notification clicked');
     event.notification.close();
 
     event.waitUntil(
@@ -75,42 +70,14 @@ self.addEventListener('notificationclick', (event) => {
             type: 'window', 
             includeUncontrolled: true 
         }).then((clientList) => {
-            // If window already open, focus it
             for (const client of clientList) {
-                if (client.url.includes(self.location.origin) && 'focus' in client) {
+                if (client.url.includes(self.registration.scope) && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // Otherwise open new window
             if (clients.openWindow) {
-                return clients.openWindow(self.location.origin + '/');
+                return clients.openWindow(self.registration.scope);
             }
         })
     );
 });
-
-// ─── PUSH SUBSCRIPTION CHANGE ─────────────────────────────────────────────────
-self.addEventListener('pushsubscriptionchange', (event) => {
-    console.log('Push subscription changed');
-    event.waitUntil(
-        self.registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-        }).then((newSubscription) => {
-            // Could post to server here
-            console.log('New subscription created');
-        })
-    );
-});
-
-// ─── UTILITY (for potential re-subscription) ──────────────────────────────────
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-    const rawData = atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-}
