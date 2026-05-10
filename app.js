@@ -1,80 +1,37 @@
-// ─── Parts Center PWA - App Logic (Debug Version) ─────────────────────────────
+// ─── Parts Center PWA - App Logic ─────────────────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 const VAPID_PUBLIC_KEY = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
 
 let swRegistration = null;
 let pushSubscribed = false;
-let allOrders = [];
 let pushSupported = false;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
-    const debug = [];
-    
-    // Check 1: Service Worker
     const hasSW = 'serviceWorker' in navigator;
-    debug.push('ServiceWorker: ' + (hasSW ? '✅' : '❌'));
-    
-    // Check 2: PushManager
     const hasPush = 'PushManager' in window;
-    debug.push('PushManager: ' + (hasPush ? '✅' : '❌'));
-    
-    // Check 3: Notification
     const hasNotif = 'Notification' in window;
-    debug.push('Notification: ' + (hasNotif ? '✅' : '❌'));
-    
-    // Check 4: Standalone mode (must be YES for push)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         navigator.standalone;
-    debug.push('Standalone: ' + (isStandalone ? '✅' : '❌ (MUST be ✅)'));
-    
-    // Check 5: HTTPS
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
     const isHTTPS = location.protocol === 'https:';
-    debug.push('HTTPS: ' + (isHTTPS ? '✅' : '❌'));
     
-    // Check 6: iOS version
-    const iosMatch = navigator.userAgent.match(/OS (\d+)_(\d+)/);
-    if (iosMatch) {
-        const major = parseInt(iosMatch[1]);
-        const minor = parseInt(iosMatch[2]);
-        const versionOK = major > 16 || (major === 16 && minor >= 4);
-        debug.push('iOS ' + major + '.' + minor + ': ' + (versionOK ? '✅' : '❌ (need 16.4+)'));
-    } else {
-        debug.push('iOS: Not detected');
-    }
-    
-    // Overall support
     pushSupported = hasSW && hasPush && hasNotif && isStandalone && isHTTPS;
-    debug.push('Push Supported: ' + (pushSupported ? '✅ YES!' : '❌ NO'));
     
-    console.log('=== PWA PUSH DIAGNOSTIC ===');
-    debug.forEach(line => console.log(line));
-    console.log('User Agent:', navigator.userAgent);
-    console.log('===========================');
+    console.log('Push supported:', pushSupported);
     
-    // Show debug info on screen temporarily
-    document.getElementById('pending-orders').innerHTML = `
-        <div style="background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);">
-            <div style="font-weight:800;margin-bottom:12px;font-size:16px;">🔍 Diagnoza Push</div>
-            ${debug.map(d => `<div style="font-size:13px;margin:6px 0;color:#475569;">${d}</div>`).join('')}
-            <button class="btn-approve" onclick="location.reload()" style="margin-top:12px;width:100%;">
-                OK - Ngarko Porositë
-            </button>
-        </div>`;
-    
-    // Register SW anyway
+    // Register service worker
     if (hasSW) {
         try {
             swRegistration = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
-            console.log('SW registered');
+            console.log('✅ SW registered');
             await navigator.serviceWorker.ready;
             
             if (swRegistration.pushManager) {
                 try {
                     const sub = await swRegistration.pushManager.getSubscription();
                     pushSubscribed = !!sub;
+                    console.log('Already subscribed:', pushSubscribed);
                 } catch(e) {
-                    console.log('Push check failed:', e.message);
+                    console.log('Push check:', e.message);
                 }
             }
         } catch(e) {
@@ -83,6 +40,10 @@ async function init() {
     }
     
     updateNotifUI();
+    await loadOrders();
+    
+    // Auto-refresh every 45 seconds
+    setInterval(loadOrders, 45000);
 }
 
 // ─── NOTIFICATION TOGGLE ──────────────────────────────────────────────────────
@@ -96,14 +57,16 @@ async function toggleNotifications() {
 
 async function subscribeToPush() {
     if (!pushSupported || !swRegistration) {
-        showToast('❌ Njoftimet nuk suportohen. Shiko diagnozën më sipër.');
+        showToast('❌ Njoftimet nuk suportohen');
         return;
     }
     
     try {
         const permission = await Notification.requestPermission();
+        console.log('Permission:', permission);
+        
         if (permission !== 'granted') {
-            showToast('⚠️ Duhet të lejoni njoftimet');
+            showToast('⚠️ Duhet të lejoni njoftimet në Settings');
             return;
         }
         
@@ -112,7 +75,7 @@ async function subscribeToPush() {
             applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
         });
         
-        console.log('Subscription:', subscription.endpoint);
+        console.log('Subscription created:', subscription.endpoint);
         
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
@@ -124,17 +87,22 @@ async function subscribeToPush() {
         });
         
         const data = await response.json();
+        console.log('Save result:', data);
         
-        if (data.saved) {
+        if (data && data.saved) {
             pushSubscribed = true;
             updateNotifUI();
             showToast('🔔 Njoftimet u aktivizuan!');
         } else {
-            showToast('❌ Nuk u ruajt në server');
+            showToast('❌ Nuk u ruajt. Provoni përsëri.');
         }
     } catch(e) {
         console.error('Subscribe error:', e);
-        showToast('❌ ' + e.message);
+        if (e.name === 'NotAllowedError') {
+            showToast('⚠️ Njoftimet u refuzuan. Shkoni te Settings > Notifications > Argati');
+        } else {
+            showToast('❌ ' + e.message);
+        }
     }
 }
 
@@ -146,7 +114,7 @@ async function unsubscribeFromPush() {
         }
         pushSubscribed = false;
         updateNotifUI();
-        showToast('🔕 Çaktivizuar');
+        showToast('🔕 Njoftimet u çaktivizuan');
     } catch(e) {
         console.error(e);
     }
@@ -161,9 +129,8 @@ function updateNotifUI() {
     if (!pushSupported) {
         bar.className = 'notif-bar inactive';
         text.innerText = 'Njoftimet nuk suportohen';
-        btn.innerText = 'ℹ️ Pse?';
+        btn.innerText = 'ℹ️';
         btn.className = 'btn-subscribe disable';
-        btn.onclick = () => init(); // Re-run diagnostic
         return;
     }
     
@@ -186,14 +153,42 @@ async function loadOrders() {
     if (!container) return;
     
     try {
+        console.log('Loading orders from:', SCRIPT_URL);
+        
         const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-        const orders = await res.json();
-        if (!Array.isArray(orders)) throw new Error('Invalid data');
+        
+        if (!res.ok) {
+            throw new Error('HTTP ' + res.status);
+        }
+        
+        const text = await res.text();
+        console.log('Raw response:', text.substring(0, 200));
+        
+        let orders;
+        try {
+            orders = JSON.parse(text);
+        } catch(e) {
+            throw new Error('Invalid JSON response');
+        }
+        
+        if (!Array.isArray(orders)) {
+            // Maybe it's wrapped in an object
+            if (orders && Array.isArray(orders.data)) {
+                orders = orders.data;
+            } else if (orders && Array.isArray(orders.orders)) {
+                orders = orders.orders;
+            } else {
+                throw new Error('Response is not an array');
+            }
+        }
+        
+        console.log('Orders loaded:', orders.length);
         
         const pending = orders.filter(o => {
             const oid = (o.OrderID || '').toString().trim();
             return !oid || oid.toLowerCase() === 'pending';
         });
+        
         const todayStr = new Date().toDateString();
         const done = orders.filter(o => {
             const oid = (o.OrderID || '').toString().trim();
@@ -210,6 +205,7 @@ async function loadOrders() {
                 <div class="empty-state">
                     <div class="empty-icon">🎉</div>
                     <div class="empty-title">Asnjë porosi në pritje</div>
+                    <div class="empty-sub">Kontrolloni përsëri më vonë</div>
                 </div>`;
             return;
         }
@@ -219,43 +215,65 @@ async function loadOrders() {
                 <div class="order-top">
                     <div class="order-name-row">
                         <span class="order-row-num">#${o.rowNumber}</span>
-                        <span class="order-name">${(o.Emri||'')} ${(o.Mbiemri||'')}</span>
+                        <span class="order-name">${escapeHtml(o.Emri||'')} ${escapeHtml(o.Mbiemri||'')}</span>
                     </div>
                 </div>
                 <div class="order-details">
-                    <div class="detail-item">📦 ${o.Produkti||'—'}</div>
-                    <div class="detail-item">📍 ${o.Qyteti||'—'}</div>
-                    <div class="detail-item">📞 ${o.Telefoni||'—'}</div>
-                    <div class="detail-item">🏠 ${o.Adresa||'—'}</div>
+                    <div class="detail-item">📦 ${escapeHtml(o.Produkti||'—')}</div>
+                    <div class="detail-item">📍 ${escapeHtml(o.Qyteti||'—')}</div>
+                    <div class="detail-item">📞 ${escapeHtml(o.Telefoni||'—')}</div>
+                    <div class="detail-item">🏠 ${escapeHtml(o.Adresa||'—')}</div>
                 </div>
-                ${o['Koment shtese (Nese ka)'] ? `<div class="order-comment">💬 ${o['Koment shtese (Nese ka)']}</div>` : ''}
+                ${o['Koment shtese (Nese ka)'] ? `<div class="order-comment">💬 ${escapeHtml(o['Koment shtese (Nese ka)'])}</div>` : ''}
                 <div class="order-action-row">
                     <button class="btn-approve" onclick="approveOrder(${o.rowNumber})">✅ Aprovo</button>
-                    <button class="btn-view" onclick="openInMaps('${(o.Adresa||'').replace(/'/g,"\\'")}','${(o.Qyteti||'').replace(/'/g,"\\'")}')">🗺️ Harta</button>
                 </div>
             </div>
         `).join('');
         
     } catch(e) {
-        container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Gabim</div></div>`;
+        console.error('Load error:', e);
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <div class="empty-title">Nuk u ngarkuan porositë</div>
+                <div class="empty-sub">${e.message}</div>
+                <button class="btn-subscribe enable" onclick="loadOrders()" style="margin-top:12px;">
+                    🔄 Provo përsëri
+                </button>
+            </div>`;
     }
 }
 
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text.toString();
+    return div.innerHTML;
+}
+
+// ─── APPROVE ORDER ────────────────────────────────────────────────────────────
 async function approveOrder(row) {
     const card = document.getElementById('order-' + row);
     if (card) card.classList.add('processing');
+    
     try {
         const r = await fetch(`${SCRIPT_URL}?action=approve&row=${row}&t=${Date.now()}`);
         const d = await r.json();
-        if (d.success) { showToast('✅ Aprovuar!'); setTimeout(loadOrders, 2000); }
-        else { showToast('❌ Gabim'); if (card) card.classList.remove('processing'); }
-    } catch(e) { showToast('❌ Gabim lidhjeje'); if (card) card.classList.remove('processing'); }
+        if (d.success) {
+            showToast('✅ Porosia #' + row + ' u aprovua!');
+            setTimeout(loadOrders, 2000);
+        } else {
+            showToast('❌ Gabim: ' + (d.error || 'E panjohur'));
+            if (card) card.classList.remove('processing');
+        }
+    } catch(e) {
+        showToast('❌ Gabim në lidhje');
+        if (card) card.classList.remove('processing');
+    }
 }
 
-function openInMaps(addr, city) {
-    window.open('https://maps.apple.com/?q=' + encodeURIComponent(addr + ', ' + city + ', Kosova'), '_blank');
-}
-
+// ─── TOAST ────────────────────────────────────────────────────────────────────
 function showToast(msg) {
     const t = document.getElementById('toast');
     if (!t) return;
@@ -265,6 +283,7 @@ function showToast(msg) {
     t._tid = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ─── UTILITY ──────────────────────────────────────────────────────────────────
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
