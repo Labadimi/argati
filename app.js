@@ -1,26 +1,25 @@
 // ─── Parts Center PWA - WebPushr Integration ──────────────────────────────────
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 
-// Replace with your WebPushr keys after signing up
-const WEBPUSHR_PUBLIC_KEY = 'BHVdCTPrQjCOIPfMKnc6_yqXF6iNhPoFDFPyPICll7_dEBWCVFgNwOscuAzwQsJQhD6mCK_NuH1dgYy4LT2oEGQ'; // Get from WebPushr dashboard
-const WEBPUSHR_API_KEY = 'YOUR_WEBPUSHR_API_KEY'; // Get from WebPushr dashboard
-const WEBPUSHR_REST_KEY = '318111da484aaa6d52c33b0f234402c1'; // Get from WebPushr dashboard
+// Your WebPushr keys
+const WEBPUSHR_PUBLIC_KEY = 'YOUR_PUBLIC_KEY_HERE'; // The public key from WebPushr dashboard
 
-let swRegistration = null;
 let pushSubscribed = false;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init() {
     console.log('🚀 PWA Starting...');
     
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
+    // Register WebPushr's SW
+    if ('serviceWorker' in navigator) {
         try {
-            swRegistration = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
+            await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
             console.log('✅ SW registered');
             await navigator.serviceWorker.ready;
             
-            // Check existing subscription
-            const subscription = await swRegistration.pushManager.getSubscription();
+            // Check if already subscribed
+            const reg = await navigator.serviceWorker.ready;
+            const subscription = await reg.pushManager.getSubscription();
             pushSubscribed = !!subscription;
             console.log('Push subscribed:', pushSubscribed);
             
@@ -44,64 +43,52 @@ async function toggleNotifications() {
 }
 
 async function subscribe() {
-    if (!swRegistration) {
-        showToast('❌ Service Worker nuk është gati');
+    if (!('serviceWorker' in navigator)) {
+        showToast('❌ Service Worker nuk suportohet');
         return;
     }
     
     try {
+        console.log('Requesting permission...');
         const permission = await Notification.requestPermission();
+        console.log('Permission:', permission);
+        
         if (permission !== 'granted') {
             showToast('⚠️ Duhet të lejoni njoftimet');
             return;
         }
         
-        // Subscribe with WebPushr's VAPID key
-        const subscription = await swRegistration.pushManager.subscribe({
+        console.log('Subscribing with WebPushr...');
+        const reg = await navigator.serviceWorker.ready;
+        
+        // Subscribe using WebPushr's public key
+        const subscription = await reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(WEBPUSHR_PUBLIC_KEY)
         });
         
-        console.log('Subscribed:', subscription);
-        
-        // Send subscription to WebPushr
-        const response = await fetch('https://app.webpushr.com/api/v1/subscription', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'webpushrKey': WEBPUSHR_REST_KEY
-            },
-            body: JSON.stringify({
-                endpoint: subscription.endpoint,
-                keys: {
-                    p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')))),
-                    auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth'))))
-            }
-            )
-        });
-        
-        const data = await response.json();
-        console.log('WebPushr registration:', data);
-        
+        console.log('✅ Subscribed!', subscription.endpoint);
         pushSubscribed = true;
         updateNotifUI();
         showToast('🔔 Njoftimet u aktivizuan!');
         
     } catch(e) {
         console.error('Subscribe error:', e);
-        showToast('❌ ' + e.message);
+        showToast('❌ Gabim: ' + e.message);
     }
 }
 
 async function unsubscribe() {
     try {
-        const subscription = await swRegistration.pushManager.getSubscription();
+        const reg = await navigator.serviceWorker.ready;
+        const subscription = await reg.pushManager.getSubscription();
         if (subscription) {
             await subscription.unsubscribe();
+            console.log('Unsubscribed');
         }
         pushSubscribed = false;
         updateNotifUI();
-        showToast('🔕 Çaktivizuar');
+        showToast('🔕 Njoftimet u çaktivizuan');
     } catch(e) {
         console.error(e);
     }
@@ -114,7 +101,7 @@ function updateNotifUI() {
     const btn = document.getElementById('subscribe-btn');
     if (!bar || !text || !btn) return;
     
-    if (!('Notification' in window) || !('PushManager' in window)) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
         bar.className = 'notif-bar inactive';
         text.innerText = 'Push nuk suportohet';
         btn.innerText = 'ℹ️';
