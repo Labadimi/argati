@@ -9,33 +9,54 @@ async function init() {
     // Register SW
     if ('serviceWorker' in navigator) {
         try {
-            const reg = await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
+            await navigator.serviceWorker.register('/argati/sw.js', { scope: '/argati/' });
             console.log('✅ SW registered');
             await navigator.serviceWorker.ready;
             console.log('✅ SW ready');
-            
-            // Start badge polling in SW
-            if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({ type: 'START_BADGE' });
-            }
         } catch(e) { 
             console.error('SW error:', e); 
         }
     }
     
-    // Listen for badge updates from SW
-    navigator.serviceWorker?.addEventListener('message', event => {
-        if (event.data?.type === 'BADGE_UPDATED') {
-            badgeCount = event.data.count;
-            updateBadgeDisplay();
-        }
-    });
-    
     await loadOrders();
     setInterval(loadOrders, 60000);
+    
+    // Also poll badge every 30s even if orders haven't changed
+    setInterval(updateHomeScreenBadge, 30000);
 }
 
-// ─── UPDATE BADGE DISPLAY ─────────────────────────────────────────────────────
+// ─── SET BADGE ON HOME SCREEN ICON ────────────────────────────────────────────
+async function updateHomeScreenBadge() {
+    if (!('setAppBadge' in navigator)) {
+        console.log('setAppBadge not supported on this device');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+        if (!res.ok) return;
+        
+        const orders = await res.json();
+        if (!Array.isArray(orders)) return;
+        
+        const pendingCount = orders.filter(o => {
+            const oid = (o.OrderID || '').toString().trim();
+            return !oid || oid.toLowerCase() === 'pending';
+        }).length;
+        
+        if (pendingCount > 0) {
+            await navigator.setAppBadge(pendingCount);
+            console.log('🔴 Home Screen badge set to:', pendingCount);
+        } else {
+            await navigator.clearAppBadge();
+            console.log('🟢 Home Screen badge cleared');
+        }
+    } catch(e) {
+        console.log('Badge update error:', e.message);
+    }
+}
+
+// ─── UPDATE IN-APP BADGE DISPLAY ──────────────────────────────────────────────
 function updateBadgeDisplay() {
     const badgeEl = document.getElementById('app-badge');
     if (!badgeEl) return;
@@ -68,10 +89,8 @@ async function loadOrders() {
         badgeCount = pending.length;
         updateBadgeDisplay();
         
-        // Force SW to update Home Screen badge
-        if (navigator.serviceWorker?.controller) {
-            navigator.serviceWorker.controller.postMessage({ type: 'UPDATE_BADGE' });
-        }
+        // Set Home Screen badge directly
+        await updateHomeScreenBadge();
         
         const todayStr = new Date().toDateString();
         const done = orders.filter(o => {
@@ -166,6 +185,14 @@ function showToast(msg) {
     clearTimeout(t._tid);
     t._tid = setTimeout(() => t.classList.remove('show'), 3000);
 }
+
+// ─── KEEP ALIVE FOR BADGE POLLING ─────────────────────────────────────────────
+// When page is hidden, keep polling for badge updates
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        loadOrders(); // Refresh immediately when user opens the app
+    }
+});
 
 // ─── START ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', init);
