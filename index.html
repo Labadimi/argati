@@ -293,14 +293,40 @@ async function subscribeToNotifications() {
             });
         }
 
-        // Save to Google Sheets
-        await fetch(SCRIPT_URL + '?action=saveSub', {
+        // Save to Google Apps Script via POST
+        const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(sub)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'saveSub', subscription: sub })
         });
 
-        document.getElementById('notif-bar').style.display = 'none';
-        reg.showNotification('Argati', { body: 'Njoftimet u aktivizuan!' });
+        const result = await response.json();
+        if (result.saved) {
+            document.getElementById('notif-bar').style.display = 'none';
+            reg.showNotification('Argati', { body: 'Njoftimet u aktivizuan!' });
+        } else {
+            alert('Mbrojtja e njoftime dështoi. Provo përsëri.');
+        }
+    } catch(err) {
+        alert('Gabim: ' + err.message);
+    }
+}
+
+async function approveSelected() {
+    if (selectedRows.size === 0) return;
+    const rows = Array.from(selectedRows);
+    const fab = document.getElementById('fab');
+    fab.style.display = 'none';
+
+    for (const rowNum of rows) {
+        try {
+            const res = await fetch(SCRIPT_URL + '?action=approve&row=' + rowNum);
+            const result = await res.json();
+            if (result.success) {
+                selectedRows.delete(rowNum);
+            }
+        } catch(e) {
+            console.error('Approval failed for row ' + rowNum, e);
     } catch(err) {
         alert('Error: ' + err.message);
     }
