@@ -1,19 +1,22 @@
-// Argati Service Worker — required for iOS PWA notifications
-const CACHE = 'argati-v1';
+// Argati Service Worker v2 — handles push notifications
+const CACHE = 'argati-v2';
 
-self.addEventListener('install', e => {
-    self.skipWaiting();
-});
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
 
-self.addEventListener('activate', e => {
-    e.waitUntil(clients.claim());
-});
-
-// Handle push events (for future server-sent push)
+// ── PUSH EVENT — fires when server sends a push ───────────────────────────────
 self.addEventListener('push', e => {
-    const data = e.data ? e.data.json() : {};
-    const title = data.title || '🛒 Argati';
-    const body  = data.body  || 'New order arrived!';
+    let title = 'Argati';
+    let body  = 'New order arrived!';
+    let data  = {};
+
+    try {
+        data  = e.data ? e.data.json() : {};
+        title = data.title || title;
+        body  = data.body  || body;
+    } catch(err) {
+        body = e.data ? e.data.text() : body;
+    }
 
     e.waitUntil(
         self.registration.showNotification(title, {
@@ -23,11 +26,12 @@ self.addEventListener('push', e => {
             tag:           'argati-order',
             renotify:      true,
             requireInteraction: false,
+            data:          { url: self.location.origin }
         })
     );
 });
 
-// Tap on notification opens/focuses the app
+// ── NOTIFICATION CLICK — open/focus the app ───────────────────────────────────
 self.addEventListener('notificationclick', e => {
     e.notification.close();
     e.waitUntil(
