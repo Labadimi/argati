@@ -809,9 +809,18 @@ function renderOrderList(orders, reviewOrders) {
     list.innerHTML=`<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">No pending orders!</div><div class="empty-sub">All orders have been placed.</div></div>`;
     return;
   }
-  const sorted=[...reviewOrders,...orders.filter(o=>!reviewOrders.includes(o))];
-  const hint=orders.length>1?'<p class="section-label" style="margin-bottom:8px">Tap to select — pick multiple</p>':'<p class="section-label" style="margin-bottom:8px">Pending order</p>';
-  list.innerHTML=hint+sorted.map(o=>buildOrderCard(o)).join('');
+  // Exclude the active (current) order — it's shown in the active card below
+  const queue = orders.filter(o => o.rowNumber !== currentOrder?.rowNumber);
+  const sorted = [...reviewOrders.filter(o=>o.rowNumber!==currentOrder?.rowNumber), ...queue.filter(o=>!reviewOrders.includes(o))];
+
+  if (!sorted.length) {
+    // Only one order — active card handles it, nothing to show in list
+    list.innerHTML = '';
+    return;
+  }
+
+  const hint = '<p class="section-label" style="margin-bottom:8px">Queue — tap to switch</p>';
+  list.innerHTML = hint + sorted.map(o=>buildOrderCard(o)).join('');
   sorted.forEach(o=>{
     const card=document.getElementById('card-'+o.rowNumber);
     if (card) card.addEventListener('click',()=>toggleSelect(o.rowNumber,o));
