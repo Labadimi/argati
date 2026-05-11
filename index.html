@@ -389,30 +389,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
   </div>
 
   <!-- Active order + place controls -->
-  <div id="active-order-area"></div>
 
-  <div id="timer-bar" class="timer-bar" style="display:none">
-    <span>⏱</span><span id="timer-val">00:00</span><span>processing...</span>
-  </div>
-
-  <div id="checklist-box" class="checklist" style="display:none">
-    <div class="step" id="p-step-1">○ Opening product page...</div>
-    <div class="step" id="p-step-2">○ Filling customer info...</div>
-    <div class="step" id="p-step-3">○ Selecting payment...</div>
-    <div class="step" id="p-step-4">○ Recording Order ID...</div>
-  </div>
-
-  <div class="toggle-row pilot">
-    <span class="toggle-label" id="pilot-label">Auto-Pilot: OFF</span>
-    <label class="toggle-switch">
-      <input type="checkbox" id="pilot-toggle">
-      <span class="toggle-slider"></span>
-    </label>
-  </div>
-
-  <button id="place-order-btn" disabled>▶ Place Order</button>
-
-  <div id="place-status" style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;margin-top:8px;"></div>
 </div>
 
 
@@ -527,6 +504,14 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 </div>
 
 <!-- FLOATING ACTION BAR (multi-select) -->
+<!-- Auto-Pilot toggle always visible above FAB area -->
+<div id="autopilot-bar" style="position:fixed;bottom:calc(64px + env(safe-area-inset-bottom));left:16px;right:16px;z-index:59;display:none;">
+  <div style="background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.05));border:1px solid rgba(16,185,129,0.3);border-radius:14px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+    <span style="font-size:13px;font-weight:700;color:var(--text);" id="pilot-label">Auto-Pilot: OFF</span>
+    <label class="toggle-switch"><input type="checkbox" id="pilot-toggle"><span class="toggle-slider"></span></label>
+  </div>
+</div>
+
 <div id="fab">
   <div class="fab-inner">
     <div class="fab-left">
@@ -781,10 +766,7 @@ async function loadOrders(silent=false) {
     lastCount = allOrders.length;
 
     renderOrderList(allOrders, reviewOrders);
-    if (!currentOrder && allOrders.length>0) {
-      currentOrder = allOrders[0];
-      renderPlacePage();
-    }
+    if (allOrders.length>0) currentOrder = allOrders[0];
 
     // Auto-pilot
     if (autoPilot && !isProcessing && currentOrder) {
@@ -809,18 +791,10 @@ function renderOrderList(orders, reviewOrders) {
     list.innerHTML=`<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">No pending orders!</div><div class="empty-sub">All orders have been placed.</div></div>`;
     return;
   }
-  // Exclude the active (current) order — it's shown in the active card below
-  const queue = orders.filter(o => o.rowNumber !== currentOrder?.rowNumber);
-  const sorted = [...reviewOrders.filter(o=>o.rowNumber!==currentOrder?.rowNumber), ...queue.filter(o=>!reviewOrders.includes(o))];
-
-  if (!sorted.length) {
-    // Only one order — active card handles it, nothing to show in list
-    list.innerHTML = '';
-    return;
-  }
-
-  const hint = '<p class="section-label" style="margin-bottom:8px">Queue — tap to switch</p>';
-  list.innerHTML = hint + sorted.map(o=>buildOrderCard(o)).join('');
+  // Show all orders — review first, then normal
+  const sorted=[...reviewOrders,...orders.filter(o=>!reviewOrders.includes(o))];
+  const hint=orders.length>1?'<p class="section-label" style="margin-bottom:8px">Tap to select — pick multiple</p>':'<p class="section-label" style="margin-bottom:8px">Pending order</p>';
+  list.innerHTML=hint+sorted.map(o=>buildOrderCard(o)).join('');
   sorted.forEach(o=>{
     const card=document.getElementById('card-'+o.rowNumber);
     if (card) card.addEventListener('click',()=>toggleSelect(o.rowNumber,o));
@@ -859,7 +833,7 @@ function toggleSelect(rowNumber, order) {
     if (check) check.innerText=selectedRows.has(rowNumber)?'✓':'';
   }
   // Set as current order too
-  if (order&&selectedRows.has(rowNumber)) { currentOrder=order; renderPlacePage(); }
+  if (order&&selectedRows.has(rowNumber)) currentOrder=order;
   updateFAB();
 }
 function clearSelection() {
@@ -871,39 +845,13 @@ function clearSelection() {
 }
 function updateFAB() {
   const fab=document.getElementById('fab'), n=selectedRows.size;
+  const bar=document.getElementById('autopilot-bar');
   fab.style.display=n>0?'block':'none';
+  if(bar) bar.style.display=n>0?'none':'block'; // show pilot bar when nothing selected
   document.getElementById('fab-count').innerText=n+(n===1?' order selected':' orders selected');
 }
 
-// ─── RENDER PLACE PAGE ────────────────────────────────────────────────────────
-function renderPlacePage() {
-  const area=document.getElementById('active-order-area');
-  const btn=document.getElementById('place-order-btn');
-  if (!currentOrder) {
-    area.innerHTML=`<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">No pending orders</div><div class="empty-sub">All caught up!</div></div>`;
-    btn.disabled=true; return;
-  }
-  const o=currentOrder;
-  const prod=getProduct(o.Produkti);
-  const phone=validatePhone(o.Telefoni);
-  const addr=normalizeAddress(o.Adresa);
-  const raw=(o.Produkti||'').toString().trim();
-  const comment=(o['Koment shtese (Nese ka)']||'').toString().trim();
-  const isMulti=raw.includes('+');
-  area.innerHTML=`
-    <p class="section-label">⚡ Active Order</p>
-    <div class="order-card" style="margin-bottom:14px;">
-      <div class="card-top"><span class="card-badge">#${o.rowNumber}</span><span style="font-size:11px;color:var(--muted);font-weight:700;">${isMulti||comment?'⚠️ Needs review':'🟢 Ready'}</span></div>
-      <div class="card-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
-      <div class="card-detail"><span>📦</span><span class="val">${prod.name}</span></div>
-      <div class="card-detail"><span>📍</span><span class="val">${o.Qyteti||'—'}</span></div>
-      <div class="card-detail"><span>📞</span><span class="val" style="color:${phone.warning?'var(--red)':'inherit'}">${phone.warning||phone.value}</span></div>
-      <div class="card-detail"><span>🏠</span><span class="val">${addr.value||'—'}</span></div>
-      ${isMulti?`<div class="card-alert alert-multi">⚠️ <span>Multiple products: ${raw.split('+').map(c=>c.trim()).join(' + ')}</span></div>`:''}
-      ${comment?`<div class="card-alert alert-comment">💬 <span>${comment}</span></div>`:''}
-    </div>`;
-  btn.disabled = !!phone.warning || isProcessing;
-}
+// renderPlacePage removed
 
 // ─── TIMER ────────────────────────────────────────────────────────────────────
 function startTimer() {
@@ -930,7 +878,7 @@ async function placeOrder(order) {
   if (phone.warning) { showNotif('⚠️','Invalid Phone',phone.warning,'red'); return; }
 
   isProcessing=true;
-  document.getElementById('place-order-btn').disabled=true;
+  const _poBtn=document.getElementById('place-order-btn'); if(_poBtn) _poBtn.disabled=true;
   document.getElementById('checklist-box').style.display='block';
   const steps=['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'];
   [1,2,3,4].forEach(i=>{ const el=document.getElementById('p-step-'+i); el.innerText='○ '+steps[i-1]; el.className='step'; });
@@ -991,7 +939,7 @@ function pollForResult(rowNumber, name, product, order, attempts) {
 function finishOrder(success, order, orderId, errorMsg) {
   const elapsed=stopTimer();
   isProcessing=false;
-  document.getElementById('place-order-btn').disabled=false;
+  const _poBtn2=document.getElementById('place-order-btn'); if(_poBtn2) _poBtn2.disabled=false;
   document.getElementById('checklist-box').style.display='none';
 
   if (success) {
@@ -1038,16 +986,12 @@ document.getElementById('place-order-btn').addEventListener('click',()=>{
 });
 
 // ─── AUTO-PILOT ───────────────────────────────────────────────────────────────
-document.getElementById('pilot-toggle').addEventListener('change', e=>{
+if(document.getElementById('pilot-toggle')) document.getElementById('pilot-toggle').addEventListener('change', e=>{
   autoPilot=e.target.checked;
   document.getElementById('pilot-label').innerText='Auto-Pilot: '+(autoPilot?'ON 🤖':'OFF');
   localStorage.setItem('argatiAutoPilot', autoPilot?'1':'');
 });
-if (localStorage.getItem('argatiAutoPilot')) {
-  autoPilot=true;
-  document.getElementById('pilot-toggle').checked=true;
-  document.getElementById('pilot-label').innerText='Auto-Pilot: ON 🤖';
-}
+if (localStorage.getItem('argatiAutoPilot')) { autoPilot=true; const pt=document.getElementById('pilot-toggle'); if(pt) pt.checked=true; const pl=document.getElementById('pilot-label'); if(pl) pl.innerText='Auto-Pilot: ON 🤖'; }
 
 // ─── WEB PUSH NOTIFICATIONS ───────────────────────────────────────────────────
 function urlBase64ToUint8Array(b64) {
