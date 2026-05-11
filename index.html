@@ -349,7 +349,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
   <div class="header-icon">🤖</div>
   <div class="header-text">
     <div class="header-title">Argati</div>
-    <div class="header-sub" id="header-sub"></div>
+    <div class="header-sub" id="header-sub">Parts Center</div>
   </div>
   <div class="header-btns">
     <button class="icon-btn" id="theme-btn">🌙</button>
@@ -387,10 +387,8 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
   <div id="order-list">
     <div class="loading"><div class="spinner"></div>Loading orders...</div>
   </div>
-</div>
 
-<!-- ── PLACE ORDER PAGE ────────────────────────────────────────────────────── -->
-<div class="page" id="page-place">
+  <!-- Active order + place controls -->
   <div id="active-order-area"></div>
 
   <div id="timer-bar" class="timer-bar" style="display:none">
@@ -416,6 +414,8 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 
   <div id="place-status" style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;margin-top:8px;"></div>
 </div>
+
+
 
 <!-- ── ANALYTICS PAGE ─────────────────────────────────────────────────────── -->
 <div class="page" id="page-analytics">
@@ -516,10 +516,6 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
     <span class="tab-badge" id="badge-orders"></span>
     <span>Orders</span>
   </div>
-  <div class="tab-item" data-page="place" onclick="switchTab('place')">
-    <div class="tab-icon">▶️</div>
-    <span>Place</span>
-  </div>
   <div class="tab-item" data-page="analytics" onclick="switchTab('analytics')">
     <div class="tab-icon">📊</div>
     <span>Analytics</span>
@@ -617,7 +613,6 @@ function switchTab(name) {
   document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.page === name));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
   if (name === 'analytics') { renderChart(weeklyData); updateAvgTime(); renderHistory(); }
-  if (name === 'place') renderPlacePage();
 }
 
 // ─── RELOAD ───────────────────────────────────────────────────────────────────
@@ -742,9 +737,13 @@ async function loadOrders(silent=false) {
   try {
     const ctrl = new AbortController();
     const to   = setTimeout(()=>ctrl.abort(), 15000);
-    const res  = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal, redirect:'follow' });
+    // Don't specify mode — let browser use default CORS handling
+    // Apps Script deployed as "Anyone" handles CORS automatically
+    const res  = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal });
     clearTimeout(to);
-    const orders = await res.json();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const orders = JSON.parse(text);
 
     const todayStr = new Date().toDateString();
     const completedToday = orders.filter(o => {
@@ -797,8 +796,9 @@ async function loadOrders(silent=false) {
     }
 
   } catch(e) {
-    const msg=e.name==='AbortError'?'Connection timed out.':'Error: '+(e.message||'unknown');
-    if (!silent) list.innerHTML=`<div class="loading" style="color:var(--red)">⚠ ${msg}<br><br><button onclick="loadOrders()" style="margin-top:12px;background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;">↻ Retry</button></div>`;
+    const msg=e.name==='AbortError'?'Connection timed out — check internet connection.':('Error: '+(e.message||'unknown'));
+    console.error('loadOrders failed:', e);
+    if (!silent) list.innerHTML='<div class="loading" style="color:var(--red)">⚠ '+msg+'<br><br><small style="color:var(--muted)">Make sure Apps Script is deployed as Anyone</small><br><br><button onclick="loadOrders()" style="margin-top:12px;background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;">↻ Retry</button></div>';
   }
 }
 
@@ -930,7 +930,7 @@ async function placeOrder(order) {
 
   try {
     // Write approval flag to Apps Script
-    const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now(), { redirect:'follow' });
+    const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
     let success=false;
     try { const d=JSON.parse(await res.text()); success=d.success===true; } catch(e) { success=res.status>=200&&res.status<400; }
 
@@ -958,7 +958,7 @@ function pollForResult(rowNumber, name, product, order, attempts) {
   const MAX=24; // 24×5s = 2min
   setTimeout(async()=>{
     try {
-      const res=await fetch(SCRIPT_URL+'?t='+Date.now(), { redirect:'follow' });
+      const res=await fetch(SCRIPT_URL+'?t='+Date.now());
       const orders=await res.json();
       const row=orders.find(o=>o.rowNumber==rowNumber);
       if (row) {
@@ -1007,7 +1007,7 @@ async function approveSelected() {
   let failed=0;
   for (const order of toProcess) {
     try {
-      const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now(),{redirect:'follow'});
+      const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
       let ok=false;
       try { const d=JSON.parse(await res.text()); ok=d.success===true; } catch(e) { ok=res.status>=200&&res.status<400; }
       if (!ok) failed++;
@@ -1110,13 +1110,12 @@ async function testNotification() {
 setInterval(()=>loadOrders(true), 60000);
 
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
+try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{}); } catch(e) {}
 // Restore timings
-(()=>{ const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.date===new Date().toDateString()&&Array.isArray(s.timings)) sessionTimings=s.timings; })();
-checkNotifBar();
-setTimeout(()=>loadOrders(), 100);
+try { const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.date===new Date().toDateString()&&Array.isArray(s.timings)) sessionTimings=s.timings; } catch(e) {}
+try { checkNotifBar(); } catch(e) {}
+// Delay slightly to let page render first, then load
+setTimeout(()=>{ try { loadOrders(); } catch(e) { document.getElementById('order-list').innerHTML='<div class="loading" style="color:var(--red)">⚠ Startup error: '+e.message+'<br><br><button onclick="loadOrders()" style="margin-top:12px;background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;">↻ Retry</button></div>'; } }, 300);
 </script>
 </body>
 </html>
