@@ -1,359 +1,1122 @@
 <!DOCTYPE html>
-<html lang="sq">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ff4500">
-    <title>Parts Center</title>
-    <link rel="manifest" href="/argati/manifest.json">
-    <link rel="apple-touch-icon" href="/argati/icon-192.png">
-    <style>
-        :root {
-            --primary: #ff4500;
-            --primary-dark: #e03d00;
-            --bg: #f0f2f5;
-            --card: #ffffff;
-            --text: #0f172a;
-            --muted: #94a3b8;
-            --border: #e8ecf0;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning-bg: #fef3c7;
-            --shadow: 0 2px 12px rgba(0,0,0,0.08);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Argati">
+<link rel="manifest" href="manifest.json">
+<title>Argati</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── THEME ──────────────────────────────────────────────────────────────────── */
+:root {
+  --primary:       #ff4500;
+  --primary-light: rgba(255,69,0,0.09);
+  --bg:            #f0f2f5;
+  --card:          #ffffff;
+  --text:          #0f172a;
+  --muted:         #94a3b8;
+  --border:        #e8ecf0;
+  --shadow:        rgba(0,0,0,0.07);
+  --green:         #10b981;
+  --amber:         #f59e0b;
+  --red:           #ef4444;
+  --blue:          #3b82f6;
+}
+body.dark {
+  --primary:       #ff5722;
+  --primary-light: rgba(255,87,34,0.12);
+  --bg:            #0f1117;
+  --card:          #1a1d27;
+  --text:          #e2e8f0;
+  --muted:         #64748b;
+  --border:        #2a2d3a;
+  --shadow:        rgba(0,0,0,0.5);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  transition: background 0.2s, color 0.2s;
+}
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #0f1117;
-                --card: #1a1d27;
-                --text: #e2e8f0;
-                --muted: #64748b;
-                --border: #2a2d3a;
-                --shadow: 0 2px 12px rgba(0,0,0,0.4);
-                --warning-bg: #2d1a0a;
-            }
-        }
+/* ── HEADER ─────────────────────────────────────────────────────────────────── */
+.header {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.header-icon {
+  width: 38px; height: 38px; background: var(--primary);
+  border-radius: 11px; display: flex; align-items: center;
+  justify-content: center; font-size: 20px; flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(255,69,0,0.3);
+}
+.header-text { flex: 1; }
+.header-title { font-size: 16px; font-weight: 800; }
+.header-sub   { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+.header-btns  { display: flex; gap: 7px; }
+.icon-btn {
+  width: 34px; height: 34px; border: 1.5px solid var(--border);
+  border-radius: 10px; background: var(--card); color: var(--text);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer; padding: 0;
+  transition: all 0.15s;
+}
+.icon-btn:active { border-color: var(--primary); background: var(--primary-light); transform: scale(0.93); }
+#reload-btn.spinning { animation: spin 0.5s linear; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── BOTTOM TAB BAR ─────────────────────────────────────────────────────────── */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: var(--card); border-top: 1px solid var(--border);
+  display: flex; padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 10px 0; cursor: pointer; position: relative;
+  font-size: 10px; font-weight: 600; color: var(--muted);
+  transition: color 0.15s;
+}
+.tab-item.active { color: var(--primary); }
+.tab-icon { font-size: 20px; line-height: 1; }
+.tab-badge {
+  position: absolute; top: 6px; right: calc(50% - 18px);
+  background: var(--primary); color: white;
+  font-size: 10px; font-weight: 800;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: none; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'DM Sans', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 16px;
-            padding-top: max(16px, env(safe-area-inset-top));
-            padding-bottom: max(16px, env(safe-area-inset-bottom));
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            max-width: 500px;
-            margin: 0 auto;
-        }
+/* ── PAGE VIEWS ─────────────────────────────────────────────────────────────── */
+.page { display: none; padding: 14px 16px; }
+.page.active { display: block; }
 
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            padding: 8px 0;
-            position: sticky;
-            top: 0;
-            background: var(--bg);
-            z-index: 10;
-            padding-top: max(8px, env(safe-area-inset-top));
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .header-icon {
-            width: 44px; height: 44px;
-            background: var(--primary);
-            border-radius: 14px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px; color: white;
-            box-shadow: 0 4px 12px rgba(255,69,0,0.3);
-            position: relative;
-        }
-        .header-title {
-            font-size: 21px; font-weight: 800;
-            line-height: 1.2; letter-spacing: -0.02em;
-        }
-        .header-sub {
-            font-size: 12px; color: var(--muted); font-weight: 500;
-        }
-        .btn-icon {
-            width: 40px; height: 40px;
-            background: var(--card);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-            color: var(--text);
-        }
-        .btn-icon:active { background: var(--primary); border-color: var(--primary); color: white; }
+/* ── STATS BAR ──────────────────────────────────────────────────────────────── */
+.stats-bar {
+  display: flex; background: var(--card); border-radius: 14px;
+  padding: 12px 16px; margin-bottom: 14px; border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.stat-item  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.stat-num   { font-size: 24px; font-weight: 800; color: var(--green); line-height: 1; }
+.stat-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-divider { width: 1px; height: 32px; background: var(--border); margin: 0 10px; }
 
-        /* Badge */
-        #app-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ef4444;
-            color: white;
-            font-size: 11px;
-            font-weight: 800;
-            min-width: 20px;
-            height: 20px;
-            border-radius: 10px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid white;
-            padding: 0 5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
+/* ── NEW ORDER BANNER ───────────────────────────────────────────────────────── */
+#new-order-banner {
+  display: none; background: var(--green); color: white;
+  font-size: 13px; font-weight: 700; text-align: center;
+  padding: 10px 16px; margin-bottom: 12px; border-radius: 12px;
+  animation: slideDown 0.3s ease;
+}
+@keyframes slideDown { from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)} }
 
-        /* Stats */
-        .stats-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-        .stat-box {
-            flex: 1;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 12px 14px;
-            text-align: center;
-        }
-        .stat-num {
-            font-size: 28px;
-            font-weight: 800;
-            line-height: 1;
-            margin-bottom: 3px;
-        }
-        .stat-num.pending { color: #ff4500; }
-        .stat-num.done { color: #10b981; }
-        .stat-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
+/* ── NOTIFICATION BAR ───────────────────────────────────────────────────────── */
+#notif-bar {
+  display: none; background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;
+  align-items: center; justify-content: space-between; gap: 10px;
+}
+#notif-bar span { font-size: 12px; color: var(--muted); font-weight: 600; }
+#notif-bar button {
+  background: var(--primary); color: white; border: none;
+  border-radius: 8px; padding: 7px 14px; font-size: 12px;
+  font-weight: 800; cursor: pointer; font-family: inherit;
+  white-space: nowrap; width: auto;
+}
 
-        /* Section Title */
-        .section-title {
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin: 20px 0 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .section-count {
-            background: var(--primary);
-            color: white;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 700;
-        }
+/* ── SECTION LABEL ──────────────────────────────────────────────────────────── */
+.section-label {
+  font-size: 10px; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 9px 1px;
+}
 
-        /* Order Cards */
-        .order-card {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            transition: opacity 0.3s, transform 0.15s;
-        }
-        .order-card:active { transform: scale(0.99); }
-        .order-card.processing { opacity: 0.5; pointer-events: none; }
-        
-        .order-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-        .order-name-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .order-name {
-            font-size: 16px;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-        .order-row-num {
-            background: rgba(255,69,0,0.1);
-            color: var(--primary);
-            font-size: 11px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 7px;
-        }
-        
-        .order-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px 12px;
-            font-size: 13px;
-            color: #475569;
-            margin-bottom: 10px;
-        }
-        @media (prefers-color-scheme: dark) {
-            .order-details { color: #94a3b8; }
-        }
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .detail-icon { font-size: 13px; flex-shrink: 0; }
-        
-        .order-comment {
-            background: var(--warning-bg);
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            margin-bottom: 10px;
-            font-weight: 500;
-            display: flex;
-            align-items: flex-start;
-            gap: 6px;
-            line-height: 1.4;
-        }
+/* ── ORDER CARD ─────────────────────────────────────────────────────────────── */
+.order-card {
+  background: var(--card); border-radius: 16px; padding: 14px 16px;
+  margin-bottom: 10px; border-left: 4px solid var(--primary);
+  box-shadow: 0 2px 10px var(--shadow);
+}
+.order-card.review { border-left-color: var(--amber); }
+.order-card.selected {
+  border-color: var(--primary); border-width: 2px;
+  background: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(255,69,0,0.15);
+}
+.card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.card-badge {
+  background: var(--primary-light); color: var(--primary);
+  font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 7px;
+}
+.card-check {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--border); background: var(--card);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; transition: all 0.15s; flex-shrink: 0;
+}
+.order-card.selected .card-check { background: var(--primary); border-color: var(--primary); color: white; }
+.card-name { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
+.card-detail { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 7px; font-weight: 500; }
+.card-detail .val { color: var(--text); font-weight: 600; }
+.card-alert {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin-top: 10px; padding: 9px 12px; border-radius: 10px;
+  font-size: 12px; line-height: 1.5; font-weight: 600;
+}
+.alert-multi   { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+.alert-comment { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+body.dark .alert-multi   { background: #2d1a0a; border-color: #7c3509; color: #fb923c; }
+body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #93c5fd; }
 
-        .order-action-row {
-            display: flex;
-            gap: 8px;
-        }
-        .btn-approve {
-            flex: 1;
-            padding: 12px;
-            background: var(--success);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.15s;
-            letter-spacing: 0.02em;
-        }
-        .btn-approve:active { transform: scale(0.97); opacity: 0.8; }
+/* ── FLOATING ACTION BAR ────────────────────────────────────────────────────── */
+#fab {
+  position: fixed; bottom: calc(64px + env(safe-area-inset-bottom));
+  left: 16px; right: 16px; z-index: 60;
+  display: none; animation: fabUp 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes fabUp { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)} }
+.fab-inner {
+  background: var(--primary); border-radius: 16px; padding: 13px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 8px 24px rgba(255,69,0,0.4);
+}
+.fab-left { display: flex; flex-direction: column; gap: 1px; }
+.fab-count { font-size: 17px; font-weight: 800; color: white; }
+.fab-sub   { font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 600; }
+.fab-btn {
+  background: white; color: var(--primary); border: none;
+  border-radius: 11px; padding: 10px 18px;
+  font-family: inherit; font-size: 14px; font-weight: 800;
+  cursor: pointer; transition: transform 0.12s;
+}
+.fab-btn:active { transform: scale(0.95); }
+.fab-btn:disabled { opacity: 0.5; }
+.fab-clear {
+  background: rgba(255,255,255,0.18); color: white; border: none;
+  border-radius: 8px; padding: 6px 12px; font-family: inherit;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+  margin-top: 6px; width: 100%; text-align: center;
+}
 
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 40px 24px;
-            color: var(--muted);
-            background: var(--card);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-        }
-        .empty-icon { font-size: 52px; margin-bottom: 12px; }
-        .empty-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-        .empty-sub { font-size: 13px; margin-top: 4px; }
+/* ── CHECKLIST / TIMER ──────────────────────────────────────────────────────── */
+.checklist {
+  background: var(--card); border-radius: 12px; padding: 13px 15px;
+  margin-bottom: 12px; border: 1px solid var(--border);
+}
+.step { font-size: 12px; margin: 5px 0; color: var(--muted); display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.step.done { color: var(--green); font-weight: 700; }
+.timer-bar {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 8px 14px; margin-bottom: 10px;
+  font-size: 12px; color: var(--muted); font-weight: 600;
+}
+#timer-val { font-size: 18px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
 
-        /* Toast */
-        #toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #0f172a;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 24px;
-            font-size: 13px;
-            font-weight: 600;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 999;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            white-space: nowrap;
-        }
-        #toast.show { opacity: 1; }
+/* ── TOGGLES ────────────────────────────────────────────────────────────────── */
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 11px 15px; margin-bottom: 10px;
+}
+.toggle-row.pilot {
+  background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.04));
+  border-color: rgba(16,185,129,0.25);
+}
+.toggle-label { font-size: 13px; font-weight: 700; }
+.toggle-switch { position: relative; width: 42px; height: 23px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 23px; cursor: pointer; transition: background 0.2s; }
+.toggle-slider:before { content:''; position:absolute; width:17px; height:17px; left:3px; top:3px; background:white; border-radius:50%; transition:transform 0.2s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--green); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(19px); }
 
-        /* Loading */
-        .loading-wrap {
-            text-align: center;
-            padding: 32px 20px;
-        }
-        .spinner {
-            display: inline-block;
-            width: 28px; height: 28px;
-            border: 3px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+/* ── PLACE ORDER BUTTON ─────────────────────────────────────────────────────── */
+#place-order-btn {
+  width: 100%; padding: 15px; border: none; border-radius: 14px;
+  font-family: inherit; background: var(--primary); color: white;
+  font-size: 15px; font-weight: 800; letter-spacing: 0.05em;
+  text-transform: uppercase; cursor: pointer; margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(255,69,0,0.3);
+  transition: all 0.15s;
+}
+#place-order-btn:active:not(:disabled) { transform: scale(0.97); background: #e03d00; }
+#place-order-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── ANALYTICS ──────────────────────────────────────────────────────────────── */
+.analytics-card {
+  background: var(--card); border-radius: 14px; padding: 14px;
+  margin-bottom: 12px; border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.analytics-title { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+.chart-wrap { display: flex; align-items: flex-end; gap: 5px; height: 72px; padding-top: 12px; margin-bottom: 6px; }
+.chart-col  { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; height:100%; justify-content:flex-end; }
+.chart-bar-wrap { width:100%; flex:1; display:flex; align-items:flex-end; justify-content:center; }
+.chart-bar  { width:100%; border-radius:4px 4px 0 0; background:var(--primary); opacity:0.75; min-height:2px; }
+.chart-bar.today { opacity:1; }
+.chart-bar.zero  { opacity:0.2; }
+.chart-val  { font-size:10px; font-weight:800; color:var(--text); min-height:14px; }
+.chart-day  { font-size:9px; color:var(--muted); font-weight:600; }
+.chart-day.today { color:var(--primary); font-weight:800; }
+.avg-row { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:10px; margin-top:4px; }
+.avg-label { font-size:12px; color:var(--muted); font-weight:600; }
+.avg-value { font-size:15px; font-weight:800; color:var(--primary); }
+.avg-sub   { font-size:9px; color:var(--muted); margin-top:1px; text-align:right; }
+
+/* ── HISTORY ────────────────────────────────────────────────────────────────── */
+.history-item { padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.history-item:last-child { border-bottom: none; }
+.history-top    { display:flex; justify-content:space-between; margin-bottom:4px; }
+.history-name   { font-weight:700; font-size:13px; }
+.history-time   { color:var(--muted); font-size:11px; }
+.history-bottom { display:flex; justify-content:space-between; align-items:center; }
+.history-product { color:var(--muted); font-weight:500; }
+.history-result  { font-size:12px; font-weight:800; }
+.history-result.ok  { color:var(--green); }
+.history-result.err { color:var(--red); }
+
+/* ── EMPTY STATE ────────────────────────────────────────────────────────────── */
+.empty-state { text-align:center; padding:48px 20px; }
+.empty-icon  { font-size:48px; margin-bottom:12px; }
+.empty-title { font-size:17px; font-weight:800; margin-bottom:6px; }
+.empty-sub   { font-size:13px; color:var(--muted); }
+
+/* ── LOADING ────────────────────────────────────────────────────────────────── */
+.loading { text-align:center; padding:40px 20px; color:var(--muted); }
+.spinner { width:28px; height:28px; border:3px solid var(--border); border-top-color:var(--primary); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 12px; }
+
+/* ── NOTIFICATION OVERLAY ───────────────────────────────────────────────────── */
+.notif-overlay {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,0.6); backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  display:none; align-items:center; justify-content:center; padding:24px;
+}
+.notif-overlay.show { display:flex; animation:fadeIn 0.2s ease; }
+@keyframes fadeIn { from{opacity:0}to{opacity:1} }
+.notif-card {
+  background:var(--card); border-radius:22px; padding:28px 24px;
+  text-align:center; width:100%; max-width:300px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  animation:popUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popUp { from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1} }
+.notif-icon  { font-size:52px; margin-bottom:14px; }
+.notif-title { font-size:20px; font-weight:800; margin-bottom:8px; }
+.notif-sub   { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:22px; white-space:pre-line; }
+.notif-btn {
+  width:100%; padding:13px; border:none; border-radius:12px;
+  font-family:inherit; font-size:14px; font-weight:800;
+  cursor:pointer; background:var(--primary); color:white;
+}
+.notif-btn.green { background:var(--green); }
+.notif-btn.red   { background:var(--red); }
+
+/* ── SETTINGS ───────────────────────────────────────────────────────────────── */
+.settings-section { margin-bottom: 20px; }
+.settings-title {
+  font-size: 10px; font-weight: 800; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;
+}
+.settings-card {
+  background: var(--card); border-radius: 14px;
+  border: 1px solid var(--border); overflow: hidden;
+}
+.settings-row {
+  display: flex; align-items: center; padding: 13px 15px;
+  border-bottom: 1px solid var(--border); gap: 12px;
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+.settings-info { flex: 1; }
+.settings-label { font-size: 13px; font-weight: 700; }
+.settings-desc  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+</style>
 </head>
 <body>
 
-    <!-- HEADER -->
-    <div class="header">
-        <div class="header-left">
-            <div class="header-icon">
-                🤖
-                <span id="app-badge">0</span>
-            </div>
-            <div>
-                <div class="header-title">Argati</div>
-                <div class="header-sub">Order Dashboard</div>
-            </div>
+<!-- HEADER -->
+<div class="header">
+  <div class="header-icon">🤖</div>
+  <div class="header-text">
+    <div class="header-title">Argati</div>
+    <div class="header-sub" id="header-sub">Parts Center</div>
+  </div>
+  <div class="header-btns">
+    <button class="icon-btn" id="theme-btn">🌙</button>
+    <button class="icon-btn" id="reload-btn">↻</button>
+  </div>
+</div>
+
+<!-- PAGES -->
+
+<!-- ── ORDERS PAGE ─────────────────────────────────────────────────────────── -->
+<div class="page active" id="page-orders">
+  <div id="new-order-banner"></div>
+  <div id="notif-bar">
+    <span>🔔 Enable Argati notifications</span>
+    <button onclick="subscribeNotifications()">Enable</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-num" id="stat-today">—</span>
+      <span class="stat-label">Today ✅</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-pending" style="color:var(--primary)">—</span>
+      <span class="stat-label">Pending 🕐</span>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-review" style="color:var(--amber)">—</span>
+      <span class="stat-label">Review ⚠️</span>
+    </div>
+  </div>
+
+  <div id="order-list">
+    <div class="loading"><div class="spinner"></div>Loading orders...</div>
+  </div>
+</div>
+
+<!-- ── PLACE ORDER PAGE ────────────────────────────────────────────────────── -->
+<div class="page" id="page-place">
+  <div id="active-order-area"></div>
+
+  <div id="timer-bar" class="timer-bar" style="display:none">
+    <span>⏱</span><span id="timer-val">00:00</span><span>processing...</span>
+  </div>
+
+  <div id="checklist-box" class="checklist" style="display:none">
+    <div class="step" id="p-step-1">○ Opening product page...</div>
+    <div class="step" id="p-step-2">○ Filling customer info...</div>
+    <div class="step" id="p-step-3">○ Selecting payment...</div>
+    <div class="step" id="p-step-4">○ Recording Order ID...</div>
+  </div>
+
+  <div class="toggle-row pilot">
+    <span class="toggle-label" id="pilot-label">Auto-Pilot: OFF</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="pilot-toggle">
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
+
+  <button id="place-order-btn" disabled>▶ Place Order</button>
+
+  <div id="place-status" style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;margin-top:8px;"></div>
+</div>
+
+<!-- ── ANALYTICS PAGE ─────────────────────────────────────────────────────── -->
+<div class="page" id="page-analytics">
+  <div class="analytics-card">
+    <p class="analytics-title">Orders — Last 7 Days</p>
+    <div class="chart-wrap" id="perf-chart"></div>
+    <div class="avg-row">
+      <span class="avg-label">Avg time today</span>
+      <div style="text-align:right">
+        <div class="avg-value" id="avg-time-val">--:--</div>
+        <div class="avg-sub"   id="avg-time-sub">no orders yet</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Session History</p>
+  <div id="history-list-a">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-title">No orders yet</div>
+      <div class="empty-sub">Completed orders will appear here.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SETTINGS PAGE ──────────────────────────────────────────────────────── -->
+<div class="page" id="page-settings">
+  <div class="settings-section">
+    <p class="settings-title">Appearance</p>
+    <div class="settings-card">
+      <div class="settings-row">
+        <span class="settings-icon">🌙</span>
+        <div class="settings-info">
+          <div class="settings-label">Dark Mode</div>
+          <div class="settings-desc">Switch between light and dark theme</div>
         </div>
-        <button class="btn-icon" onclick="loadOrders()" title="Refresh">🔄</button>
+        <label class="toggle-switch">
+          <input type="checkbox" id="dark-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
+  </div>
 
-    <!-- STATS -->
-    <div class="stats-row">
-        <div class="stat-box">
-            <div class="stat-num pending" id="stat-pending">—</div>
-            <div class="stat-label">Në Pritje</div>
+  <div class="settings-section">
+    <p class="settings-title">Notifications</p>
+    <div class="settings-card">
+      <div class="settings-row">
+        <span class="settings-icon">🔔</span>
+        <div class="settings-info">
+          <div class="settings-label">Push Notifications</div>
+          <div class="settings-desc" id="notif-status-text">Not enabled</div>
         </div>
-        <div class="stat-box">
-            <div class="stat-num done" id="stat-done">—</div>
-            <div class="stat-label">Sot ✅</div>
+        <button id="notif-toggle-btn" onclick="subscribeNotifications()"
+          style="background:var(--primary);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;width:auto;">
+          Enable
+        </button>
+      </div>
+      <div class="settings-row">
+        <span class="settings-icon">🧪</span>
+        <div class="settings-info">
+          <div class="settings-label">Test Notification</div>
+          <div class="settings-desc">Send a test push to this device</div>
         </div>
+        <button onclick="testNotification()"
+          style="background:var(--card);color:var(--text);border:1.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;width:auto;">
+          Test
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- PENDING ORDERS -->
-    <div class="section-title">
-        📋 Porositë në Pritje
-        <span class="section-count" id="pending-count">0</span>
+  <div class="settings-section">
+    <p class="settings-title">About</p>
+    <div class="settings-card">
+      <div class="settings-row">
+        <span class="settings-icon">🤖</span>
+        <div class="settings-info">
+          <div class="settings-label">Argati v3.0</div>
+          <div class="settings-desc">Parts Center Order Manager</div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <span class="settings-icon">🔗</span>
+        <div class="settings-info">
+          <div class="settings-label">Desktop Extension</div>
+          <div class="settings-desc">iPhone approvals processed by Chrome on your PC</div>
+        </div>
+      </div>
     </div>
-    <div id="pending-orders">
-        <div class="loading-wrap"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ── BOTTOM TAB BAR ──────────────────────────────────────────────────────── -->
+<div class="tab-bar">
+  <div class="tab-item active" data-page="orders" onclick="switchTab('orders')">
+    <div class="tab-icon">📋</div>
+    <span class="tab-badge" id="badge-orders"></span>
+    <span>Orders</span>
+  </div>
+  <div class="tab-item" data-page="place" onclick="switchTab('place')">
+    <div class="tab-icon">▶️</div>
+    <span>Place</span>
+  </div>
+  <div class="tab-item" data-page="analytics" onclick="switchTab('analytics')">
+    <div class="tab-icon">📊</div>
+    <span>Analytics</span>
+  </div>
+  <div class="tab-item" data-page="settings" onclick="switchTab('settings')">
+    <div class="tab-icon">⚙️</div>
+    <span>Settings</span>
+  </div>
+</div>
+
+<!-- FLOATING ACTION BAR (multi-select) -->
+<div id="fab">
+  <div class="fab-inner">
+    <div class="fab-left">
+      <div class="fab-count" id="fab-count">0 selected</div>
+      <div class="fab-sub">Tap Place to send to desktop</div>
     </div>
+    <button class="fab-btn" id="fab-btn" onclick="approveSelected()">▶ Place</button>
+  </div>
+  <button class="fab-clear" onclick="clearSelection()">✕ Clear selection</button>
+</div>
 
-    <!-- TOAST -->
-    <div id="toast"></div>
+<!-- NOTIFICATION OVERLAY -->
+<div class="notif-overlay" id="notif-overlay">
+  <div class="notif-card">
+    <div class="notif-icon"  id="notif-icon">✅</div>
+    <div class="notif-title" id="notif-title">Done!</div>
+    <div class="notif-sub"   id="notif-sub"></div>
+    <button class="notif-btn" id="notif-btn" onclick="closeNotif()">OK</button>
+  </div>
+</div>
 
-    <script src="/argati/app.js"></script>
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
+const VAPID_PUBLIC  = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let allOrders      = [];
+let selectedRows   = new Set();
+let currentOrder   = null;
+let orderHistory   = [];
+let sessionTimings = [];
+let weeklyData     = {};
+let lastCount      = -1;
+let isProcessing   = false;
+let timerInterval  = null;
+let timerStart     = null;
+let autoPilot      = false;
+
+// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
+const PRODUCTS = {
+  "105":{ name:"Pastrues Frenave 105",         url:"https://gjirafamall.com/pastrues-i-frenave-80100-pcl-005-105" },
+  "106":{ name:"DPF Additiv 106",               url:"https://gjirafamall.com/dpf-additiv-pcl-006-106" },
+  "107":{ name:"Pastrues DPF 107",              url:"https://gjirafamall.com/pastrues-i-dpf-parts-center-pcl007-107-300-ml" },
+  "201":{ name:"Super Diesel Additiv 201",      url:"https://gjirafamall.com/super-diesel-addetiv-pcs-001-201-300-ml" },
+  "204":{ name:"Pastrues Injektimit Dizel 204", url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-dizel-parts-center-204" },
+  "206":{ name:"Perforcues Oktani 206",         url:"https://gjirafamall.com/perforcues-i-oktanit-te-benzines-pcs-006-206" },
+  "207":{ name:"Additiv Vaj Motorik 207",       url:"https://gjirafamall.com/additiv-per-vaj-motorik-pcs-007-207" },
+  "209":{ name:"Super Benzin Additiv 209",      url:"https://gjirafamall.com/super-benzin-addetiv-pcs-009-209" },
+  "210":{ name:"Pastrues Injektimit Benzine 210",url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-benzine-pcs-010-210" },
+};
+function getProduct(raw) {
+  if (!raw) return { name:'—', url:'' };
+  const c = raw.toString().trim();
+  if (c.includes('+')) return { name: c.split('+').map(x => (PRODUCTS[x.trim()]||{name:x.trim()}).name).join(' + '), url:'' };
+  return PRODUCTS[c] || { name:c, url:'' };
+}
+
+// ─── VALIDATORS ───────────────────────────────────────────────────────────────
+function validatePhone(raw) {
+  if (!raw) return { value:'', warning:'Phone number missing!' };
+  let p = raw.toString().trim().replace(/[\s\-().]/g,'').replace(/^\+3830?/,'0').replace(/^3830?/,'0');
+  if (!/^04\d{7}$/.test(p)) return { value:p, warning:'Phone ' + p + ' looks incorrect' };
+  return { value:p, warning:null };
+}
+function normalizeAddress(raw) {
+  if (!raw) return { value:'', warning:'Address missing!' };
+  return { value: raw.toString().trim().replace(/\s+/g,' '), warning:null };
+}
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+function applyTheme(dark) {
+  document.body.classList.toggle('dark', dark);
+  document.getElementById('theme-btn').innerText = dark ? '☀️' : '🌙';
+  document.getElementById('dark-toggle').checked = dark;
+  localStorage.setItem('darkMode', dark ? '1' : '');
+}
+document.getElementById('theme-btn').addEventListener('click', () => applyTheme(!document.body.classList.contains('dark')));
+document.getElementById('dark-toggle').addEventListener('change', e => applyTheme(e.target.checked));
+if (localStorage.getItem('darkMode')) applyTheme(true);
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.page === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  if (name === 'analytics') { renderChart(weeklyData); updateAvgTime(); renderHistory(); }
+  if (name === 'place') renderPlacePage();
+}
+
+// ─── RELOAD ───────────────────────────────────────────────────────────────────
+document.getElementById('reload-btn').addEventListener('click', () => {
+  const btn = document.getElementById('reload-btn');
+  btn.classList.add('spinning');
+  btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once:true });
+  loadOrders();
+});
+
+// ─── NOTIFICATION ─────────────────────────────────────────────────────────────
+function showNotif(icon, title, sub, btnClass) {
+  document.getElementById('notif-icon').innerText  = icon;
+  document.getElementById('notif-title').innerText = title;
+  document.getElementById('notif-sub').innerText   = sub;
+  document.getElementById('notif-btn').className   = 'notif-btn ' + (btnClass||'');
+  document.getElementById('notif-overlay').classList.add('show');
+  if (navigator.vibrate) navigator.vibrate(btnClass === 'red' ? [100,50,100] : [80]);
+}
+function closeNotif() { document.getElementById('notif-overlay').classList.remove('show'); }
+
+// ─── SOUND ────────────────────────────────────────────────────────────────────
+function playSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function tone(f,t,d,v) {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type='sine';
+      o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(v,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+d);
+      o.start(t); o.stop(t+d);
+    }
+    const t=ctx.currentTime;
+    tone(659.25,t,0.18,0.4); tone(830.61,t+0.2,0.18,0.4); tone(987.77,t+0.4,0.28,0.5);
+  } catch(e) {}
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function updateStats(completedToday, pending, reviewCount) {
+  document.getElementById('stat-today').innerText   = completedToday;
+  document.getElementById('stat-pending').innerText = pending;
+  document.getElementById('stat-review').innerText  = reviewCount;
+  // Badge on Orders tab
+  const badge = document.getElementById('badge-orders');
+  if (pending > 0) { badge.innerText = pending; badge.style.display = 'flex'; }
+  else badge.style.display = 'none';
+}
+
+// ─── ANALYTICS ────────────────────────────────────────────────────────────────
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function buildWeeklyData(orders) {
+  const result = {}; const today = new Date();
+  for (let i=6;i>=0;i--) { const d=new Date(today); d.setDate(d.getDate()-i); result[d.toDateString()]=0; }
+  orders.forEach(o => {
+    const oid = (o.OrderID||'').toString().trim();
+    if (!oid || oid.toLowerCase()==='pending') return;
+    const placed = (o.PlacedDate||'').toString().trim();
+    if (!placed) return;
+    try { const ds=new Date(placed).toDateString(); if (ds in result) result[ds]++; } catch(e) {}
+  });
+  return result;
+}
+function renderChart(data) {
+  const wrap = document.getElementById('perf-chart');
+  if (!wrap) return;
+  const entries = Object.entries(data);
+  const max = Math.max(...entries.map(e=>e[1]), 1);
+  const todayStr = new Date().toDateString();
+  wrap.innerHTML = entries.map(([ds, count]) => {
+    const isToday = ds===todayStr;
+    const barH = Math.max(Math.round((count/max)*100), count>0?8:2);
+    return `<div class="chart-col">
+      <div class="chart-bar-wrap"><div class="chart-bar${isToday?' today':''}${count===0?' zero':''}" style="height:${barH}%"></div></div>
+      <div class="chart-val">${count>0?count:''}</div>
+      <div class="chart-day${isToday?' today':''}">${isToday?'Today':DAYS[new Date(ds).getDay()]}</div>
+    </div>`;
+  }).join('');
+}
+function updateAvgTime() {
+  const el=document.getElementById('avg-time-val'), sub=document.getElementById('avg-time-sub');
+  if (!el||!sub) return;
+  const saved = JSON.parse(localStorage.getItem('argatiTimings')||'{}');
+  if (saved.date===new Date().toDateString() && Array.isArray(saved.timings)) sessionTimings=saved.timings;
+  if (!sessionTimings.length) { el.innerText='--:--'; sub.innerText='no orders yet'; return; }
+  const avg=Math.round(sessionTimings.reduce((a,b)=>a+b,0)/sessionTimings.length);
+  const mm=String(Math.floor(avg/60)).padStart(2,'0'), ss=String(avg%60).padStart(2,'0');
+  el.innerText=mm+':'+ss;
+  sub.innerText='based on '+sessionTimings.length+' order'+(sessionTimings.length===1?'':'s');
+}
+function saveTimings() {
+  localStorage.setItem('argatiTimings', JSON.stringify({ date:new Date().toDateString(), timings:sessionTimings }));
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function addHistory(order, orderId, elapsed) {
+  const time = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+  const mm=String(Math.floor(elapsed/60)).padStart(2,'0'), ss=String(elapsed%60).padStart(2,'0');
+  orderHistory.unshift({ rowNumber:order.rowNumber, name:(order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), product:getProduct(order.Produkti).name, orderId, time, elapsed:mm+':'+ss });
+  if (orderHistory.length>30) orderHistory.pop();
+  renderHistory();
+}
+function renderHistory() {
+  const c = document.getElementById('history-list-a');
+  if (!c) return;
+  if (!orderHistory.length) {
+    c.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No orders yet</div><div class="empty-sub">Completed orders will appear here.</div></div>';
+    return;
+  }
+  c.innerHTML = orderHistory.map(h=>`
+    <div class="history-item">
+      <div class="history-top"><span class="history-name">#${h.rowNumber} ${h.name}</span><span class="history-time">${h.time}</span></div>
+      <div class="history-bottom"><span class="history-product">${h.product}</span><span class="history-result ok">${h.orderId} · ${h.elapsed}</span></div>
+    </div>`).join('');
+}
+
+// ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
+async function loadOrders(silent=false) {
+  const list = document.getElementById('order-list');
+  if (!silent) list.innerHTML='<div class="loading"><div class="spinner"></div>Loading...</div>';
+  try {
+    const ctrl = new AbortController();
+    const to   = setTimeout(()=>ctrl.abort(), 15000);
+    const res  = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal, redirect:'follow' });
+    clearTimeout(to);
+    const orders = await res.json();
+
+    const todayStr = new Date().toDateString();
+    const completedToday = orders.filter(o => {
+      const oid=(o.OrderID||'').toString().trim();
+      if (!oid||oid.toLowerCase()==='pending') return false;
+      const placed=(o.PlacedDate||'').toString().trim();
+      try { return placed&&new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
+    }).length;
+
+    allOrders = orders.filter(o => {
+      const oid=(o.OrderID||'').toString().trim();
+      return oid===''||oid.toLowerCase()==='pending';
+    });
+
+    const reviewOrders = allOrders.filter(o => {
+      const c=(o['Koment shtese (Nese ka)']||'').toString().trim();
+      return c!==''||(o.Produkti||'').toString().includes('+');
+    });
+
+    updateStats(completedToday, allOrders.length, reviewOrders.length);
+
+    weeklyData = buildWeeklyData(orders);
+    selectedRows.forEach(r => { if (!allOrders.find(o=>o.rowNumber==r)) selectedRows.delete(r); });
+
+    // New order detection
+    if (lastCount>=0 && allOrders.length>lastCount) {
+      const diff=allOrders.length-lastCount;
+      const banner=document.getElementById('new-order-banner');
+      banner.innerText='🔔 '+diff+' new order'+(diff===1?'':'s')+' arrived!';
+      banner.style.display='block';
+      setTimeout(()=>{banner.style.display='none';}, 6000);
+      playSound();
+      if (navigator.vibrate) navigator.vibrate([200,80,200]);
+    }
+    lastCount = allOrders.length;
+
+    renderOrderList(allOrders, reviewOrders);
+    if (!currentOrder && allOrders.length>0) {
+      currentOrder = allOrders[0];
+      renderPlacePage();
+    }
+
+    // Auto-pilot
+    if (autoPilot && !isProcessing && currentOrder) {
+      const raw=(currentOrder.Produkti||'').toString().trim();
+      const cm=(currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
+      if (!raw.includes('+')&&cm==='') {
+        setTimeout(()=>{ if (!isProcessing&&currentOrder&&autoPilot) placeOrder(currentOrder); }, 3000);
+      }
+    }
+
+  } catch(e) {
+    const msg=e.name==='AbortError'?'Connection timed out.':'Error: '+(e.message||'unknown');
+    if (!silent) list.innerHTML=`<div class="loading" style="color:var(--red)">⚠ ${msg}<br><br><button onclick="loadOrders()" style="margin-top:12px;background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;">↻ Retry</button></div>`;
+  }
+}
+
+// ─── RENDER ORDER LIST ────────────────────────────────────────────────────────
+function renderOrderList(orders, reviewOrders) {
+  const list = document.getElementById('order-list');
+  if (!orders.length) {
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">No pending orders!</div><div class="empty-sub">All orders have been placed.</div></div>`;
+    return;
+  }
+  const sorted=[...reviewOrders,...orders.filter(o=>!reviewOrders.includes(o))];
+  const hint=orders.length>1?'<p class="section-label" style="margin-bottom:8px">Tap to select — pick multiple</p>':'<p class="section-label" style="margin-bottom:8px">Pending order</p>';
+  list.innerHTML=hint+sorted.map(o=>buildOrderCard(o)).join('');
+  sorted.forEach(o=>{
+    const card=document.getElementById('card-'+o.rowNumber);
+    if (card) card.addEventListener('click',()=>toggleSelect(o.rowNumber,o));
+  });
+}
+
+function buildOrderCard(o) {
+  const ap=(o.Produkti||'').toString().trim();
+  const ac=(o['Koment shtese (Nese ka)']||'').toString().trim();
+  const isReview=ap.includes('+')||ac!=='';
+  const prod=getProduct(ap);
+  const isSel=selectedRows.has(o.rowNumber);
+  return `<div class="order-card${isReview?' review':''}${isSel?' selected':''}" id="card-${o.rowNumber}" style="cursor:pointer">
+    <div class="card-top">
+      <span class="card-badge">#${o.rowNumber}</span>
+      <div class="card-check">${isSel?'✓':''}</div>
+    </div>
+    <div class="card-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
+    <div class="card-detail"><span>📦</span><span class="val">${prod.name}</span></div>
+    <div class="card-detail"><span>📍</span><span class="val">${o.Qyteti||'—'}</span></div>
+    <div class="card-detail"><span>📞</span><span class="val">${(o.Telefoni||'').toString().trim()||'—'}</span></div>
+    <div class="card-detail"><span>🏠</span><span class="val">${(o.Adresa||'').toString().trim()||'—'}</span></div>
+    ${ap.includes('+')?`<div class="card-alert alert-multi">⚠️ <span>Multiple products: ${ap.split('+').map(c=>c.trim()).join(' + ')}</span></div>`:''}
+    ${ac?`<div class="card-alert alert-comment">💬 <span>${ac}</span></div>`:''}
+  </div>`;
+}
+
+// ─── SELECTION ────────────────────────────────────────────────────────────────
+function toggleSelect(rowNumber, order) {
+  if (selectedRows.has(rowNumber)) selectedRows.delete(rowNumber);
+  else selectedRows.add(rowNumber);
+  const card=document.getElementById('card-'+rowNumber);
+  if (card) {
+    card.classList.toggle('selected', selectedRows.has(rowNumber));
+    const check=card.querySelector('.card-check');
+    if (check) check.innerText=selectedRows.has(rowNumber)?'✓':'';
+  }
+  // Set as current order too
+  if (order&&selectedRows.has(rowNumber)) { currentOrder=order; renderPlacePage(); }
+  updateFAB();
+}
+function clearSelection() {
+  selectedRows.forEach(r=>{
+    const card=document.getElementById('card-'+r);
+    if (card) { card.classList.remove('selected'); const c=card.querySelector('.card-check'); if (c) c.innerText=''; }
+  });
+  selectedRows.clear(); updateFAB();
+}
+function updateFAB() {
+  const fab=document.getElementById('fab'), n=selectedRows.size;
+  fab.style.display=n>0?'block':'none';
+  document.getElementById('fab-count').innerText=n+(n===1?' order selected':' orders selected');
+}
+
+// ─── RENDER PLACE PAGE ────────────────────────────────────────────────────────
+function renderPlacePage() {
+  const area=document.getElementById('active-order-area');
+  const btn=document.getElementById('place-order-btn');
+  if (!currentOrder) {
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">No pending orders</div><div class="empty-sub">All caught up!</div></div>`;
+    btn.disabled=true; return;
+  }
+  const o=currentOrder;
+  const prod=getProduct(o.Produkti);
+  const phone=validatePhone(o.Telefoni);
+  const addr=normalizeAddress(o.Adresa);
+  const raw=(o.Produkti||'').toString().trim();
+  const comment=(o['Koment shtese (Nese ka)']||'').toString().trim();
+  const isMulti=raw.includes('+');
+  area.innerHTML=`
+    <p class="section-label">⚡ Active Order</p>
+    <div class="order-card" style="margin-bottom:14px;">
+      <div class="card-top"><span class="card-badge">#${o.rowNumber}</span><span style="font-size:11px;color:var(--muted);font-weight:700;">${isMulti||comment?'⚠️ Needs review':'🟢 Ready'}</span></div>
+      <div class="card-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
+      <div class="card-detail"><span>📦</span><span class="val">${prod.name}</span></div>
+      <div class="card-detail"><span>📍</span><span class="val">${o.Qyteti||'—'}</span></div>
+      <div class="card-detail"><span>📞</span><span class="val" style="color:${phone.warning?'var(--red)':'inherit'}">${phone.warning||phone.value}</span></div>
+      <div class="card-detail"><span>🏠</span><span class="val">${addr.value||'—'}</span></div>
+      ${isMulti?`<div class="card-alert alert-multi">⚠️ <span>Multiple products: ${raw.split('+').map(c=>c.trim()).join(' + ')}</span></div>`:''}
+      ${comment?`<div class="card-alert alert-comment">💬 <span>${comment}</span></div>`:''}
+    </div>`;
+  btn.disabled = !!phone.warning || isProcessing;
+}
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+function startTimer() {
+  timerStart=Date.now(); document.getElementById('timer-bar').style.display='flex';
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    const e=Math.floor((Date.now()-timerStart)/1000);
+    document.getElementById('timer-val').innerText=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
+  },1000);
+}
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+  document.getElementById('timer-bar').style.display='none';
+  const elapsed=timerStart?Math.floor((Date.now()-timerStart)/1000):0;
+  timerStart=null; return elapsed;
+}
+
+// ─── PLACE ORDER ──────────────────────────────────────────────────────────────
+// On iPhone: approve flag → desktop extension picks up within 1 min → places order
+// Desktop result comes back via poll → push notification
+async function placeOrder(order) {
+  if (isProcessing) return;
+  const phone=validatePhone(order.Telefoni);
+  if (phone.warning) { showNotif('⚠️','Invalid Phone',phone.warning,'red'); return; }
+
+  isProcessing=true;
+  document.getElementById('place-order-btn').disabled=true;
+  document.getElementById('checklist-box').style.display='block';
+  const steps=['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'];
+  [1,2,3,4].forEach(i=>{ const el=document.getElementById('p-step-'+i); el.innerText='○ '+steps[i-1]; el.className='step'; });
+  document.getElementById('place-status').innerText='Sending to desktop...';
+  startTimer();
+
+  try {
+    // Write approval flag to Apps Script
+    const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now(), { redirect:'follow' });
+    let success=false;
+    try { const d=JSON.parse(await res.text()); success=d.success===true; } catch(e) { success=res.status>=200&&res.status<400; }
+
+    if (success) {
+      // Visually simulate steps while polling
+      const delays=[800,1800,2800,0];
+      delays.slice(0,3).forEach((delay,i)=>{
+        setTimeout(()=>{
+          const el=document.getElementById('p-step-'+(i+1));
+          if (el) { el.innerText='✅ '+steps[i]; el.className='step done'; }
+        }, delay);
+      });
+      document.getElementById('place-status').innerText='⏳ Desktop is placing order... (up to 1 min)';
+      // Poll for result
+      pollForResult(order.rowNumber, (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), getProduct(order.Produkti).name, order, 0);
+    } else {
+      finishOrder(false, order, null, 'Approval failed — please retry.');
+    }
+  } catch(e) {
+    finishOrder(false, order, null, e.message||'Connection error');
+  }
+}
+
+function pollForResult(rowNumber, name, product, order, attempts) {
+  const MAX=24; // 24×5s = 2min
+  setTimeout(async()=>{
+    try {
+      const res=await fetch(SCRIPT_URL+'?t='+Date.now(), { redirect:'follow' });
+      const orders=await res.json();
+      const row=orders.find(o=>o.rowNumber==rowNumber);
+      if (row) {
+        const oid=(row.OrderID||'').toString().trim();
+        if (oid&&oid.toLowerCase()!=='pending') {
+          // Success!
+          const el=document.getElementById('p-step-4');
+          if (el) { el.innerText='✅ '+(['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'][3]); el.className='step done'; }
+          finishOrder(true, order, oid, null);
+          return;
+        }
+      }
+      if (attempts<MAX) pollForResult(rowNumber,name,product,order,attempts+1);
+      else finishOrder(false, order, null, 'Timed out — check if your laptop is on and Chrome is running.');
+    } catch(e) {
+      if (attempts<MAX) pollForResult(rowNumber,name,product,order,attempts+1);
+    }
+  }, 5000);
+}
+
+function finishOrder(success, order, orderId, errorMsg) {
+  const elapsed=stopTimer();
+  isProcessing=false;
+  document.getElementById('place-order-btn').disabled=false;
+  document.getElementById('checklist-box').style.display='none';
+
+  if (success) {
+    sessionTimings.push(elapsed); saveTimings();
+    addHistory(order, orderId, elapsed);
+    document.getElementById('place-status').innerText='✅ Order placed!';
+    showNotif('✅','Order Placed!', '#'+order.rowNumber+' — '+(order.Emri||'').trim()+' '+(order.Mbiemri||'').trim()+'\n'+getProduct(order.Produkti).name+'\nOrder ID: '+orderId, 'green');
+    playSound();
+    setTimeout(()=>loadOrders(true), 2000);
+  } else {
+    document.getElementById('place-status').innerText='⚠ '+errorMsg;
+    showNotif('❌','Failed', errorMsg, 'red');
+  }
+}
+
+// ─── APPROVE SELECTED (multi-select from Orders tab) ─────────────────────────
+async function approveSelected() {
+  if (selectedRows.size===0) return;
+  const btn=document.getElementById('fab-btn');
+  btn.disabled=true; btn.innerText='⏳ Sending...';
+  const toProcess=allOrders.filter(o=>selectedRows.has(o.rowNumber));
+  let failed=0;
+  for (const order of toProcess) {
+    try {
+      const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now(),{redirect:'follow'});
+      let ok=false;
+      try { const d=JSON.parse(await res.text()); ok=d.success===true; } catch(e) { ok=res.status>=200&&res.status<400; }
+      if (!ok) failed++;
+    } catch(e) { failed++; }
+  }
+  clearSelection(); btn.disabled=false; btn.innerText='▶ Place';
+  const n=toProcess.length;
+  if (failed===0) {
+    showNotif('📤', n===1?'1 order sent!':n+' orders sent!','Desktop will place them within 1 minute.\nYou\'ll be notified as each completes.','green');
+    toProcess.forEach(o=>pollForResult(o.rowNumber,(o.Emri||'').trim()+' '+(o.Mbiemri||'').trim(),getProduct(o.Produkti).name,o,0));
+  } else {
+    showNotif('⚠️','Some failed',failed+' of '+n+' approvals failed. Please retry.','red');
+  }
+}
+
+// ─── PLACE ORDER BUTTON ───────────────────────────────────────────────────────
+document.getElementById('place-order-btn').addEventListener('click',()=>{
+  if (currentOrder&&!isProcessing) placeOrder(currentOrder);
+});
+
+// ─── AUTO-PILOT ───────────────────────────────────────────────────────────────
+document.getElementById('pilot-toggle').addEventListener('change', e=>{
+  autoPilot=e.target.checked;
+  document.getElementById('pilot-label').innerText='Auto-Pilot: '+(autoPilot?'ON 🤖':'OFF');
+  localStorage.setItem('argatiAutoPilot', autoPilot?'1':'');
+});
+if (localStorage.getItem('argatiAutoPilot')) {
+  autoPilot=true;
+  document.getElementById('pilot-toggle').checked=true;
+  document.getElementById('pilot-label').innerText='Auto-Pilot: ON 🤖';
+}
+
+// ─── WEB PUSH NOTIFICATIONS ───────────────────────────────────────────────────
+function urlBase64ToUint8Array(b64) {
+  const pad='='.repeat((4-b64.length%4)%4);
+  const raw=atob((b64+pad).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from({length:raw.length},(_,i)=>raw.charCodeAt(i));
+}
+
+function checkNotifBar() {
+  const bar=document.getElementById('notif-bar');
+  const statusText=document.getElementById('notif-status-text');
+  const toggleBtn=document.getElementById('notif-toggle-btn');
+  if (!('Notification' in window)||!('serviceWorker' in navigator)) {
+    if (bar) bar.style.display='none';
+    if (statusText) statusText.innerText='Not supported on this browser';
+    return;
+  }
+  const perm=Notification.permission;
+  if (perm==='granted') {
+    if (bar) bar.style.display='none';
+    if (statusText) statusText.innerText='Enabled ✅';
+    if (toggleBtn) toggleBtn.style.display='none';
+  } else if (perm==='denied') {
+    if (bar) bar.style.display='none';
+    if (statusText) statusText.innerText='Blocked — enable in iOS Settings';
+    if (toggleBtn) toggleBtn.style.display='none';
+  } else {
+    if (bar) bar.style.display='flex';
+    if (statusText) statusText.innerText='Not enabled yet';
+  }
+}
+
+async function subscribeNotifications() {
+  if (!('Notification' in window)) {
+    alert('Open this app from your Home Screen icon (not Safari browser) for notifications to work.');
+    return;
+  }
+  const perm=await Notification.requestPermission();
+  checkNotifBar();
+  if (perm!=='granted') return;
+
+  try {
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC) });
+    }
+    fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(),{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(sub.toJSON())
+    }).catch(()=>{});
+    reg.showNotification('Argati',{ body:'Notifications enabled! You\'ll be alerted for new orders.', icon:'icon.png', tag:'argati-setup' });
+    checkNotifBar();
+  } catch(err) {
+    alert('Setup failed: '+err.message+'\nMake sure you opened from the Home Screen icon.');
+  }
+}
+
+async function testNotification() {
+  if (Notification.permission!=='granted') { alert('Please enable notifications first.'); return; }
+  try {
+    const reg=await navigator.serviceWorker.ready;
+    reg.showNotification('Argati Test',{ body:'Push notifications are working! 🎉', icon:'icon.png', tag:'argati-test' });
+  } catch(e) { alert('Test failed: '+e.message); }
+}
+
+// ─── AUTO-DETECT NEW ORDERS ───────────────────────────────────────────────────
+setInterval(()=>loadOrders(true), 60000);
+
+// ─── STARTUP ──────────────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+// Restore timings
+(()=>{ const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.date===new Date().toDateString()&&Array.isArray(s.timings)) sessionTimings=s.timings; })();
+checkNotifBar();
+setTimeout(()=>loadOrders(), 100);
+</script>
 </body>
 </html>
