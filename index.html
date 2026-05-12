@@ -339,7 +339,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
   <div class="header-icon">🤖</div>
   <div class="header-text">
     <div class="header-title">Argati</div>
-    <div class="header-sub" id="header-sub">Parts Center</div>
+    <div class="header-sub" id="header-sub"></div>
   </div>
   <div class="header-btns">
     <button class="icon-btn" id="theme-btn">🌙</button>
@@ -398,7 +398,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
     </div>
   </div>
 
-  <p class="section-label">Session History</p>
+  <p class="section-label">Today's Orders</p>
   <div id="history-list-a">
     <div class="empty-state">
       <div class="empty-icon">📋</div>
@@ -694,14 +694,48 @@ function renderHistory() {
   const c = document.getElementById('history-list-a');
   if (!c) return;
   if (!orderHistory.length) {
-    c.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No orders yet</div><div class="empty-sub">Completed orders will appear here.</div></div>';
+    c.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No orders today</div><div class="empty-sub">Completed orders will appear here.</div></div>';
     return;
   }
   c.innerHTML = orderHistory.map(h=>`
     <div class="history-item">
       <div class="history-top"><span class="history-name">#${h.rowNumber} ${h.name}</span><span class="history-time">${h.time}</span></div>
-      <div class="history-bottom"><span class="history-product">${h.product}</span><span class="history-result ok">${h.orderId} · ${h.elapsed}</span></div>
+      <div class="history-bottom"><span class="history-product">${h.product}</span><span class="history-result ok">${h.orderId}${h.elapsed?' · '+h.elapsed:''}</span></div>
     </div>`).join('');
+}
+
+// Load today's completed orders from sheet into history
+function loadTodayHistory(orders) {
+  const todayStr = new Date().toDateString();
+  const todayOrders = orders.filter(o => {
+    const oid = (o.OrderID||'').toString().trim();
+    if (!oid || oid.toLowerCase()==='pending') return false;
+    const placed = (o.PlacedDate||'').toString().trim();
+    if (!placed) return false;
+    try { return new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
+  });
+
+  // Build entries from sheet
+  const sheetHistory = todayOrders.map(o => {
+    const placed = new Date((o.PlacedDate||'').toString());
+    const time   = placed.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+    return {
+      rowNumber: o.rowNumber,
+      name:    ((o.Emri||'').trim()+' '+(o.Mbiemri||'').trim()).trim(),
+      product: getProduct(o.Produkti).name,
+      orderId: (o.OrderID||'').toString().trim(),
+      time,
+      elapsed: null
+    };
+  }).reverse(); // newest first
+
+  // Merge: session entries take priority (have elapsed time)
+  const sessionIds = new Set(orderHistory.map(h => h.orderId));
+  const newFromSheet = sheetHistory.filter(h => !sessionIds.has(h.orderId));
+  const combined = [...orderHistory, ...newFromSheet];
+  combined.sort((a,b) => (b.time||'').localeCompare(a.time||''));
+  orderHistory = combined.slice(0, 50);
+  renderHistory();
 }
 
 // ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
@@ -740,6 +774,7 @@ async function loadOrders(silent=false) {
 
     try { updateStats(completedToday, allOrders.length, reviewOrders.length); } catch(e) { console.warn('updateStats error:', e.message); }
     try { weeklyData = buildWeeklyData(orders); } catch(e) { console.warn('buildWeeklyData error:', e.message); }
+    try { loadTodayHistory(orders); } catch(e) { console.warn('loadTodayHistory error:', e.message); }
     try { selectedRows.forEach(r => { if (!allOrders.find(o=>o.rowNumber==r)) selectedRows.delete(r); }); } catch(e) {}
 
     // New order detection
