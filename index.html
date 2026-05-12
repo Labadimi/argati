@@ -749,34 +749,40 @@ async function loadOrders(silent=false) {
       return c!==''||(o.Produkti||'').toString().includes('+');
     });
 
-    updateStats(completedToday, allOrders.length, reviewOrders.length);
-
-    weeklyData = buildWeeklyData(orders);
-    selectedRows.forEach(r => { if (!allOrders.find(o=>o.rowNumber==r)) selectedRows.delete(r); });
+    try { updateStats(completedToday, allOrders.length, reviewOrders.length); } catch(e) { console.warn('updateStats error:', e.message); }
+    try { weeklyData = buildWeeklyData(orders); } catch(e) { console.warn('buildWeeklyData error:', e.message); }
+    try { selectedRows.forEach(r => { if (!allOrders.find(o=>o.rowNumber==r)) selectedRows.delete(r); }); } catch(e) {}
 
     // New order detection
-    if (lastCount>=0 && allOrders.length>lastCount) {
-      const diff=allOrders.length-lastCount;
-      const banner=document.getElementById('new-order-banner');
-      banner.innerText='🔔 '+diff+' new order'+(diff===1?'':'s')+' arrived!';
-      banner.style.display='block';
-      setTimeout(()=>{banner.style.display='none';}, 6000);
-      playSound();
-      if (navigator.vibrate) navigator.vibrate([200,80,200]);
-    }
-    lastCount = allOrders.length;
+    try {
+      if (lastCount>=0 && allOrders.length>lastCount) {
+        const diff=allOrders.length-lastCount;
+        const banner=document.getElementById('new-order-banner');
+        if (banner) {
+          banner.innerText='🔔 '+diff+' new order'+(diff===1?'':'s')+' arrived!';
+          banner.style.display='block';
+          setTimeout(()=>{banner.style.display='none';}, 6000);
+        }
+        playSound();
+        if (navigator.vibrate) navigator.vibrate([200,80,200]);
+      }
+      lastCount = allOrders.length;
+    } catch(e) { console.warn('banner error:', e.message); }
 
+    // This must always run — shows orders or empty state
     renderOrderList(allOrders, reviewOrders);
     if (allOrders.length>0) currentOrder = allOrders[0];
 
     // Auto-pilot
-    if (autoPilot && !isProcessing && currentOrder) {
-      const raw=(currentOrder.Produkti||'').toString().trim();
-      const cm=(currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
-      if (!raw.includes('+')&&cm==='') {
-        setTimeout(()=>{ if (!isProcessing&&currentOrder&&autoPilot) placeOrder(currentOrder); }, 3000);
+    try {
+      if (autoPilot && !isProcessing && currentOrder) {
+        const raw=(currentOrder.Produkti||'').toString().trim();
+        const cm=(currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
+        if (!raw.includes('+')&&cm==='') {
+          setTimeout(()=>{ if (!isProcessing&&currentOrder&&autoPilot) placeOrder(currentOrder); }, 3000);
+        }
       }
-    }
+    } catch(e) { console.warn('autopilot error:', e.message); }
 
   } catch(e) {
     const msg=e.name==='AbortError'?'Connection timed out — check internet.':('Error: '+(e.message||'unknown'));
