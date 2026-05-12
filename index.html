@@ -339,7 +339,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
   <div class="header-icon">🤖</div>
   <div class="header-text">
     <div class="header-title">Argati</div>
-    <div class="header-sub" id="header-sub"></div>
+    <div class="header-sub" id="header-sub">Parts Center</div>
   </div>
   <div class="header-btns">
     <button class="icon-btn" id="theme-btn">🌙</button>
@@ -359,17 +359,17 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 
   <div class="stats-bar">
     <div class="stat-item">
-      <span class="stat-num" id="stat-today">—</span>
+      <span class="stat-num" id="stat-today" style="color:#10b981">—</span>
       <span class="stat-label">Today ✅</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
-      <span class="stat-num" id="stat-pending" style="color:var(--primary)">—</span>
+      <span class="stat-num" id="stat-pending" style="color:#FF5F1F">—</span>
       <span class="stat-label">Pending 🕐</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
-      <span class="stat-num" id="stat-review" style="color:var(--amber)">—</span>
+      <span class="stat-num" id="stat-review" style="color:#f59e0b">—</span>
       <span class="stat-label">Review ⚠️</span>
     </div>
   </div>
@@ -629,13 +629,12 @@ function playSound() {
 
 // ─── STATS ────────────────────────────────────────────────────────────────────
 function updateStats(completedToday, pending, reviewCount) {
-  document.getElementById('stat-today').innerText   = completedToday;
-  document.getElementById('stat-pending').innerText = pending;
-  document.getElementById('stat-review').innerText  = reviewCount;
-  // Badge on Orders tab
+  const te=document.getElementById('stat-today'),   pe=document.getElementById('stat-pending'),   re=document.getElementById('stat-review');
+  if (te) { te.innerText=completedToday; te.style.color='#10b981'; }
+  if (pe) { pe.innerText=pending;        pe.style.color='#FF5F1F'; }
+  if (re) { re.innerText=reviewCount;    re.style.color='#f59e0b'; }
   const badge = document.getElementById('badge-orders');
-  if (pending > 0) { badge.innerText = pending; badge.style.display = 'flex'; }
-  else badge.style.display = 'none';
+  if (badge) { if (pending > 0) { badge.innerText=pending; badge.style.display='flex'; } else badge.style.display='none'; }
 }
 
 // ─── ANALYTICS ────────────────────────────────────────────────────────────────
