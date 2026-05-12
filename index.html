@@ -524,22 +524,6 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 </div>
 
 <script>
-// ─── GLOBAL ERROR CATCHER ────────────────────────────────────────────────────
-window.onerror = function(msg, src, line, col, err) {
-  document.getElementById('order-list').innerHTML =
-    '<div style="padding:16px;font-size:12px;color:red;line-height:1.8">' +
-    '❌ JS Error at line ' + line + ':<br><b>' + msg + '</b><br>' +
-    (src ? '<small>' + src + '</small>' : '') +
-    '</div>';
-  return false;
-};
-window.addEventListener('unhandledrejection', function(e) {
-  document.getElementById('order-list').innerHTML =
-    '<div style="padding:16px;font-size:12px;color:red;line-height:1.8">' +
-    '❌ Unhandled Promise:<br><b>' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)) + '</b>' +
-    '</div>';
-});
-
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 const VAPID_PUBLIC  = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
@@ -724,28 +708,18 @@ function renderHistory() {
 // ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
 async function loadOrders(silent=false) {
   const list = document.getElementById('order-list');
-  if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">🔄 Fetching data...<br></div>';
+  if (!silent) list.innerHTML='<div class="loading"><div class="spinner"></div>Loading...</div>';
   try {
     const ctrl = new AbortController();
     const to   = setTimeout(()=>ctrl.abort(), 10000);
-    let res;
-    try {
-      res = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal });
-      if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">✅ Fetch OK ('+res.status+')<br>📄 Reading text...</div>';
-    } catch(fe) {
-      if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;color:red">❌ Fetch failed: '+fe.message+'</div>';
-      throw fe;
-    }
+    const res  = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal });
     clearTimeout(to);
+    if (!res.ok) throw new Error('Server error ' + res.status);
     const text = await res.text();
-    if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">✅ Got '+text.length+' chars<br>🔍 Parsing JSON...</div>';
+    if (!text || text.trim()==='') throw new Error('Empty response from server');
     let orders;
     try { orders = JSON.parse(text); }
-    catch(pe) {
-      if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;color:red">❌ JSON parse failed<br>First 200 chars:<br><small>'+text.substring(0,200)+'</small></div>';
-      throw pe;
-    }
-    if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">✅ Parsed '+orders.length+' rows<br>🎨 Rendering...</div>';
+    catch(pe) { throw new Error('Invalid response — check Apps Script deployment'); }
 
     const todayStr = new Date().toDateString();
     const completedToday = orders.filter(o => {
