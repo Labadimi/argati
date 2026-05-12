@@ -534,6 +534,22 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 </div>
 
 <script>
+// ─── GLOBAL ERROR CATCHER ────────────────────────────────────────────────────
+window.onerror = function(msg, src, line, col, err) {
+  document.getElementById('order-list').innerHTML =
+    '<div style="padding:16px;font-size:12px;color:red;line-height:1.8">' +
+    '❌ JS Error at line ' + line + ':<br><b>' + msg + '</b><br>' +
+    (src ? '<small>' + src + '</small>' : '') +
+    '</div>';
+  return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+  document.getElementById('order-list').innerHTML =
+    '<div style="padding:16px;font-size:12px;color:red;line-height:1.8">' +
+    '❌ Unhandled Promise:<br><b>' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)) + '</b>' +
+    '</div>';
+});
+
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
 const VAPID_PUBLIC  = 'BOSn4Ynnig74lu56bG3MoLcdGlDDNsRrDYQ9tQrsy1inJY8_QsU_L-qoGYb-PfPipWD50EcYl-F_UVq9EkNHq1U';
