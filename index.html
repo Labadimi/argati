@@ -733,7 +733,19 @@ function loadTodayHistory(orders) {
   const sessionIds = new Set(orderHistory.map(h => h.orderId));
   const newFromSheet = sheetHistory.filter(h => !sessionIds.has(h.orderId));
   const combined = [...orderHistory, ...newFromSheet];
-  combined.sort((a,b) => (a.time||'').localeCompare(b.time||'')); // oldest first
+  combined.sort((a,b) => {
+    function toMin(t) {
+      if (!t) return 0;
+      const m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+      if (!m) return 0;
+      let h=parseInt(m[1]),mn=parseInt(m[2]);
+      const ap=(m[3]||'').toUpperCase();
+      if(ap==='PM'&&h!==12) h+=12;
+      if(ap==='AM'&&h===12) h=0;
+      return h*60+mn;
+    }
+    return toMin(a.time)-toMin(b.time); // oldest first
+  });
   orderHistory = combined.slice(0, 50);
   renderHistory();
 }
