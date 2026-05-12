@@ -339,7 +339,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
   <div class="header-icon">🤖</div>
   <div class="header-text">
     <div class="header-title">Argati</div>
-    <div class="header-sub" id="header-sub"></div>
+    <div class="header-sub" id="header-sub">Parts Center</div>
   </div>
   <div class="header-btns">
     <button class="icon-btn" id="theme-btn">🌙</button>
@@ -727,13 +727,13 @@ function loadTodayHistory(orders) {
       time,
       elapsed: null
     };
-  }).reverse(); // newest first
+  }); // oldest first — sheet order is already chronological
 
   // Merge: session entries take priority (have elapsed time)
   const sessionIds = new Set(orderHistory.map(h => h.orderId));
   const newFromSheet = sheetHistory.filter(h => !sessionIds.has(h.orderId));
   const combined = [...orderHistory, ...newFromSheet];
-  combined.sort((a,b) => (b.time||'').localeCompare(a.time||''));
+  combined.sort((a,b) => (a.time||'').localeCompare(b.time||'')); // oldest first
   orderHistory = combined.slice(0, 50);
   renderHistory();
 }
