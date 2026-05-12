@@ -720,14 +720,15 @@ async function loadOrders(silent=false) {
   const list = document.getElementById('order-list');
   if (!silent) list.innerHTML='<div class="loading"><div class="spinner"></div>Loading...</div>';
   try {
+    if (!silent) list.innerHTML='<div class="loading" style="font-size:11px;color:var(--muted);text-align:left;padding:16px;">⏳ Step 1: Starting fetch...<br><small>'+SCRIPT_URL.substring(0,60)+'...</small></div>';
     const ctrl = new AbortController();
     const to   = setTimeout(()=>ctrl.abort(), 10000);
-    // Don't specify mode — let browser use default CORS handling
-    // Apps Script deployed as "Anyone" handles CORS automatically
     const res  = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal });
     clearTimeout(to);
+    if (!silent) list.innerHTML='<div class="loading" style="font-size:11px;text-align:left;padding:16px;">⏳ Step 2: Got response — status: '+res.status+', type: '+res.type+'</div>';
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
+    if (!silent) list.innerHTML='<div class="loading" style="font-size:11px;text-align:left;padding:16px;">⏳ Step 3: Got text ('+text.length+' chars) — parsing JSON...</div>';
     const orders = JSON.parse(text);
 
     const todayStr = new Date().toDateString();
