@@ -718,18 +718,28 @@ function renderHistory() {
 // ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
 async function loadOrders(silent=false) {
   const list = document.getElementById('order-list');
-  if (!silent) list.innerHTML='<div class="loading"><div class="spinner"></div>Loading...</div>';
+  if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">🔄 Fetching data...<br></div>';
   try {
     const ctrl = new AbortController();
     const to   = setTimeout(()=>ctrl.abort(), 10000);
-    const res  = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal });
+    let res;
+    try {
+      res = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal });
+      if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">✅ Fetch OK ('+res.status+')<br>📄 Reading text...</div>';
+    } catch(fe) {
+      if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;color:red">❌ Fetch failed: '+fe.message+'</div>';
+      throw fe;
+    }
     clearTimeout(to);
-    if (!res.ok) throw new Error('Server error ' + res.status);
     const text = await res.text();
-    if (!text || text.trim() === '') throw new Error('Empty response — check Apps Script deployment');
+    if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">✅ Got '+text.length+' chars<br>🔍 Parsing JSON...</div>';
     let orders;
     try { orders = JSON.parse(text); }
-    catch(pe) { throw new Error('Invalid JSON from server. Redeploy Apps Script: Who has access = Anyone'); }
+    catch(pe) {
+      if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;color:red">❌ JSON parse failed<br>First 200 chars:<br><small>'+text.substring(0,200)+'</small></div>';
+      throw pe;
+    }
+    if (!silent) list.innerHTML='<div style="padding:16px;font-size:12px;line-height:2">✅ Parsed '+orders.length+' rows<br>🎨 Rendering...</div>';
 
     const todayStr = new Date().toDateString();
     const completedToday = orders.filter(o => {
