@@ -349,7 +349,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
   <div class="header-icon">🤖</div>
   <div class="header-text">
     <div class="header-title">Argati</div>
-    <div class="header-sub" id="header-sub"></div>
+    <div class="header-sub" id="header-sub">Parts Center</div>
   </div>
   <div class="header-btns">
     <button class="icon-btn" id="theme-btn">🌙</button>
@@ -505,7 +505,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 
 <!-- FLOATING ACTION BAR (multi-select) -->
 <!-- Auto-Pilot toggle always visible above FAB area -->
-<div id="autopilot-bar" style="position:fixed;bottom:calc(64px + env(safe-area-inset-bottom));left:16px;right:16px;z-index:59;display:none;">
+<div id="autopilot-bar" style="position:fixed;bottom:calc(64px + env(safe-area-inset-bottom));left:16px;right:16px;z-index:59;display:block;">
   <div style="background:linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.05));border:1px solid rgba(16,185,129,0.3);border-radius:14px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
     <span style="font-size:13px;font-weight:700;color:var(--text);" id="pilot-label">Auto-Pilot: OFF</span>
     <label class="toggle-switch"><input type="checkbox" id="pilot-toggle"><span class="toggle-slider"></span></label>
@@ -721,7 +721,7 @@ async function loadOrders(silent=false) {
   if (!silent) list.innerHTML='<div class="loading"><div class="spinner"></div>Loading...</div>';
   try {
     const ctrl = new AbortController();
-    const to   = setTimeout(()=>ctrl.abort(), 15000);
+    const to   = setTimeout(()=>ctrl.abort(), 10000);
     // Don't specify mode — let browser use default CORS handling
     // Apps Script deployed as "Anyone" handles CORS automatically
     const res  = await fetch(SCRIPT_URL+'?t='+Date.now(), { signal:ctrl.signal });
@@ -778,9 +778,10 @@ async function loadOrders(silent=false) {
     }
 
   } catch(e) {
-    const msg=e.name==='AbortError'?'Connection timed out — check internet connection.':('Error: '+(e.message||'unknown'));
-    console.error('loadOrders failed:', e);
+    const msg=e.name==='AbortError'?'Connection timed out — check internet.':('Error: '+(e.message||'unknown'));
+    console.error('loadOrders failed:', e.message);
     if (!silent) list.innerHTML='<div class="loading" style="color:var(--red)">⚠ '+msg+'<br><br><small style="color:var(--muted)">Make sure Apps Script is deployed as Anyone</small><br><br><button onclick="loadOrders()" style="margin-top:12px;background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;">↻ Retry</button></div>';
+    throw e; // rethrow so startupLoad can retry
   }
 }
 
@@ -878,11 +879,11 @@ async function placeOrder(order) {
   if (phone.warning) { showNotif('⚠️','Invalid Phone',phone.warning,'red'); return; }
 
   isProcessing=true;
-  const _poBtn=document.getElementById('place-order-btn'); if(_poBtn) _poBtn.disabled=true;
-  document.getElementById('checklist-box').style.display='block';
+
+  const _cb=document.getElementById('checklist-box'); if(_cb) _cb.style.display='block';
   const steps=['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'];
   [1,2,3,4].forEach(i=>{ const el=document.getElementById('p-step-'+i); el.innerText='○ '+steps[i-1]; el.className='step'; });
-  document.getElementById('place-status').innerText='Sending to desktop...';
+  const _ps=document.getElementById('place-status'); if(_ps) _ps.innerText='Sending to desktop...';
   startTimer();
 
   try {
@@ -900,7 +901,7 @@ async function placeOrder(order) {
           if (el) { el.innerText='✅ '+steps[i]; el.className='step done'; }
         }, delay);
       });
-      document.getElementById('place-status').innerText='⏳ Desktop is placing order... (up to 1 min)';
+      const _ps2=document.getElementById('place-status'); if(_ps2) _ps2.innerText='⏳ Desktop is placing order... (up to 1 min)';
       // Poll for result
       pollForResult(order.rowNumber, (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), getProduct(order.Produkti).name, order, 0);
     } else {
@@ -939,18 +940,18 @@ function pollForResult(rowNumber, name, product, order, attempts) {
 function finishOrder(success, order, orderId, errorMsg) {
   const elapsed=stopTimer();
   isProcessing=false;
-  const _poBtn2=document.getElementById('place-order-btn'); if(_poBtn2) _poBtn2.disabled=false;
-  document.getElementById('checklist-box').style.display='none';
+
+  const _cb2=document.getElementById('checklist-box'); if(_cb2) _cb2.style.display='none';
 
   if (success) {
     sessionTimings.push(elapsed); saveTimings();
     addHistory(order, orderId, elapsed);
-    document.getElementById('place-status').innerText='✅ Order placed!';
+    const _ps3=document.getElementById('place-status'); if(_ps3) _ps3.innerText='✅ Order placed!';
     showNotif('✅','Order Placed!', '#'+order.rowNumber+' — '+(order.Emri||'').trim()+' '+(order.Mbiemri||'').trim()+'\n'+getProduct(order.Produkti).name+'\nOrder ID: '+orderId, 'green');
     playSound();
     setTimeout(()=>loadOrders(true), 2000);
   } else {
-    document.getElementById('place-status').innerText='⚠ '+errorMsg;
+    const _ps4=document.getElementById('place-status'); if(_ps4) _ps4.innerText='⚠ '+errorMsg;
     showNotif('❌','Failed', errorMsg, 'red');
   }
 }
@@ -1064,11 +1065,26 @@ setInterval(()=>loadOrders(true), 60000);
 
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
 try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{}); } catch(e) {}
-// Restore timings
 try { const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.date===new Date().toDateString()&&Array.isArray(s.timings)) sessionTimings=s.timings; } catch(e) {}
 try { checkNotifBar(); } catch(e) {}
-// Delay slightly to let page render first, then load
-setTimeout(()=>{ try { loadOrders(); } catch(e) { document.getElementById('order-list').innerHTML='<div class="loading" style="color:var(--red)">⚠ Startup error: '+e.message+'<br><br><button onclick="loadOrders()" style="margin-top:12px;background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-weight:700;cursor:pointer;">↻ Retry</button></div>'; } }, 300);
+try { updateFAB(); } catch(e) {}
+
+// Auto-retry load — tries immediately, then again at 2s and 5s if still loading
+function startupLoad(attempt) {
+  loadOrders().catch(e => {
+    console.warn('Load attempt', attempt, 'failed:', e.message);
+    if (attempt < 3) {
+      setTimeout(()=>startupLoad(attempt+1), attempt * 2000);
+    }
+  });
+}
+
+// Use DOMContentLoaded if not yet fired, else load immediately
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', ()=>startupLoad(1));
+} else {
+  startupLoad(1);
+}
 </script>
 </body>
 </html>
