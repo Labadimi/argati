@@ -240,16 +240,6 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 .toggle-switch input:checked + .toggle-slider:before { transform: translateX(19px); }
 
 /* ── PLACE ORDER BUTTON ─────────────────────────────────────────────────────── */
-#place-order-btn {
-  width: 100%; padding: 15px; border: none; border-radius: 14px;
-  font-family: inherit; background: var(--primary); color: white;
-  font-size: 15px; font-weight: 800; letter-spacing: 0.05em;
-  text-transform: uppercase; cursor: pointer; margin-bottom: 12px;
-  box-shadow: 0 4px 14px rgba(255,69,0,0.3);
-  transition: all 0.15s;
-}
-#place-order-btn:active:not(:disabled) { transform: scale(0.97); background: #e03d00; }
-#place-order-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── ANALYTICS ──────────────────────────────────────────────────────────────── */
 .analytics-card {
@@ -1015,9 +1005,9 @@ async function approveSelected() {
 }
 
 // ─── PLACE ORDER BUTTON ───────────────────────────────────────────────────────
-document.getElementById('place-order-btn').addEventListener('click',()=>{
-  if (currentOrder&&!isProcessing) placeOrder(currentOrder);
-});
+// place-order-btn removed from HTML — orders placed via FAB
+// const _pob=document.getElementById('place-order-btn');
+// if(_pob) _pob.addEventListener('click',()=>{ if(currentOrder&&!isProcessing) placeOrder(currentOrder); });
 
 // ─── AUTO-PILOT ───────────────────────────────────────────────────────────────
 if(document.getElementById('pilot-toggle')) document.getElementById('pilot-toggle').addEventListener('change', e=>{
@@ -1102,22 +1092,10 @@ try { const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.dat
 try { checkNotifBar(); } catch(e) {}
 try { updateFAB(); } catch(e) {}
 
-// Auto-retry load — tries immediately, then again at 2s and 5s if still loading
-function startupLoad(attempt) {
-  loadOrders().catch(e => {
-    console.warn('Load attempt', attempt, 'failed:', e.message);
-    if (attempt < 3) {
-      setTimeout(()=>startupLoad(attempt+1), attempt * 2000);
-    }
-  });
-}
-
-// Use DOMContentLoaded if not yet fired, else load immediately
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', ()=>startupLoad(1));
-} else {
-  startupLoad(1);
-}
+// Simple startup — wait for DOM then load
+window.addEventListener('load', function() {
+  loadOrders();
+});
 </script>
 </body>
 </html>
