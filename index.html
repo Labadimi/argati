@@ -1089,19 +1089,37 @@ async function subscribeNotifications() {
     if (!sub) {
       sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC) });
     }
-    // Save subscription — use cors mode so we can verify it was saved
+    // Save subscription to Apps Script
+    let saved = false;
+    const subJson = JSON.stringify(sub.toJSON());
+    
+    // Try 1: POST with JSON body
     try {
-      const saveResp = await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
+      const r = await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(sub.toJSON())
+        body: subJson
       });
-      const saveData = await saveResp.json();
-      console.log('Subscription save response:', saveData);
-    } catch(saveErr) {
-      console.warn('Subscription save failed:', saveErr.message);
-      // Continue anyway — notification permission is still granted
+      if (r.ok) {
+        const d = await r.json();
+        if (d.saved) { saved = true; console.log('Subscription saved via POST'); }
+      }
+    } catch(e1) { console.warn('POST save failed:', e1.message); }
+    
+    // Try 2: POST with no-cors (if CORS fails)
+    if (!saved) {
+      try {
+        await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {'Content-Type': 'text/plain'},
+          body: subJson
+        });
+        saved = true; console.log('Subscription saved via no-cors POST');
+      } catch(e2) { console.warn('no-cors POST failed:', e2.message); }
     }
+    
+    if (!saved) console.warn('Could not confirm subscription save — will retry on next open');
     reg.showNotification('Argati',{ body:'Notifications enabled! You\'ll be alerted for new orders.', icon:'icon.png', tag:'argati-setup' });
     checkNotifBar();
   } catch(err) {
