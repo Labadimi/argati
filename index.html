@@ -776,7 +776,13 @@ async function loadOrders(silent=false) {
 
     allOrders = orders.filter(o => {
       const oid=(o.OrderID||'').toString().trim();
-      return oid===''||oid.toLowerCase()==='pending';
+      if (oid!==''&&oid.toLowerCase()!=='pending') return false;
+      return (o.Produkti||'').toString().trim()!==''&&
+             (o.Emri    ||'').toString().trim()!==''&&
+             (o.Mbiemri ||'').toString().trim()!==''&&
+             (o.Telefoni||'').toString().trim()!==''&&
+             (o.Qyteti  ||'').toString().trim()!==''&&
+             (o.Adresa  ||'').toString().trim()!=='';
     });
 
     const reviewOrders = allOrders.filter(o => {
