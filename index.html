@@ -1089,11 +1089,19 @@ async function subscribeNotifications() {
     if (!sub) {
       sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC) });
     }
-    fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(),{
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(sub.toJSON())
-    }).catch(()=>{});
+    // Save subscription — use cors mode so we can verify it was saved
+    try {
+      const saveResp = await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(sub.toJSON())
+      });
+      const saveData = await saveResp.json();
+      console.log('Subscription save response:', saveData);
+    } catch(saveErr) {
+      console.warn('Subscription save failed:', saveErr.message);
+      // Continue anyway — notification permission is still granted
+    }
     reg.showNotification('Argati',{ body:'Notifications enabled! You\'ll be alerted for new orders.', icon:'icon.png', tag:'argati-setup' });
     checkNotifBar();
   } catch(err) {
