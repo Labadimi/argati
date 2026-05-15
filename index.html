@@ -815,13 +815,21 @@ async function loadOrders(silent=false) {
     renderOrderList(allOrders, reviewOrders);
     if (allOrders.length>0) currentOrder = allOrders[0];
 
-    // Auto-pilot
+    // Auto-Pilot: fire automatically for clean orders (no comment, no multi-product)
     try {
-      if (autoPilot && !isProcessing && currentOrder) {
-        const raw=(currentOrder.Produkti||'').toString().trim();
-        const cm=(currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
-        if (!raw.includes('+')&&cm==='') {
-          setTimeout(()=>{ if (!isProcessing&&currentOrder&&autoPilot) placeOrder(currentOrder); }, 3000);
+      if (autoPilot && !isProcessing && allOrders.length > 0) {
+        const order = allOrders.find(o => {
+          const raw = (o.Produkti||'').toString().trim();
+          const cm  = (o['Koment shtese (Nese ka)']||'').toString().trim();
+          return !raw.includes('+') && cm === '';
+        });
+        if (order) {
+          setTimeout(()=>{
+            if (!isProcessing && autoPilot) {
+              currentOrder = order;
+              placeOrder(order);
+            }
+          }, 3000);
         }
       }
     } catch(e) { console.warn('autopilot error:', e.message); }
