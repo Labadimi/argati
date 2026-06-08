@@ -571,7 +571,7 @@ body.light .tab-bar { background: rgba(244,244,248,0.94); }
   <div class="logo-mark">🤖</div>
   <div class="header-info">
     <div class="header-title">Argati</div>
-    <div class="header-sub" id="header-sub"></div>
+    <div class="header-sub" id="header-sub">Parts Center</div>
   </div>
   <div class="header-actions">
     <button class="hbtn" id="theme-btn" title="Toggle theme">☀️</button>
@@ -859,8 +859,14 @@ function updateStats(completedToday, pending, reviewCount) {
   if (te) { te.innerText=completedToday; te.style.color='#10b981'; }
   if (pe) { pe.innerText=pending;        pe.style.color='#FF5F1F'; }
   if (re) { re.innerText=reviewCount;    re.style.color='#f59e0b'; }
+  // In-app tab badge
   const badge = document.getElementById('badge-orders');
   if (badge) { if (pending > 0) { badge.innerText=pending; badge.style.display='flex'; } else badge.style.display='none'; }
+  // Home screen icon badge (iOS 16.4+ PWA + Chrome/Edge on Android)
+  if ('setAppBadge' in navigator) {
+    if (pending > 0) navigator.setAppBadge(pending).catch(()=>{});
+    else             navigator.clearAppBadge().catch(()=>{});
+  }
 }
 
 // ─── ANALYTICS ────────────────────────────────────────────────────────────────
