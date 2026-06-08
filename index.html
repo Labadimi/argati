@@ -525,7 +525,7 @@ body.dark .alert-comment { background: #0d1f3c; border-color: #1e3a8a; color: #9
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwJNKQM60EgtoiL9_j0qI8B9hLrjTH9fruhpakO0aMgrJFosgm0dDMkUFWPCAxQlEL7MA/exec';
+const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 const VAPID_PUBLIC  = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -815,21 +815,13 @@ async function loadOrders(silent=false) {
     renderOrderList(allOrders, reviewOrders);
     if (allOrders.length>0) currentOrder = allOrders[0];
 
-    // Auto-Pilot: fire automatically for clean orders (no comment, no multi-product)
+    // Auto-pilot
     try {
-      if (autoPilot && !isProcessing && allOrders.length > 0) {
-        const order = allOrders.find(o => {
-          const raw = (o.Produkti||'').toString().trim();
-          const cm  = (o['Koment shtese (Nese ka)']||'').toString().trim();
-          return !raw.includes('+') && cm === '';
-        });
-        if (order) {
-          setTimeout(()=>{
-            if (!isProcessing && autoPilot) {
-              currentOrder = order;
-              placeOrder(order);
-            }
-          }, 3000);
+      if (autoPilot && !isProcessing && currentOrder) {
+        const raw=(currentOrder.Produkti||'').toString().trim();
+        const cm=(currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
+        if (!raw.includes('+')&&cm==='') {
+          setTimeout(()=>{ if (!isProcessing&&currentOrder&&autoPilot) placeOrder(currentOrder); }, 3000);
         }
       }
     } catch(e) { console.warn('autopilot error:', e.message); }
