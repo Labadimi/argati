@@ -41,6 +41,31 @@
   --safe-bottom:    env(safe-area-inset-bottom, 0px);
 }
 
+/* ── LIGHT MODE ────────────────────────────────────────────────────────────── */
+body.light {
+  --primary:        #ff4d1c;
+  --primary-dim:    rgba(255,77,28,0.09);
+  --primary-glow:   rgba(255,77,28,0.25);
+  --bg:             #f4f4f8;
+  --surface:        #ffffff;
+  --surface-2:      #f0f0f5;
+  --surface-3:      #e8e8ef;
+  --border:         rgba(0,0,0,0.08);
+  --border-bright:  rgba(0,0,0,0.14);
+  --text:           #0a0a14;
+  --text-2:         #555565;
+  --text-3:         #9090a8;
+  --green:          #00a86b;
+  --green-dim:      rgba(0,168,107,0.1);
+  --amber:          #d68c00;
+  --amber-dim:      rgba(214,140,0,0.1);
+  --red:            #e03030;
+  --blue:           #2070cc;
+  --shadow-sm:      0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md:      0 8px 24px rgba(0,0,0,0.12);
+  --shadow-lg:      0 20px 60px rgba(0,0,0,0.18);
+}
+
 /* ── RESET ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -60,8 +85,9 @@ body::before {
   content: '';
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  opacity: 0.4;
+  opacity: 0.4; transition: opacity 0.3s;
 }
+body.light::before { opacity: 0.15; }
 
 /* ── HEADER ─────────────────────────────────────────────────────────────────── */
 .header {
@@ -72,7 +98,9 @@ body::before {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--border);
+  transition: background 0.3s;
 }
+body.light .header { background: rgba(244,244,248,0.88); }
 
 .logo-mark {
   width: 40px; height: 40px; flex-shrink: 0;
@@ -121,7 +149,9 @@ body::before {
   border-top: 1px solid var(--border);
   display: flex; align-items: stretch;
   padding-bottom: var(--safe-bottom);
+  transition: background 0.3s;
 }
+body.light .tab-bar { background: rgba(244,244,248,0.94); }
 .tab-item {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px; padding: 10px 0 8px;
@@ -768,13 +798,16 @@ function normalizeAddress(raw) {
 // ─── THEME ────────────────────────────────────────────────────────────────────
 function applyTheme(dark) {
   document.body.classList.toggle('dark', dark);
+  document.body.classList.toggle('light', !dark);
   document.getElementById('theme-btn').innerText = dark ? '☀️' : '🌙';
   document.getElementById('dark-toggle').checked = dark;
-  localStorage.setItem('darkMode', dark ? '1' : '');
+  localStorage.setItem('darkMode', dark ? '1' : '0');
 }
 document.getElementById('theme-btn').addEventListener('click', () => applyTheme(!document.body.classList.contains('dark')));
 document.getElementById('dark-toggle').addEventListener('change', e => applyTheme(e.target.checked));
-if (localStorage.getItem('darkMode')) applyTheme(true);
+// Default: dark mode. Switch to light if explicitly saved as '0'
+if (localStorage.getItem('darkMode') === '0') applyTheme(false);
+else applyTheme(true);
 
 // ─── TABS ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
