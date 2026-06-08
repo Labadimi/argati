@@ -1,6 +1,6 @@
 // Argati Service Worker v3 — handles Web Push notifications
 // Required for iOS PWA push notifications (iOS 16.4+)
-const CACHE_NAME = 'argati-v5.1';
+const CACHE_NAME = 'argati-v5.2';
 
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
@@ -33,19 +33,29 @@ self.addEventListener('push', e => {
     data:           { url: self.location.origin }
   };
 
-  // event.waitUntil keeps SW alive until notification is shown
-  e.waitUntil(self.registration.showNotification(title, options));
+  // Set app badge + show notification
+  e.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      // Increment badge — exact count not known here so we use a general badge
+      'setAppBadge' in navigator ? navigator.setAppBadge().catch(()=>{}) : Promise.resolve()
+    ])
+  );
 });
 
 // ── Notification click — open/focus the app ───────────────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(list => {
-        if (list.length > 0) return list[0].focus();
-        return clients.openWindow('./');
-      })
+    Promise.all([
+      // Clear badge when user taps notification
+      'clearAppBadge' in navigator ? navigator.clearAppBadge().catch(()=>{}) : Promise.resolve(),
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then(list => {
+          if (list.length > 0) return list[0].focus();
+          return clients.openWindow('./');
+        })
+    ])
   );
 });
 
