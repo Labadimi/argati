@@ -1,9 +1,25 @@
 // Argati Service Worker v4
-const CACHE_NAME   = 'argati-v5.8';
+const CACHE_NAME   = 'argati-v5.9';
 const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 
 self.addEventListener('install',  e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+
+// Refresh badge whenever SW wakes up (push, focus, etc.)
+async function refreshBadgeOnly() {
+  try {
+    const res     = await fetch(SCRIPT_URL + '?action=count&t=' + Date.now());
+    const text    = await res.text();
+    const pending = parseInt(text.trim()) || 0;
+    if ('setAppBadge' in navigator) {
+      if (pending > 0) navigator.setAppBadge(pending).catch(() => {});
+      else             navigator.clearAppBadge().catch(() => {});
+    }
+    // Update open windows
+    const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    list.forEach(c => c.postMessage({ type: 'BADGE_UPDATE', pending }));
+  } catch(e) {}
+}
 
 // ── PUSH — fires even when PWA is closed ──────────────────────────────────────
 self.addEventListener('push', e => {
@@ -80,6 +96,13 @@ self.addEventListener('notificationclick', e => {
       // Don't clear badge on click — let the app do it when orders are loaded
     ])
   );
+});
+
+// ── PERIODIC BACKGROUND SYNC — refreshes badge every 5 min ─────────────────
+self.addEventListener('periodicsync', e => {
+  if (e.tag === 'badge-refresh') {
+    e.waitUntil(refreshBadgeOnly());
+  }
 });
 
 // ── PUSH SUBSCRIPTION CHANGED — auto re-subscribe ────────────────────────────
