@@ -51,7 +51,7 @@ body {
   background:var(--bg); color:var(--t1);
   min-height:100dvh; overflow-x:hidden;
   -webkit-font-smoothing:antialiased;
-  padding-bottom:calc(84px + var(--sab));
+  padding-bottom:calc(72px + var(--sab));
 }
 body::before {
   content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
@@ -94,16 +94,16 @@ body.light .header { background:rgba(240,240,247,.85); }
 
 /* ── TAB BAR — floating pill ────────────────────────────────────────────────── */
 .tab-bar {
-  position:fixed; bottom:calc(12px + var(--sab));
-  left:50%; transform:translateX(-50%); z-index:100;
+  position:fixed; bottom:var(--sab);
+  left:0; right:0; z-index:100; transform:none;
   display:flex; align-items:center;
   background:rgba(14,14,22,.9);
   backdrop-filter:blur(32px) saturate(200%);
   -webkit-backdrop-filter:blur(32px) saturate(200%);
-  border:1px solid var(--gbb); border-radius:24px;
-  padding:5px 6px; gap:2px;
-  width:calc(100% - 32px); max-width:420px;
-  box-shadow:0 8px 40px rgba(0,0,0,.5);
+  border-top:1px solid var(--gbb); border-radius:0;
+  padding:4px 8px calc(4px + var(--sab)); gap:2px;
+  width:100%; max-width:none;
+  box-shadow:0 -8px 40px rgba(0,0,0,.3);
 }
 body.light .tab-bar { background:rgba(255,255,255,.92); }
 .tab-item {
@@ -255,7 +255,7 @@ body.light .tab-bar { background:rgba(255,255,255,.92); }
 
 /* ── FAB ────────────────────────────────────────────────────────────────────── */
 #fab {
-  position:fixed; bottom:calc(84px + var(--sab));
+  position:fixed; bottom:calc(76px + var(--sab));
   left:16px; right:16px; z-index:60; display:none;
   animation:fabUp .28s cubic-bezier(.34,1.56,.64,1);
 }
@@ -415,7 +415,7 @@ body.light .tab-bar { background:rgba(255,255,255,.92); }
   <div class="app-mark">🤖</div>
   <div class="header-info">
     <div class="header-name">Argati</div>
-    <div class="header-sub" id="header-sub">Parts Center</div>
+    <div class="header-sub" id="header-sub"></div>
   </div>
   <div class="hbtns">
     <button class="hbtn" id="reload-btn" title="Sync">↻</button>
