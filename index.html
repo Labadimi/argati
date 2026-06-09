@@ -436,7 +436,7 @@ body.light .tab-badge { border-color: rgba(250,250,255,0.95); }
   <div class="app-mark">🤖</div>
   <div class="header-info">
     <div class="header-name">Argati</div>
-    <div class="header-sub" id="header-sub">Parts Center</div>
+    <div class="header-sub" id="header-sub">Lavdot</div>
   </div>
   <div class="hbtns">
     <button class="hbtn" id="reload-btn" title="Sync">↻</button>
@@ -717,8 +717,14 @@ function updateStats(completedToday, pending, reviewCount) {
   if (te) { te.innerText=completedToday; te.style.color='var(--mint)'; }
   if (pe) { pe.innerText=pending;        pe.style.color='var(--flame)'; }
   if (re) { re.innerText=reviewCount;    re.style.color='var(--amber)'; }
+  // In-app tab badge
   const badge = document.getElementById('badge-orders');
   if (badge) { if (pending > 0) { badge.innerText=pending; badge.style.display='flex'; } else badge.style.display='none'; }
+  // Home screen icon badge — the red number on the app icon
+  if ('setAppBadge' in navigator) {
+    if (pending > 0) navigator.setAppBadge(pending).catch(()=>{});
+    else             navigator.clearAppBadge().catch(()=>{});
+  }
 }
 
 // ─── ANALYTICS ────────────────────────────────────────────────────────────────
@@ -1240,6 +1246,10 @@ async function testNotification() {
 setInterval(()=>loadOrders(true), 60000);
 
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
+// Probe badge API — iOS activates it on first call
+if ('setAppBadge' in navigator) {
+  navigator.clearAppBadge().catch(()=>{});
+}
 try {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js?v=5').then(async reg => {
