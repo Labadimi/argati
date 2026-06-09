@@ -1,75 +1,95 @@
-// Argati Service Worker v3 — handles Web Push notifications
-// Required for iOS PWA push notifications (iOS 16.4+)
-const CACHE_NAME = 'argati-v5.6';
+// Argati Service Worker v4
+const CACHE_NAME   = 'argati-v5.7';
+const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 
-self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('install',  e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
 
-// ── Push event — fires when server sends a push ───────────────────────────────
-// This fires even when the PWA is completely closed
+// ── PUSH — fires even when PWA is closed ──────────────────────────────────────
 self.addEventListener('push', e => {
   let title = 'Argati';
   let body  = 'New order arrived!';
-  let icon  = 'icon.png';
 
   if (e.data) {
-    try {
-      const data = e.data.json();
-      title = data.title || title;
-      body  = data.body  || body;
-    } catch(err) {
-      body = e.data.text() || body;
-    }
+    try   { const d = e.data.json(); title = d.title || title; body = d.body || body; }
+    catch { body = e.data.text() || body; }
   }
 
-  const options = {
-    body,
-    icon,
-    badge:          icon,
-    tag:            'argati-order',
-    renotify:       true,
-    requireInteraction: false,
-    vibrate:        [200, 80, 200],
-    data:           { url: self.location.origin }
-  };
+  e.waitUntil(Promise.all([
+    // 1. Show notification
+    self.registration.showNotification(title, {
+      body, icon: 'icon.png', badge: 'icon.png',
+      tag: 'argati-order', renotify: true,
+      vibrate: [200, 80, 200],
+      requireInteraction: false,
+      data: { url: self.location.origin }
+    }),
 
-  // Set app badge + show notification
-  e.waitUntil(
-    Promise.all([
-      self.registration.showNotification(title, options),
-      // Increment badge — exact count not known here so we use a general badge
-      'setAppBadge' in navigator ? navigator.setAppBadge().catch(()=>{}) : Promise.resolve()
-    ])
-  );
+    // 2. Fetch current pending count and update app badge instantly
+    fetchAndUpdateBadge(),
+
+    // 3. Tell any open PWA window to refresh its order list immediately
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      list.forEach(c => c.postMessage({ type: 'NEW_ORDER' }));
+    })
+  ]));
 });
 
-// ── Notification click — open/focus the app ───────────────────────────────────
+// ── Fetch pending count + set home screen badge ───────────────────────────────
+async function fetchAndUpdateBadge() {
+  try {
+    const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
+    const orders = await res.json();
+    const pending = Array.isArray(orders) ? orders.filter(o => {
+      const oid = (o.OrderID || '').toString().trim();
+      if (oid !== '' && oid.toLowerCase() !== 'pending') return false;
+      return (o.Produkti  || '').toString().trim() !== '' &&
+             (o.Emri      || '').toString().trim() !== '' &&
+             (o.Mbiemri   || '').toString().trim() !== '' &&
+             (o.Telefoni  || '').toString().trim() !== '' &&
+             (o.Qyteti    || '').toString().trim() !== '' &&
+             (o.Adresa    || '').toString().trim() !== '';
+    }).length : 0;
+
+    // Update home screen badge
+    if ('setAppBadge' in navigator) {
+      if (pending > 0) navigator.setAppBadge(pending).catch(() => {});
+      else             navigator.clearAppBadge().catch(() => {});
+    }
+
+    // Tell open windows the exact count so they update immediately
+    const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    list.forEach(c => c.postMessage({ type: 'BADGE_UPDATE', pending }));
+
+    return pending;
+  } catch(e) {
+    // Badge increment without exact count if fetch fails
+    if ('setAppBadge' in navigator) navigator.setAppBadge().catch(() => {});
+  }
+}
+
+// ── NOTIFICATION CLICK — open/focus app ──────────────────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(
     Promise.all([
-      // Clear badge when user taps notification
-      'clearAppBadge' in navigator ? navigator.clearAppBadge().catch(()=>{}) : Promise.resolve(),
-      clients.matchAll({ type: 'window', includeUncontrolled: true })
-        .then(list => {
-          if (list.length > 0) return list[0].focus();
-          return clients.openWindow('./');
-        })
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+        if (list.length > 0) return list[0].focus();
+        return clients.openWindow('./');
+      }),
+      // Don't clear badge on click — let the app do it when orders are loaded
     ])
   );
 });
 
-// ── Push subscription changed — re-subscribe automatically ───────────────────
-// iOS sometimes drops subscriptions — this re-subscribes and saves new sub
+// ── PUSH SUBSCRIPTION CHANGED — auto re-subscribe ────────────────────────────
 self.addEventListener('pushsubscriptionchange', e => {
   e.waitUntil(
     self.registration.pushManager.subscribe(e.oldSubscription.options)
-      .then(sub => {
-        return fetch('{}/argati-subscribe'.replace('{}', self.location.origin), {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sub.toJSON())
-        });
-      })
+      .then(sub => fetch(SCRIPT_URL + '?action=saveSub&t=' + Date.now(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON())
+      }))
   );
 });
