@@ -1,5 +1,5 @@
 // Argati Service Worker v4
-const CACHE_NAME   = 'argati-v6';
+const CACHE_NAME   = 'argati-v6.1';
 const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 
 self.addEventListener('install',  e => { self.skipWaiting(); });
@@ -31,6 +31,9 @@ self.addEventListener('push', e => {
     catch { body = e.data.text() || body; }
   }
 
+  // Set badge immediately (before fetch) so it appears instantly
+  if ('setAppBadge' in self) self.setAppBadge().catch(()=>{});
+
   e.waitUntil(Promise.all([
     // 1. Show notification
     self.registration.showNotification(title, {
@@ -41,10 +44,10 @@ self.addEventListener('push', e => {
       data: { url: self.location.origin }
     }),
 
-    // 2. Fetch current pending count and update app badge instantly
+    // 2. Fetch exact pending count and update badge with real number
     fetchAndUpdateBadge(),
 
-    // 3. Tell any open PWA window to refresh its order list immediately
+    // 3. Tell any open PWA window to refresh immediately
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       list.forEach(c => c.postMessage({ type: 'NEW_ORDER' }));
     })
