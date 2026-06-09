@@ -415,7 +415,7 @@ body.light .tab-bar { background:rgba(255,255,255,.92); }
   <div class="app-mark">🤖</div>
   <div class="header-info">
     <div class="header-name">Argati</div>
-    <div class="header-sub" id="header-sub"></div>
+    <div class="header-sub" id="header-sub">Lavdot</div>
   </div>
   <div class="hbtns">
     <button class="hbtn" id="reload-btn" title="Sync">↻</button>
@@ -1217,7 +1217,15 @@ setInterval(()=>loadOrders(true), 60000);
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
 try {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js?v=5').then(async reg => {
+      // Periodic Background Sync — updates badge every 5 minutes even when closed
+      // Supported on Android Chrome; iOS uses push for wakeup instead
+      if ('periodicSync' in reg) {
+        try {
+          await reg.periodicSync.register('badge-refresh', { minInterval: 5 * 60 * 1000 });
+        } catch(e) {}
+      }
+    }).catch(()=>{});
 
     // Listen for messages from service worker
     navigator.serviceWorker.addEventListener('message', e => {
