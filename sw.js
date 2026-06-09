@@ -1,5 +1,5 @@
 // Argati Service Worker v4
-const CACHE_NAME   = 'argati-v5.7';
+const CACHE_NAME   = 'argati-v5.8';
 const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 
 self.addEventListener('install',  e => { self.skipWaiting(); });
