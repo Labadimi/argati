@@ -1,6 +1,6 @@
 // Argati Service Worker v3 — handles Web Push notifications
 // Required for iOS PWA push notifications (iOS 16.4+)
-const CACHE_NAME = 'argati-v5.5';
+const CACHE_NAME = 'argati-v5.6';
 
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
