@@ -1215,7 +1215,31 @@ async function testNotification() {
 setInterval(()=>loadOrders(true), 60000);
 
 // ─── STARTUP ──────────────────────────────────────────────────────────────────
-try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{}); } catch(e) {}
+try {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+
+    // Listen for messages from service worker
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data.type === 'NEW_ORDER') {
+        // New order push received — reload orders immediately
+        loadOrders(true);
+        // Flash the orders tab
+        const tab = document.querySelector('.tab-item[data-page="orders"]');
+        if (tab) { tab.style.transition = 'background 0.1s'; tab.style.background = 'rgba(255,92,26,0.2)'; setTimeout(()=>{ tab.style.background=''; }, 400); }
+      }
+      if (e.data.type === 'BADGE_UPDATE') {
+        // SW fetched exact count — update stats bar directly
+        const pe = document.getElementById('stat-pending');
+        if (pe && typeof e.data.pending === 'number') {
+          pe.innerText = e.data.pending;
+          const badge = document.getElementById('badge-orders');
+          if (badge) { if (e.data.pending > 0) { badge.innerText = e.data.pending; badge.style.display = 'flex'; } else badge.style.display = 'none'; }
+        }
+      }
+    });
+  }
+} catch(e) {}
 try { const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.date===new Date().toDateString()&&Array.isArray(s.timings)) sessionTimings=s.timings; } catch(e) {}
 try { checkNotifBar(); } catch(e) {}
 try { updateFAB(); } catch(e) {}
