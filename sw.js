@@ -1,5 +1,5 @@
 // Argati Service Worker v4
-const CACHE_NAME   = 'argati-v6.1';
+const CACHE_NAME   = 'argati-v6.2';
 const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 
 self.addEventListener('install',  e => { self.skipWaiting(); });
@@ -11,9 +11,9 @@ async function refreshBadgeOnly() {
     const res     = await fetch(SCRIPT_URL + '?action=count&t=' + Date.now());
     const text    = await res.text();
     const pending = parseInt(text.trim()) || 0;
-    if ('setAppBadge' in navigator) {
-      if (pending > 0) navigator.setAppBadge(pending).catch(() => {});
-      else             navigator.clearAppBadge().catch(() => {});
+    if ('setAppBadge' in self) {
+      if (pending > 0) self.navigator.setAppBadge(pending).catch(() => {});
+      else             self.navigator.clearAppBadge().catch(() => {});
     }
     // Update open windows
     const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
@@ -71,9 +71,9 @@ async function fetchAndUpdateBadge() {
     }).length : 0;
 
     // Update home screen badge
-    if ('setAppBadge' in navigator) {
-      if (pending > 0) navigator.setAppBadge(pending).catch(() => {});
-      else             navigator.clearAppBadge().catch(() => {});
+    if ('setAppBadge' in self) {
+      if (pending > 0) self.navigator.setAppBadge(pending).catch(() => {});
+      else             self.navigator.clearAppBadge().catch(() => {});
     }
 
     // Tell open windows the exact count so they update immediately
