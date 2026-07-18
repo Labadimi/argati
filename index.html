@@ -35,7 +35,7 @@ body.light {
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(76px + var(--sab))}
+  padding-bottom:calc(80px + max(var(--sab),8px))}
 body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(255,92,26,.09) 0%,transparent 70%),
              radial-gradient(ellipse 40% 30% at 85% 100%,rgba(0,229,160,.05) 0%,transparent 60%)}
@@ -78,7 +78,8 @@ body.light .search-input{color:var(--t1);background-image:url("data:image/svg+xm
 
 /* ── TAB BAR ────────────────────────────────────────────────────────────────── */
 .tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;
-  display:flex;align-items:stretch;padding-bottom:var(--sab);
+  display:flex;align-items:stretch;
+  padding-bottom:max(var(--sab), 8px);
   background:rgba(8,8,13,.85);
   backdrop-filter:blur(48px) saturate(200%);-webkit-backdrop-filter:blur(48px) saturate(200%);
   border-top:.5px solid var(--gbb)}
@@ -202,7 +203,7 @@ body.light .tab-bar{background:rgba(240,240,247,.92)}
 .loading-txt{font-size:13px;color:var(--t3);font-weight:500}
 
 /* ── FAB ────────────────────────────────────────────────────────────────────── */
-#fab{position:fixed;bottom:calc(76px + var(--sab));left:16px;right:16px;z-index:60;
+#fab{position:fixed;bottom:calc(80px + max(var(--sab),8px));left:16px;right:16px;z-index:60;
   display:none;animation:fabUp .28s cubic-bezier(.34,1.56,.64,1)}
 @keyframes fabUp{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
 .fab-shell{background:linear-gradient(135deg,var(--flame),#ff8040);border-radius:var(--r4);
@@ -756,16 +757,19 @@ function switchTab(name) {
 document.getElementById('search-btn').addEventListener('click', () => {
   const wrap = document.getElementById('search-wrap');
   const inp  = document.getElementById('search-input');
-  const isOpen = wrap && (wrap.style.display === 'block' || wrap.style.display === '');
+  const isOpen = wrap && wrap.style.display === 'block';
   if (isOpen) {
-    if (wrap) wrap.style.display = 'none';
-    if (inp)  { inp.value = ''; }
+    wrap.style.display = 'none';
+    inp.value = '';
     searchQuery = '';
-    document.getElementById('search-clear').style.display = 'none';
-    renderOrderList();
+    const clr = document.getElementById('search-clear');
+    if (clr) clr.style.display = 'none';
+    renderOrderList(allOrders);
+    document.getElementById('search-btn').innerText = '🔍';
   } else {
     if (wrap) wrap.style.display = 'block';
-    if (inp)  setTimeout(() => inp.focus(), 100);
+    document.getElementById('search-btn').innerText = '✕';
+    setTimeout(() => { if (inp) inp.focus(); }, 150);
   }
 });
 
@@ -975,7 +979,9 @@ async function loadOrders(silent=false) {
 
     const reviewOrders = allOrders.filter(o => {
       const c=(o['Koment shtese (Nese ka)']||'').toString().trim();
-      return c!==''||(o.Produkti||'').toString().includes('+');
+      const ap=(o.Produkti||'').toString().trim();
+      // Only flag as review if: has comment, OR has + but NOT a known bundle
+      return c!=='' || (ap.includes('+') && !KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(ap)));
     });
 
     try { updateStats(completedToday, allOrders.length, reviewOrders.length); } catch(e) { console.warn('updateStats error:', e.message); }
@@ -1046,7 +1052,7 @@ function renderOrderList(orders, reviewOrders) {
   if (!reviewOrders) reviewOrders = (orders || []).filter(o => {
     const ac = (o['Koment shtese (Nese ka)']||'').toString().trim();
     const ap = (o.Produkti||'').toString().trim();
-    return ac !== '' || (!isKnownBundle(ap) && ap.includes('+'));
+    return ac !== '' || (ap.includes('+') && !KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(ap)));
   });
   const list = document.getElementById('order-list');
   if (!orders || !orders.length) {
@@ -1505,8 +1511,24 @@ function showSearchBar(show) {
 
 searchInput.addEventListener('input', e => {
   searchQuery = e.target.value.toLowerCase().trim();
-  searchClear.style.display = searchQuery ? 'block' : 'none';
-  renderOrderList();
+  if (searchClear) searchClear.style.display = searchQuery ? 'block' : 'none';
+  if (!allOrders || !allOrders.length) return;
+  if (!searchQuery) {
+    renderOrderList(allOrders);
+    return;
+  }
+  const q = searchQuery;
+  const filtered = allOrders.filter(o => {
+    const name    = ((o.Emri||'')+' '+(o.Mbiemri||'')).toLowerCase();
+    const city    = (o.Qyteti||'').toLowerCase();
+    const prod    = (o._productName||o.Produkti||'').toLowerCase();
+    const phone   = (o.Telefoni||'').toString();
+    const comment = (o['Koment shtese (Nese ka)']||'').toLowerCase();
+    const row     = String(o.rowNumber);
+    return name.includes(q)||city.includes(q)||prod.includes(q)||
+           phone.includes(q)||comment.includes(q)||row===q;
+  });
+  renderOrderList(filtered);
 });
 searchClear.addEventListener('click', () => {
   searchInput.value = ''; searchQuery = '';
@@ -1881,7 +1903,12 @@ const _stOrig = switchTab;
 window.switchTab = function(name) {
   _stOrig(name);
   showSearchBar(name === 'orders');
-  if (name !== 'orders') { searchInput.value=''; searchQuery=''; }
+  if (name !== 'orders') {
+    searchInput.value=''; searchQuery='';
+    const wrap=document.getElementById('search-wrap');
+    if (wrap) wrap.style.display='none';
+    document.getElementById('search-btn').innerText='🔍';
+  }
 };
 
 // ─── PATCH loadOrders to filter by search ────────────────────────────────────
