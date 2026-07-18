@@ -1042,12 +1042,18 @@ async function loadOrders(silent=false) {
 
 // ─── RENDER ORDER LIST ────────────────────────────────────────────────────────
 function renderOrderList(orders, reviewOrders) {
+  if (!orders) orders = allOrders;
+  if (!reviewOrders) reviewOrders = (orders || []).filter(o => {
+    const ac = (o['Koment shtese (Nese ka)']||'').toString().trim();
+    const ap = (o.Produkti||'').toString().trim();
+    return ac !== '' || (!isKnownBundle(ap) && ap.includes('+'));
+  });
   const list = document.getElementById('order-list');
-  if (!orders.length) {
+  if (!orders || !orders.length) {
     list.innerHTML='<div class="empty-state"><div class="empty-glyph">🎉</div><div class="empty-h">All caught up!</div><div class="empty-p">No pending orders right now.</div></div>';
     return;
   }
-  // Show all orders — review first, then normal
+  // Review orders first, then clean
   const sorted=[...reviewOrders,...orders.filter(o=>!reviewOrders.includes(o))];
   const hint=orders.length>1?'<p class="section-eye">Tap to select · Swipe for actions</p>':'<p class="section-eye">Pending order · Swipe for actions</p>';
   list.innerHTML=hint+sorted.map(o=>buildOrderCard(o)).join('');
@@ -1483,6 +1489,7 @@ loadAutoModeState();
 
 // ─── KNOWN BUNDLES ────────────────────────────────────────────────────────────
 const KNOWN_BUNDLES = ["201+106","204+106+201","204+107+106","210+209+206"];
+function isKnownBundle(s) { return KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(s)); }
 function normBundle(s) { return s.split('+').map(p=>p.trim()).sort().join('+'); }
 
 // ─── SEARCH ───────────────────────────────────────────────────────────────────
