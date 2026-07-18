@@ -64,9 +64,9 @@ body.light .header{background:rgba(240,240,247,.88)}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ── SEARCH BAR ─────────────────────────────────────────────────────────────── */
-#search-bar{display:none;padding:0 16px 10px;
+#search-wrap{display:none;padding:0 16px 10px;
   background:rgba(8,8,13,.8);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px)}
-body.light #search-bar{background:rgba(240,240,247,.88)}
+body.light #search-wrap{background:rgba(240,240,247,.88)}
 .search-input{width:100%;background:var(--g2);border:1px solid var(--gb);
   border-radius:12px;padding:10px 14px 10px 36px;color:var(--t1);
   font-family:inherit;font-size:14px;outline:none;
@@ -347,6 +347,54 @@ select.field-input option{background:var(--s1);color:var(--t1)}
 .ver-tag{text-align:center;padding:20px 0 8px;font-size:11px;
   color:var(--t4);font-family:'JetBrains Mono',monospace}
 
+
+/* ── SEARCH CLEAR BTN ───────────────────────────────────────────────────────── */
+#search-clear{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px 6px}
+#search-wrap{background:rgba(8,8,13,.8);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
+  padding:0 16px 10px}
+body.light #search-wrap{background:rgba(240,240,247,.88)}
+
+/* ── SWIPE HINT ─────────────────────────────────────────────────────────────── */
+.swipe-hint{font-size:11px;color:var(--t4);text-align:center;padding:0 0 10px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  animation:hintPulse 2s ease infinite}
+@keyframes hintPulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── CARD PROCESSING STATE ──────────────────────────────────────────────────── */
+.order-card.processing{border-color:rgba(0,229,160,.3)}
+.order-card.processing::before{background:var(--mint);box-shadow:0 0 18px var(--mdim);
+  animation:processingPulse 1.5s ease infinite}
+@keyframes processingPulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* ── SKELETON LOADING ───────────────────────────────────────────────────────── */
+.skeleton{border-radius:var(--r3);padding:16px;margin-bottom:10px;
+  background:var(--g1);border:1px solid var(--gb);overflow:hidden;position:relative}
+.skeleton::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.04) 50%,transparent 100%);
+  animation:shimmer 1.5s ease infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.skel-line{height:12px;border-radius:6px;background:var(--g3);margin-bottom:8px}
+.skel-line.w80{width:80%}.skel-line.w60{width:60%}.skel-line.w40{width:40%}
+.skel-line.tall{height:20px;width:55%;margin-bottom:12px}
+
+/* ── SEARCH INPUT CLEAR ─────────────────────────────────────────────────────── */
+input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
+
+/* ── NEW ORDER PULSE ────────────────────────────────────────────────────────── */
+@keyframes newCardIn{from{opacity:0;transform:translateX(-12px) scale(.97)}to{opacity:1;transform:none}}
+.order-card.new-in{animation:newCardIn .35s cubic-bezier(.34,1.56,.64,1)}
+
+/* ── DETAIL KEY LABEL ───────────────────────────────────────────────────────── */
+.detail-key{font-size:10px;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+
+/* ── EDIT OVERLAY MAX HEIGHT ─────────────────────────────────────────────────── */
+#edit-overlay .modal-sheet{max-height:92dvh;overflow-y:auto}
+
+/* ── QUICK ACTIONS LABELS ────────────────────────────────────────────────────── */
+.ca-icon{font-size:18px;line-height:1;margin-bottom:2px}
+
 /* ── SCROLLBAR ──────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:var(--gbb);border-radius:2px}
@@ -368,9 +416,16 @@ select.field-input option{background:var(--s1);color:var(--t1)}
 </header>
 
 <!-- SEARCH -->
-<div id="search-bar">
-  <input class="search-input" id="search-input" type="search"
-    placeholder="Search by name, city, product…" autocomplete="off">
+<div id="search-wrap" style="display:none">
+  <div style="padding:0 16px 10px;background:rgba(8,8,13,.8);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px)">
+    <div style="position:relative">
+      <input class="search-input" id="search-input" type="search"
+        placeholder="Name, city, product, phone…" autocomplete="off">
+      <button id="search-clear" onclick="document.getElementById('search-input').value='';searchQuery='';document.getElementById('search-clear').style.display='none';renderOrderList();"
+        style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);
+          background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px">✕</button>
+    </div>
+  </div>
 </div>
 
 <!-- ORDERS PAGE -->
@@ -401,6 +456,7 @@ select.field-input option{background:var(--s1);color:var(--t1)}
 
   <div id="auto-mode-bar">⚡ Full Auto Mode — clean orders placed automatically</div>
 
+  <div id="swipe-hint" class="swipe-hint" style="display:none">← Swipe left for quick actions</div>
   <div id="order-list">
     <div class="loading"><div class="ring"></div><div class="loading-txt">Loading orders…</div></div>
   </div>
@@ -629,3 +685,1314 @@ select.field-input option{background:var(--s1);color:var(--t1)}
 </div>
 
 <script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
+const VAPID_PUBLIC = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let allOrders      = [];
+let selectedRows   = new Set();
+let currentOrder   = null;
+let orderHistory   = [];
+let sessionTimings = [];
+let weeklyData     = {};
+let lastCount      = -1;
+let isProcessing   = false;
+let autoMode       = false;
+let timerInterval  = null;
+let timerStart     = null;
+
+// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
+const PRODUCTS = {
+  "105":{ name:"Pastrues Frenave 105",         url:"https://gjirafamall.com/pastrues-i-frenave-80100-pcl-005-105" },
+  "106":{ name:"DPF Additiv 106",               url:"https://gjirafamall.com/dpf-additiv-pcl-006-106" },
+  "107":{ name:"Pastrues DPF 107",              url:"https://gjirafamall.com/pastrues-i-dpf-parts-center-pcl007-107-300-ml" },
+  "201":{ name:"Super Diesel Additiv 201",      url:"https://gjirafamall.com/super-diesel-addetiv-pcs-001-201-300-ml" },
+  "204":{ name:"Pastrues Injektimit Dizel 204", url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-dizel-parts-center-204" },
+  "206":{ name:"Perforcues Oktani 206",         url:"https://gjirafamall.com/perforcues-i-oktanit-te-benzines-pcs-006-206" },
+  "207":{ name:"Additiv Vaj Motorik 207",       url:"https://gjirafamall.com/additiv-per-vaj-motorik-pcs-007-207" },
+  "209":{ name:"Super Benzin Additiv 209",      url:"https://gjirafamall.com/super-benzin-addetiv-pcs-009-209" },
+  "210":{ name:"Pastrues Injektimit Benzine 210",url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-benzine-pcs-010-210" },
+};
+function getProduct(raw) {
+  if (!raw) return { name:'—', url:'' };
+  const c = raw.toString().trim();
+  if (c.includes('+')) return { name: c.split('+').map(x => (PRODUCTS[x.trim()]||{name:x.trim()}).name).join(' + '), url:'' };
+  return PRODUCTS[c] || { name:c, url:'' };
+}
+
+// ─── VALIDATORS ───────────────────────────────────────────────────────────────
+function validatePhone(raw) {
+  if (!raw) return { value:'', warning:'Phone number missing!' };
+  let p = raw.toString().trim().replace(/[\s\-().]/g,'').replace(/^\+3830?/,'0').replace(/^3830?/,'0');
+  if (!/^04\d{7}$/.test(p)) return { value:p, warning:'Phone ' + p + ' looks incorrect' };
+  return { value:p, warning:null };
+}
+function normalizeAddress(raw) {
+  if (!raw) return { value:'', warning:'Address missing!' };
+  return { value: raw.toString().trim().replace(/\s+/g,' '), warning:null };
+}
+
+// ─── THEME ────────────────────────────────────────────────────────────────────
+// System-based dark mode — follows iOS/macOS preference automatically
+function applySystemTheme() {
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.body.classList.toggle('dark',  dark);
+  document.body.classList.toggle('light', !dark);
+}
+applySystemTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applySystemTheme);
+
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.page === name));
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  if (name === 'analytics') { renderChart(weeklyData); updateAvgTime(); renderHistory(); }
+}
+
+// ─── RELOAD ───────────────────────────────────────────────────────────────────
+// ─── SEARCH BUTTON ───────────────────────────────────────────────────────────
+document.getElementById('search-btn').addEventListener('click', () => {
+  const wrap = document.getElementById('search-wrap');
+  const inp  = document.getElementById('search-input');
+  const isOpen = wrap && (wrap.style.display === 'block' || wrap.style.display === '');
+  if (isOpen) {
+    if (wrap) wrap.style.display = 'none';
+    if (inp)  { inp.value = ''; }
+    searchQuery = '';
+    document.getElementById('search-clear').style.display = 'none';
+    renderOrderList();
+  } else {
+    if (wrap) wrap.style.display = 'block';
+    if (inp)  setTimeout(() => inp.focus(), 100);
+  }
+});
+
+document.getElementById('reload-btn').addEventListener('click', () => {
+  const btn = document.getElementById('reload-btn');
+  btn.classList.add('spinning');
+  btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once:true });
+  loadOrders();
+});
+
+// ─── NOTIFICATION ─────────────────────────────────────────────────────────────
+function showNotif(icon, title, sub, btnClass) {
+  document.getElementById('notif-icon').innerText  = icon;
+  document.getElementById('notif-title').innerText = title;
+  document.getElementById('notif-sub').innerText   = sub;
+  document.getElementById('notif-btn').className = 'modal-btn ' + (btnClass==='green'?'btn-mint':btnClass==='red'?'btn-crimson':'btn-flame');
+  document.getElementById('notif-overlay').classList.add('show');
+  if (navigator.vibrate) navigator.vibrate(btnClass === 'red' ? [100,50,100] : [80]);
+}
+function closeNotif() { document.getElementById('notif-overlay').classList.remove('show'); }
+
+// ─── SOUND ────────────────────────────────────────────────────────────────────
+function playSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    function tone(f,t,d,v) {
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type='sine';
+      o.frequency.setValueAtTime(f,t);
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(v,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+d);
+      o.start(t); o.stop(t+d);
+    }
+    const t=ctx.currentTime;
+    tone(659.25,t,0.18,0.4); tone(830.61,t+0.2,0.18,0.4); tone(987.77,t+0.4,0.28,0.5);
+  } catch(e) {}
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function updateStats(completedToday, pending, reviewCount) {
+  const te=document.getElementById('stat-today'),   pe=document.getElementById('stat-pending'),   re=document.getElementById('stat-review');
+  if (te) { te.innerText=completedToday; te.style.color='var(--mint)'; }
+  if (pe) { pe.innerText=pending;        pe.style.color='var(--flame)'; }
+  if (re) { re.innerText=reviewCount;    re.style.color='var(--amber)'; }
+  // In-app tab badge
+  const badge = document.getElementById('badge-orders');
+  if (badge) { if (pending > 0) { badge.innerText=pending; badge.style.display='flex'; } else badge.style.display='none'; }
+  // Home screen icon badge — the red number on the app icon
+  if ('setAppBadge' in navigator) {
+    if (pending > 0) navigator.setAppBadge(pending).catch(()=>{});
+    else             navigator.clearAppBadge().catch(()=>{});
+  }
+}
+
+// ─── ANALYTICS ────────────────────────────────────────────────────────────────
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function buildWeeklyData(orders) {
+  const result = {}; const today = new Date();
+  for (let i=6;i>=0;i--) { const d=new Date(today); d.setDate(d.getDate()-i); result[d.toDateString()]=0; }
+  orders.forEach(o => {
+    const oid = (o.OrderID||'').toString().trim();
+    if (!oid || oid.toLowerCase()==='pending') return;
+    const placed = (o.PlacedDate||'').toString().trim();
+    if (!placed) return;
+    try { const ds=new Date(placed).toDateString(); if (ds in result) result[ds]++; } catch(e) {}
+  });
+  return result;
+}
+function renderChart(data) {
+  const wrap = document.getElementById('perf-chart');
+  if (!wrap) return;
+  const entries = Object.entries(data);
+  const max = Math.max(...entries.map(e=>e[1]), 1);
+  const todayStr = new Date().toDateString();
+  wrap.innerHTML = entries.map(([ds, count]) => {
+    const isToday = ds===todayStr;
+    const barH = Math.max(Math.round((count/max)*100), count>0?8:2);
+    return `<div class="chart-col">
+      <div class="bwrap"><div class="chart-bar${isToday?' today':''}${count===0?' zero':''}" style="height:${barH}%"></div></div>
+      <div class="bval">${count>0?count:''}</div>
+      <div class="chart-day${isToday?' today':''}">${isToday?'Today':DAYS[new Date(ds).getDay()]}</div>
+    </div>`;
+  }).join('');
+}
+function updateAvgTime() {
+  const el=document.getElementById('avg-time-val'), sub=document.getElementById('avg-time-sub');
+  if (!el||!sub) return;
+  const saved = JSON.parse(localStorage.getItem('argatiTimings')||'{}');
+  if (saved.date===new Date().toDateString() && Array.isArray(saved.timings)) sessionTimings=saved.timings;
+  if (!sessionTimings.length) { el.innerText='--:--'; sub.innerText='no orders yet'; return; }
+  const avg=Math.round(sessionTimings.reduce((a,b)=>a+b,0)/sessionTimings.length);
+  const mm=String(Math.floor(avg/60)).padStart(2,'0'), ss=String(avg%60).padStart(2,'0');
+  el.innerText=mm+':'+ss;
+  sub.innerText='based on '+sessionTimings.length+' order'+(sessionTimings.length===1?'':'s');
+}
+function saveTimings() {
+  localStorage.setItem('argatiTimings', JSON.stringify({ date:new Date().toDateString(), timings:sessionTimings }));
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function addHistory(order, orderId, elapsed) {
+  const time = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+  const mm=String(Math.floor(elapsed/60)).padStart(2,'0'), ss=String(elapsed%60).padStart(2,'0');
+  orderHistory.unshift({ rowNumber:order.rowNumber, name:(order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), product:getProduct(order.Produkti).name, orderId, time, elapsed:mm+':'+ss });
+  if (orderHistory.length>30) orderHistory.pop();
+  renderHistory();
+}
+function renderHistory() {
+  const c = document.getElementById('history-list-a');
+  if (!c) return;
+  if (!orderHistory.length) {
+    c.innerHTML = '<div class="empty-state" style="padding:28px 0"><div class="empty-glyph">📋</div><div class="empty-h" style="font-size:15px">No orders today</div><div class="empty-p">Completed orders appear here</div></div>';
+    return;
+  }
+  c.innerHTML = orderHistory.map((h, i) => `
+    <div class="hist-row">
+      <div class="hist-idx">${i + 1}</div>
+      <div class="hist-info">
+        <div class="hist-name">${h.name}</div>
+        <div class="hist-prod">${h.product}</div>
+      </div>
+      <div class="hist-meta">
+        <div class="hist-oid">${h.orderId}</div>
+        <div class="hist-time">${h.time}${h.elapsed ? ' · ' + h.elapsed : ''}</div>
+      </div>
+    </div>`).join('');
+}
+
+// Load today's completed orders from sheet into history
+function loadTodayHistory(orders) {
+  const todayStr = new Date().toDateString();
+  const todayOrders = orders.filter(o => {
+    const oid = (o.OrderID||'').toString().trim();
+    if (!oid || oid.toLowerCase()==='pending') return false;
+    const placed = (o.PlacedDate||'').toString().trim();
+    if (!placed) return false;
+    try { return new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
+  });
+
+  // Build entries from sheet
+  const sheetHistory = todayOrders.map(o => {
+    const placed = new Date((o.PlacedDate||'').toString());
+    const time   = placed.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+    return {
+      rowNumber: o.rowNumber,
+      name:    ((o.Emri||'').trim()+' '+(o.Mbiemri||'').trim()).trim(),
+      product: getProduct(o.Produkti).name,
+      orderId: (o.OrderID||'').toString().trim(),
+      time,
+      elapsed: null
+    };
+  }); // oldest first — sheet order is already chronological
+
+  // Merge: session entries take priority (have elapsed time)
+  const sessionIds = new Set(orderHistory.map(h => h.orderId));
+  const newFromSheet = sheetHistory.filter(h => !sessionIds.has(h.orderId));
+  const combined = [...orderHistory, ...newFromSheet];
+  combined.sort((a,b) => {
+    function toMin(t) {
+      if (!t) return 0;
+      const m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+      if (!m) return 0;
+      let h=parseInt(m[1]),mn=parseInt(m[2]);
+      const ap=(m[3]||'').toUpperCase();
+      if(ap==='PM'&&h!==12) h+=12;
+      if(ap==='AM'&&h===12) h=0;
+      return h*60+mn;
+    }
+    return toMin(a.time)-toMin(b.time); // oldest first
+  });
+  orderHistory = combined.slice(0, 50);
+  renderHistory();
+}
+
+// ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
+async function loadOrders(silent=false) {
+  const list = document.getElementById('order-list');
+  if (!silent) list.innerHTML=`<div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div><div class="skel-line w40"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>`;
+  try {
+    const res  = await Promise.race([fetch(SCRIPT_URL+'?t='+Date.now()),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Timed out.')),10000))]);
+    if (!res.ok) throw new Error('Server error ' + res.status);
+    const text = await res.text();
+    if (!text || text.trim()==='') throw new Error('Empty response from server');
+    let orders;
+    try { orders = JSON.parse(text); }
+    catch(pe) { throw new Error('Invalid response — check Apps Script deployment'); }
+
+    const todayStr = new Date().toDateString();
+    const completedToday = orders.filter(o => {
+      const oid=(o.OrderID||'').toString().trim();
+      if (!oid||oid.toLowerCase()==='pending') return false;
+      const placed=(o.PlacedDate||'').toString().trim();
+      try { return placed&&new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
+    }).length;
+
+    allOrders = orders.filter(o => {
+      const oid=(o.OrderID||'').toString().trim();
+      if (oid!==''&&oid.toLowerCase()!=='pending') return false;
+      return (o.Produkti||'').toString().trim()!==''&&
+             (o.Emri    ||'').toString().trim()!==''&&
+             (o.Mbiemri ||'').toString().trim()!==''&&
+             (o.Telefoni||'').toString().trim()!==''&&
+             (o.Qyteti  ||'').toString().trim()!==''&&
+             (o.Adresa  ||'').toString().trim()!=='';
+    });
+
+    const reviewOrders = allOrders.filter(o => {
+      const c=(o['Koment shtese (Nese ka)']||'').toString().trim();
+      return c!==''||(o.Produkti||'').toString().includes('+');
+    });
+
+    try { updateStats(completedToday, allOrders.length, reviewOrders.length); } catch(e) { console.warn('updateStats error:', e.message); }
+    try { weeklyData = buildWeeklyData(orders); } catch(e) { console.warn('buildWeeklyData error:', e.message); }
+    try { loadTodayHistory(orders); } catch(e) { console.warn('loadTodayHistory error:', e.message); }
+    // Full Auto Mode: approve and place clean orders automatically
+    try {
+      if (autoMode && !isProcessing && allOrders.length > 0) {
+        const cleanOrder = allOrders.find(o => {
+          const prod    = (o.Produkti||'').toString().trim();
+          const comment = (o['Koment shtese (Nese ka)']||'').toString().trim();
+          const phone   = (o.Telefoni||'').toString().trim().replace(/[\s\-().]/g,'').replace(/^\+3830?/,'0').replace(/^3830?/,'0');
+          const knownProducts = ['104','105','106','107','201','204','206','207','209','210'];
+          return !prod.includes('+') && comment==='' && knownProducts.includes(prod) && /^04\d{7}$/.test(phone);
+        });
+        if (cleanOrder) {
+          console.log('[AutoMode] Auto-approving order #'+cleanOrder.rowNumber);
+          setTimeout(()=>{
+            if (!isProcessing && autoMode) placeOrder(cleanOrder);
+          }, 2000);
+        }
+      }
+    } catch(e) { console.warn('autoMode error:', e.message); }
+    try { selectedRows.forEach(r => { if (!allOrders.find(o=>o.rowNumber==r)) selectedRows.delete(r); }); } catch(e) {}
+
+    // New order detection
+    try {
+      if (lastCount>=0 && allOrders.length>lastCount) {
+        const diff=allOrders.length-lastCount;
+        const banner=document.getElementById('new-order-banner');
+        if (banner) {
+          banner.innerText='🔔 '+diff+' new order'+(diff===1?'':'s')+' arrived!';
+          banner.style.display='block';
+          setTimeout(()=>{banner.style.display='none';}, 6000);
+        }
+        playSound();
+        if (navigator.vibrate) navigator.vibrate([200,80,200]);
+      }
+      lastCount = allOrders.length;
+    } catch(e) { console.warn('banner error:', e.message); }
+
+    // This must always run — shows orders or empty state
+    renderOrderList(allOrders, reviewOrders);
+    if (allOrders.length>0) currentOrder = allOrders[0];
+
+    // Auto-pilot
+    try {
+      if (autoPilot && !isProcessing && currentOrder) {
+        const raw=(currentOrder.Produkti||'').toString().trim();
+        const cm=(currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
+        if (!raw.includes('+')&&cm==='') {
+          setTimeout(()=>{ if (!isProcessing&&currentOrder&&autoPilot) placeOrder(currentOrder); }, 3000);
+        }
+      }
+    } catch(e) { console.warn('autopilot error:', e.message); }
+
+  } catch(e) {
+    const msg='Error: '+(e.message||'unknown');
+    console.error('loadOrders failed:', e.message);
+    if (!silent) list.innerHTML='<div class="loading" style="color:var(--red)">⚠ '+msg+'<br><br><small style="color:var(--muted)">Make sure Apps Script is deployed as Anyone</small><br><br><button onclick="loadOrders()" style="margin-top:14px;background:var(--flame);color:white;border:none;border-radius:10px;padding:10px 24px;font-weight:700;cursor:pointer;font-family:inherit;">↻ Retry</button></div>';
+    throw e; // rethrow so startupLoad can retry
+  }
+}
+
+// ─── RENDER ORDER LIST ────────────────────────────────────────────────────────
+function renderOrderList(orders, reviewOrders) {
+  const list = document.getElementById('order-list');
+  if (!orders.length) {
+    list.innerHTML='<div class="empty-state"><div class="empty-glyph">🎉</div><div class="empty-h">All caught up!</div><div class="empty-p">No pending orders right now.</div></div>';
+    return;
+  }
+  // Show all orders — review first, then normal
+  const sorted=[...reviewOrders,...orders.filter(o=>!reviewOrders.includes(o))];
+  const hint=orders.length>1?'<p class="section-eye">Tap to select · Swipe for actions</p>':'<p class="section-eye">Pending order · Swipe for actions</p>';
+  list.innerHTML=hint+sorted.map(o=>buildOrderCard(o)).join('');
+  sorted.forEach(o=>{
+    const card=document.getElementById('card-'+o.rowNumber);
+    if (card) card.addEventListener('click',()=>toggleSelect(o.rowNumber,o));
+  });
+}
+
+function buildOrderCard(o) {
+  const ap=(o.Produkti||'').toString().trim();
+  const ac=(o['Koment shtese (Nese ka)']||'').toString().trim();
+  const isBundle=ap.includes('+')&&KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(ap));
+  const isReview=(!isBundle&&ap.includes('+'))||ac!=='';
+  const prod=getProduct(ap);
+  const isSel=selectedRows.has(o.rowNumber);
+  return `<div class="card-swipe-wrap" id="wrap-${o.rowNumber}">
+    <div class="card-actions" id="actions-${o.rowNumber}">
+      <button class="card-action ca-place" onclick="quickPlace(${o.rowNumber},event)"><span class="ca-icon">⚡</span>Place</button>
+      <button class="card-action ca-edit"  onclick="openEditSheet(${o.rowNumber},event)"><span class="ca-icon">✏️</span>Edit</button>
+      <button class="card-action ca-cancel" onclick="cancelOrder(${o.rowNumber},event)"><span class="ca-icon">✕</span>Cancel</button>
+    </div>
+    <div class="order-card${isReview?' review':''}${isSel?' selected':''}" id="card-${o.rowNumber}"
+      onclick="handleCardTap(${o.rowNumber},event)"
+      oncontextmenu="openDetailSheet(${o.rowNumber},event)">
+      <div class="card-top">
+        <span class="card-num">#${o.rowNumber}</span>
+        <div class="card-check">${isSel?'✓':''}</div>
+      </div>
+      <div class="card-name">${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}</div>
+      <div class="card-rows">
+        <div class="card-row"><span class="card-ico">📦</span><span class="card-val">${prod.name}</span></div>
+        <div class="card-row"><span class="card-ico">📍</span><span class="card-val">${o.Qyteti||'—'}</span></div>
+        <div class="card-row"><span class="card-ico">📞</span><span class="card-val">${(o.Telefoni||'').toString().trim()||'—'}</span></div>
+        <div class="card-row"><span class="card-ico">🏠</span><span class="card-val">${(o.Adresa||'').toString().trim()||'—'}</span></div>
+      </div>
+      ${isReview&&!isBundle?`<div class="card-tag tag-amber">⚠️ <span>Review needed</span></div>`:''}
+      ${isBundle?`<div class="card-tag tag-blue">📦 <span>Bundle: ${prod.name}</span></div>`:''}
+      ${ac?`<div class="card-tag tag-amber">💬 <span>${ac}</span></div>`:''}
+    </div>
+  </div>`;
+}
+
+// ─── SELECTION ────────────────────────────────────────────────────────────────
+function toggleSelect(rowNumber, order) {
+  haptic('light');
+  if (selectedRows.has(rowNumber)) selectedRows.delete(rowNumber);
+  else selectedRows.add(rowNumber);
+  const card=document.getElementById('card-'+rowNumber);
+  if (card) {
+    card.classList.toggle('selected', selectedRows.has(rowNumber));
+    const check=card.querySelector('.card-check');
+    if (check) check.innerText=selectedRows.has(rowNumber)?'✓':'';
+  }
+  // Set as current order too
+  if (order&&selectedRows.has(rowNumber)) currentOrder=order;
+  updateFAB();
+}
+function clearSelection() {
+  selectedRows.forEach(r=>{
+    const card=document.getElementById('card-'+r);
+    if (card) { card.classList.remove('selected'); const c=card.querySelector('.card-check'); if (c) c.innerText=''; }
+  });
+  selectedRows.clear(); updateFAB();
+}
+function updateFAB() {
+  const fab=document.getElementById('fab'), n=selectedRows.size;
+  const bar=document.getElementById('autopilot-bar');
+  fab.style.display=n>0?'block':'none';
+  if(bar) bar.style.display=n>0?'none':'block'; // show pilot bar when nothing selected
+  document.getElementById('fab-count').innerText=n+(n===1?' order selected':' orders selected');
+}
+
+// renderPlacePage removed
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+function startTimer() {
+  timerStart=Date.now(); document.getElementById('timer-bar').style.display='flex';
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    const e=Math.floor((Date.now()-timerStart)/1000);
+    document.getElementById('timer-val').innerText=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
+  },1000);
+}
+function stopTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+  document.getElementById('timer-bar').style.display='none';
+  const elapsed=timerStart?Math.floor((Date.now()-timerStart)/1000):0;
+  timerStart=null; return elapsed;
+}
+
+// ─── PLACE ORDER ──────────────────────────────────────────────────────────────
+// On iPhone: approve flag → desktop extension picks up within 1 min → places order
+// Desktop result comes back via poll → push notification
+async function placeOrder(order) {
+  if (isProcessing) return;
+  const phone=validatePhone(order.Telefoni);
+  if (phone.warning) { showNotif('⚠️','Invalid Phone',phone.warning,'red'); return; }
+
+  isProcessing=true;
+
+  const _cb=document.getElementById('checklist-box'); if(_cb) _cb.style.display='block';
+  const steps=['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'];
+  [1,2,3,4].forEach(i=>{ const el=document.getElementById('p-step-'+i); el.innerText='○ '+steps[i-1]; el.className='step'; });
+  const _ps=document.getElementById('place-status'); if(_ps) _ps.innerText='Sending to desktop...';
+  startTimer();
+
+  try {
+    // Write approval flag to Apps Script
+    const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
+    let success=false;
+    try { const d=JSON.parse(await res.text()); success=d.success===true; } catch(e) { success=res.status>=200&&res.status<400; }
+
+    if (success) {
+      // Visually simulate steps while polling
+      const delays=[800,1800,2800,0];
+      delays.slice(0,3).forEach((delay,i)=>{
+        setTimeout(()=>{
+          const el=document.getElementById('p-step-'+(i+1));
+          if (el) { el.innerText='✅ '+steps[i]; el.className='step done'; }
+        }, delay);
+      });
+      const _ps2=document.getElementById('place-status'); if(_ps2) _ps2.innerText='⏳ Desktop is placing order... (up to 1 min)';
+      // Poll for result
+      pollForResult(order.rowNumber, (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), getProduct(order.Produkti).name, order, 0);
+    } else {
+      finishOrder(false, order, null, 'Approval failed — please retry.');
+    }
+  } catch(e) {
+    finishOrder(false, order, null, e.message||'Connection error');
+  }
+}
+
+function pollForResult(rowNumber, name, product, order, attempts) {
+  const MAX=24; // 24×5s = 2min
+  setTimeout(async()=>{
+    try {
+      const res=await fetch(SCRIPT_URL+'?t='+Date.now());
+      const orders=await res.json();
+      const row=orders.find(o=>o.rowNumber==rowNumber);
+      if (row) {
+        const oid=(row.OrderID||'').toString().trim();
+        if (oid&&oid.toLowerCase()!=='pending') {
+          // Success!
+          const el=document.getElementById('p-step-4');
+          if (el) { el.innerText='✅ '+(['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'][3]); el.className='step done'; }
+          finishOrder(true, order, oid, null);
+          return;
+        }
+      }
+      if (attempts<MAX) pollForResult(rowNumber,name,product,order,attempts+1);
+      else finishOrder(false, order, null, 'Timed out — check if your laptop is on and Chrome is running.');
+    } catch(e) {
+      if (attempts<MAX) pollForResult(rowNumber,name,product,order,attempts+1);
+    }
+  }, 5000);
+}
+
+function finishOrder(success, order, orderId, errorMsg) {
+  const elapsed=stopTimer();
+  isProcessing=false;
+
+  const _cb2=document.getElementById('checklist-box'); if(_cb2) _cb2.style.display='none';
+
+  if (success) {
+    sessionTimings.push(elapsed); saveTimings();
+    addHistory(order, orderId, elapsed);
+    const _ps3=document.getElementById('place-status'); if(_ps3) _ps3.innerText='✅ Order placed!';
+    showNotif('✅','Order Placed!', '#'+order.rowNumber+' — '+(order.Emri||'').trim()+' '+(order.Mbiemri||'').trim()+'\n'+getProduct(order.Produkti).name+'\nOrder ID: '+orderId, 'green');
+    playSound();
+    setTimeout(()=>loadOrders(true), 2000);
+  } else {
+    const _ps4=document.getElementById('place-status'); if(_ps4) _ps4.innerText='⚠ '+errorMsg;
+    showNotif('❌','Failed', errorMsg, 'red');
+  }
+}
+
+// ─── APPROVE SELECTED (multi-select from Orders tab) ─────────────────────────
+async function approveSelected() {
+  if (selectedRows.size===0) return;
+  haptic('medium');
+  const btn=document.getElementById('fab-btn');
+  btn.disabled=true; btn.innerText='⏳ Sending...';
+  const toProcess=allOrders.filter(o=>selectedRows.has(o.rowNumber));
+  const n=toProcess.length;
+
+  try {
+    // 1. Approve all rows in Apps Script in parallel
+    const approvalResults = await Promise.all(
+      toProcess.map(async order => {
+        try {
+          const res = await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
+          const d   = await res.json().catch(()=>({}));
+          return { order, ok: d.success===true };
+        } catch(e) {
+          return { order, ok: false };
+        }
+      })
+    );
+
+    const approved = approvalResults.filter(r=>r.ok).map(r=>r.order);
+    const failed   = approvalResults.filter(r=>!r.ok).length;
+
+    if (approved.length === 0) {
+      showNotif('⚠️','All failed','Could not approve orders. Check connection.','red');
+      btn.disabled=false; btn.innerText='Place ▶'; return;
+    }
+
+    // 2. Send ALL approved orders to watcher in one batch call
+    // This ensures server queues them all at once instead of receiving
+    // separate notify calls that could race
+    try {
+      const watcherUrl = SCRIPT_URL.replace('script.google.com/macros/s/', '')
+        .replace('/exec', ''); // not used directly — go via Apps Script
+      // Use a dedicated batch endpoint in Apps Script
+      await fetch(SCRIPT_URL+'?action=approveAll&rows='+approved.map(o=>o.rowNumber).join(',')+'&t='+Date.now());
+    } catch(e) { /* fallback: individual notifies already sent above */ }
+
+    clearSelection();
+    btn.disabled=false; btn.innerText='Place ▶';
+
+    if (failed===0) {
+      showNotif('📤', n===1?'1 order sent!':n+' orders sent!',
+        'Desktop is placing them in sequence.\nYou\'ll be notified as each completes.','green');
+    } else {
+      showNotif('⚠️','Mostly sent',
+        (n-failed)+' of '+n+' sent. '+failed+' failed — retry those.','green');
+    }
+
+    // Poll for results on all approved orders
+    approved.forEach(o => {
+      pollForResult(o.rowNumber,
+        (o.Emri||'').trim()+' '+(o.Mbiemri||'').trim(),
+        getProduct(o.Produkti).name, o, 0);
+    });
+
+  } catch(e) {
+    btn.disabled=false; btn.innerText='Place ▶';
+    showNotif('❌','Error',e.message,'red');
+  }
+}
+
+// ─── PLACE ORDER BUTTON ───────────────────────────────────────────────────────
+// place-order-btn removed from HTML — orders placed via FAB
+// const _pob=document.getElementById('place-order-btn');
+// if(_pob) _pob.addEventListener('click',()=>{ if(currentOrder&&!isProcessing) placeOrder(currentOrder); });
+
+
+// ─── WEB PUSH NOTIFICATIONS ───────────────────────────────────────────────────
+function urlBase64ToUint8Array(b64) {
+  const pad='='.repeat((4-b64.length%4)%4);
+  const raw=atob((b64+pad).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from({length:raw.length},(_,i)=>raw.charCodeAt(i));
+}
+
+function checkNotifBar() {
+  const bar=document.getElementById('notif-bar');
+  const statusText=document.getElementById('notif-status-text');
+  const toggleBtn=document.getElementById('notif-toggle-btn');
+  if (!('Notification' in window)||!('serviceWorker' in navigator)) {
+    if (bar) bar.style.display='none';
+    if (statusText) statusText.innerText='Not supported on this browser';
+    return;
+  }
+  const perm=Notification.permission;
+  if (perm==='granted') {
+    if (bar) bar.style.display='none';
+    if (statusText) statusText.innerText='Enabled ✅';
+    if (toggleBtn) toggleBtn.style.display='none';
+  } else if (perm==='denied') {
+    if (bar) bar.style.display='none';
+    if (statusText) statusText.innerText='Blocked — enable in iOS Settings';
+    if (toggleBtn) toggleBtn.style.display='none';
+  } else {
+    if (bar) bar.style.display='flex';
+    if (statusText) statusText.innerText='Not enabled yet';
+  }
+}
+
+async function subscribeNotifications() {
+  if (!('Notification' in window)) {
+    alert('Open this app from your Home Screen icon (not Safari browser) for notifications to work.');
+    return;
+  }
+  const perm=await Notification.requestPermission();
+  checkNotifBar();
+  if (perm!=='granted') return;
+
+  try {
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC) });
+    }
+    // Save subscription to Apps Script
+    let saved = false;
+    const subJson = JSON.stringify(sub.toJSON());
+    
+    // Try 1: POST with JSON body
+    try {
+      const r = await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: subJson
+      });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.saved) { saved = true; console.log('Subscription saved via POST'); }
+      }
+    } catch(e1) { console.warn('POST save failed:', e1.message); }
+    
+    // Try 2: POST with no-cors (if CORS fails)
+    if (!saved) {
+      try {
+        await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {'Content-Type': 'text/plain'},
+          body: subJson
+        });
+        saved = true; console.log('Subscription saved via no-cors POST');
+      } catch(e2) { console.warn('no-cors POST failed:', e2.message); }
+    }
+    
+    if (!saved) console.warn('Could not confirm subscription save — will retry on next open');
+    reg.showNotification('Argati',{ body:'Notifications enabled! You\'ll be alerted for new orders.', icon:'icon.png', tag:'argati-setup' });
+    checkNotifBar();
+  } catch(err) {
+    alert('Setup failed: '+err.message+'\nMake sure you opened from the Home Screen icon.');
+  }
+}
+
+async function testNotification() {
+  if (Notification.permission!=='granted') { alert('Please enable notifications first.'); return; }
+  try {
+    const reg=await navigator.serviceWorker.ready;
+    reg.showNotification('Argati Test',{ body:'Push notifications are working! 🎉', icon:'icon.png', tag:'argati-test' });
+  } catch(e) { alert('Test failed: '+e.message); }
+}
+
+// ─── AUTO-DETECT NEW ORDERS ───────────────────────────────────────────────────
+setInterval(()=>loadOrders(true), 60000);
+
+// ─── PULL TO REFRESH ─────────────────────────────────────────────────────────
+(function() {
+  let ptStart = 0, pulling = false;
+  document.addEventListener('touchstart', e => {
+    if (window.scrollY === 0) { ptStart = e.touches[0].clientY; pulling = true; }
+  }, {passive: true});
+  document.addEventListener('touchend', e => {
+    if (!pulling) return;
+    const dy = e.changedTouches[0].clientY - ptStart;
+    pulling = false;
+    if (dy > 80 && document.getElementById('page-orders').classList.contains('active') && !document.querySelector('.overlay.show')) {
+      const btn = document.getElementById('reload-btn');
+      btn.classList.add('spinning');
+      loadOrders(true).finally(() => setTimeout(() => btn.classList.remove('spinning'), 500));
+    }
+  }, {passive: true});
+})();
+
+// ─── STARTUP ──────────────────────────────────────────────────────────────────
+// Probe badge API — iOS activates it on first call
+if ('setAppBadge' in navigator) {
+  navigator.clearAppBadge().catch(()=>{});
+}
+try {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js?v=5').then(async reg => {
+      // Periodic Background Sync — updates badge every 5 minutes even when closed
+      // Supported on Android Chrome; iOS uses push for wakeup instead
+      if ('periodicSync' in reg) {
+        try {
+          await reg.periodicSync.register('badge-refresh', { minInterval: 5 * 60 * 1000 });
+        } catch(e) {}
+      }
+    }).catch(()=>{});
+
+    // Listen for messages from service worker
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data.type === 'NEW_ORDER') {
+        // New order push received — reload orders immediately
+        loadOrders(true);
+        // Flash the orders tab
+        const tab = document.querySelector('.tab-item[data-page="orders"]');
+        if (tab) { tab.style.transition = 'background 0.1s'; tab.style.background = 'rgba(255,92,26,0.2)'; setTimeout(()=>{ tab.style.background=''; }, 400); }
+      }
+      if (e.data.type === 'BADGE_UPDATE') {
+        // SW fetched exact count — update stats bar directly
+        const pe = document.getElementById('stat-pending');
+        if (pe && typeof e.data.pending === 'number') {
+          pe.innerText = e.data.pending;
+          const badge = document.getElementById('badge-orders');
+          if (badge) { if (e.data.pending > 0) { badge.innerText = e.data.pending; badge.style.display = 'flex'; } else badge.style.display = 'none'; }
+        }
+      }
+    });
+  }
+} catch(e) {}
+try { const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.date===new Date().toDateString()&&Array.isArray(s.timings)) sessionTimings=s.timings; } catch(e) {}
+try { checkNotifBar(); } catch(e) {}
+try { updateFAB(); } catch(e) {}
+
+// Simple startup — wait for DOM then load
+window.addEventListener('load', function() {
+  loadOrders();
+});
+
+// ─── FULL AUTO MODE ────────────────────────────────────────────────────────────
+function applyAutoMode(on) {
+  autoMode = on;
+  const t=document.getElementById('auto-mode-toggle');
+  const d=document.getElementById('auto-mode-desc');
+  const b=document.getElementById('auto-mode-bar');
+  if(t) t.checked=on;
+  if(d) d.innerText=on?'⚡ Active — clean orders placed automatically':'Clean orders placed instantly — no approval needed';
+  if(b) b.style.display=on?'block':'none';
+  localStorage.setItem('argatiAutoMode',on?'1':'');
+  fetch(SCRIPT_URL+'?action=setAutoMode&value='+on+'&t='+Date.now()).catch(()=>{});
+}
+async function loadAutoModeState() {
+  try {
+    const r=await fetch(SCRIPT_URL+'?action=getAutoMode&t='+Date.now());
+    const d=await r.json();
+    applyAutoMode(!!d.autoMode);
+  } catch(e) {
+    if(localStorage.getItem('argatiAutoMode')) applyAutoMode(true);
+  }
+}
+const _amt=document.getElementById('auto-mode-toggle');
+if(_amt) _amt.addEventListener('change',e=>applyAutoMode(e.target.checked));
+loadAutoModeState();
+
+// ─── KNOWN BUNDLES ────────────────────────────────────────────────────────────
+const KNOWN_BUNDLES = ["201+106","204+106+201","204+107+106","210+209+206"];
+function normBundle(s) { return s.split('+').map(p=>p.trim()).sort().join('+'); }
+
+// ─── SEARCH ───────────────────────────────────────────────────────────────────
+let searchQuery = '';
+const searchWrap  = document.getElementById('search-wrap');
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
+
+// Show search bar when on Orders tab
+function showSearchBar(show) {
+  if (searchWrap) searchWrap.style.display = show ? 'block' : 'none';
+}
+
+searchInput.addEventListener('input', e => {
+  searchQuery = e.target.value.toLowerCase().trim();
+  searchClear.style.display = searchQuery ? 'block' : 'none';
+  renderOrderList();
+});
+searchClear.addEventListener('click', () => {
+  searchInput.value = ''; searchQuery = '';
+  searchClear.style.display = 'none';
+  renderOrderList();
+});
+
+// ─── SWIPE TO REVEAL ACTIONS ──────────────────────────────────────────────────
+let swipeStartX = 0, swipeStartY = 0, swipeEl = null, swipeRow = null;
+let activeSwipeRow = null;
+
+function initSwipe(el, row) {
+  el.addEventListener('touchstart', e => {
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
+    swipeEl = el; swipeRow = row;
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (!swipeEl) return;
+    const dx = e.touches[0].clientX - swipeStartX;
+    const dy = e.touches[0].clientY - swipeStartY;
+    if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll
+
+    const actions = document.getElementById('actions-' + swipeRow);
+    if (!actions) return;
+    const maxSlide = actions.offsetWidth;
+
+    if (dx < -10) {
+      // Swiping left — reveal actions
+      const slide = Math.min(-dx, maxSlide);
+      el.style.transform = `translateX(-${slide}px)`;
+      actions.style.transform = `translateX(${100 - (slide/maxSlide)*100}%)`;
+    } else if (dx > 0 && activeSwipeRow === swipeRow) {
+      // Swiping right — close
+      const slide = Math.max(0, maxSlide - dx);
+      el.style.transform = `translateX(-${slide}px)`;
+      actions.style.transform = `translateX(${100 - (slide/maxSlide)*100}%)`;
+    }
+  }, { passive: true });
+
+  el.addEventListener('touchend', e => {
+    if (!swipeEl || swipeRow === null) return;
+    const dx = swipeStartX - e.changedTouches[0].clientX;
+    const actions = document.getElementById('actions-' + swipeRow);
+    if (!actions) { swipeEl=null; swipeRow=null; return; }
+    const maxSlide = actions.offsetWidth;
+
+    if (dx > maxSlide * 0.35) {
+      // Snap open
+      el.style.transform = `translateX(-${maxSlide}px)`;
+      el.style.transition = 'transform .25s ease';
+      actions.style.transform = 'translateX(0%)';
+      actions.style.transition = 'transform .25s ease';
+      if (activeSwipeRow !== null && activeSwipeRow !== swipeRow) closeSwipe(activeSwipeRow);
+      activeSwipeRow = swipeRow;
+    } else {
+      // Snap closed
+      closeSwipeEl(el, actions);
+      if (activeSwipeRow === swipeRow) activeSwipeRow = null;
+    }
+    setTimeout(() => { el.style.transition = ''; actions.style.transition = ''; }, 300);
+    swipeEl=null; swipeRow=null;
+  }, { passive: true });
+}
+
+function closeSwipe(row) {
+  const card = document.getElementById('card-' + row);
+  const actions = document.getElementById('actions-' + row);
+  if (card && actions) { closeSwipeEl(card, actions); }
+  if (activeSwipeRow === row) activeSwipeRow = null;
+}
+function closeSwipeEl(el, actions) {
+  el.style.transition = 'transform .25s ease';
+  el.style.transform  = '';
+  actions.style.transition = 'transform .25s ease';
+  actions.style.transform  = 'translateX(100%)';
+  setTimeout(() => { el.style.transition=''; actions.style.transition=''; }, 300);
+}
+function closeAllSwipes() {
+  if (activeSwipeRow !== null) { closeSwipe(activeSwipeRow); activeSwipeRow = null; }
+}
+
+// Close swipe on background tap
+document.addEventListener('touchstart', e => {
+  if (activeSwipeRow !== null) {
+    const wrap = document.getElementById('wrap-' + activeSwipeRow);
+    if (wrap && !wrap.contains(e.target)) closeAllSwipes();
+  }
+}, { passive: true });
+
+// ─── HANDLE CARD TAP (select or close swipe) ──────────────────────────────────
+function handleCardTap(row, e) {
+  if (activeSwipeRow !== null) { closeAllSwipes(); return; }
+  toggleSelect(row);
+}
+
+// ─── LONG PRESS → DETAIL SHEET ───────────────────────────────────────────────
+let longPressTimer = null;
+function initLongPress(el, row) {
+  el.addEventListener('touchstart', e => {
+    longPressTimer = setTimeout(() => {
+      openDetailSheet(row, e);
+      longPressTimer = null;
+    }, 500);
+  }, { passive: true });
+  el.addEventListener('touchend',   () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } });
+  el.addEventListener('touchmove',  () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } });
+}
+
+// ─── INIT CARDS after render ──────────────────────────────────────────────────
+function initCardInteractions() {
+  allOrders.forEach(o => {
+    const card = document.getElementById('card-' + o.rowNumber);
+    if (!card) return;
+    initSwipe(card, o.rowNumber);
+    initLongPress(card, o.rowNumber);
+  });
+}
+
+// ─── QUICK PLACE (swipe action) ───────────────────────────────────────────────
+async function quickPlace(row, e) {
+  haptic('medium');
+  e.stopPropagation();
+  closeSwipe(row);
+  const order = allOrders.find(o => o.rowNumber === row);
+  if (!order) return;
+  try {
+    const res = await fetch(SCRIPT_URL+'?action=approve&row='+row+'&t='+Date.now());
+    const d   = await res.json().catch(()=>({}));
+    if (d.success) {
+      showNotif('📤','Order Sent!',`#${row} — ${order.Emri||''} ${order.Mbiemri||''}
+Desktop will place it shortly.`,'green');
+      pollForResult(row, (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), getProduct(order.Produkti).name, order, 0);
+    } else {
+      showNotif('⚠️','Failed','Could not approve order #'+row,'red');
+    }
+  } catch(err) {
+    showNotif('⚠️','Error',err.message,'red');
+  }
+}
+
+// ─── CANCEL ORDER ─────────────────────────────────────────────────────────────
+async function cancelOrder(row, e) {
+  haptic('heavy');
+  if (e) e.stopPropagation();
+  closeSwipe(row);
+  const order = allOrders.find(o => o.rowNumber === row);
+  const name  = order ? `${order.Emri||''} ${order.Mbiemri||''}`.trim() : `#${row}`;
+
+  // Confirm
+  showNotif('🗑️', 'Cancel Order?',
+    `Cancel order for ${name}?
+This will mark it as ANULUAR in the sheet.`, 'red');
+  document.getElementById('notif-btn').innerText = 'Yes, Cancel';
+  document.getElementById('notif-btn').onclick = async () => {
+    closeNotif();
+    try {
+      const res = await fetch(SCRIPT_URL+'?action=cancelOrder&row='+row+'&t='+Date.now());
+      const d   = await res.json().catch(()=>({}));
+      // Animate card out
+      const wrap = document.getElementById('wrap-' + row);
+      if (wrap) { wrap.classList.add('card-cancelling'); setTimeout(()=>loadOrders(true), 350); }
+      else loadOrders(true);
+      showNotif('✅','Cancelled',`Order #${row} marked as ANULUAR.`,'green');
+    } catch(err) {
+      showNotif('⚠️','Error',err.message,'red');
+    }
+    document.getElementById('notif-btn').onclick = closeNotif;
+    document.getElementById('notif-btn').innerText = 'Got it';
+  };
+}
+
+// ─── EDIT SHEET ───────────────────────────────────────────────────────────────
+let editingRow = null;
+function openEditSheet(row, e) {
+  if (e) e.stopPropagation();
+  haptic('light');
+  closeSwipe(row);
+  const order = allOrders.find(o => o.rowNumber === row);
+  if (!order) return;
+  editingRow = row;
+
+  document.getElementById('edit-title').innerText = `Edit Order #${row}`;
+  document.getElementById('edit-emri').value    = order.Emri     || '';
+  document.getElementById('edit-mbiemri').value = order.Mbiemri  || '';
+  document.getElementById('edit-telefoni').value= order.Telefoni || '';
+  document.getElementById('edit-adresa').value  = order.Adresa   || '';
+  document.getElementById('edit-comment').value = order['Koment shtese (Nese ka)'] || '';
+
+  // Set city
+  const cityEl = document.getElementById('edit-qyteti');
+  const cityVal = order.Qyteti || '';
+  let matched = false;
+  for (let opt of cityEl.options) {
+    if (opt.value.toLowerCase() === cityVal.toLowerCase()) { opt.selected=true; matched=true; break; }
+  }
+  if (!matched && cityVal) {
+    const opt = document.createElement('option');
+    opt.value = cityVal; opt.text = cityVal; opt.selected = true;
+    cityEl.appendChild(opt);
+  }
+
+  // Set product
+  const prodEl = document.getElementById('edit-produkti');
+  prodEl.value = order.Produkti || '';
+
+  document.getElementById('edit-overlay').classList.add('show');
+}
+function closeEditSheet() {
+  document.getElementById('edit-overlay').classList.remove('show');
+  editingRow = null;
+}
+
+async function saveEditedOrder() {
+  if (!editingRow) return;
+  const order = allOrders.find(o => o.rowNumber === editingRow);
+  if (!order) return;
+
+  // Build updated order
+  const updated = Object.assign({}, order, {
+    Emri:     document.getElementById('edit-emri').value.trim(),
+    Mbiemri:  document.getElementById('edit-mbiemri').value.trim(),
+    Telefoni: document.getElementById('edit-telefoni').value.trim(),
+    Qyteti:   document.getElementById('edit-qyteti').value,
+    Adresa:   document.getElementById('edit-adresa').value.trim(),
+    Produkti: document.getElementById('edit-produkti').value,
+    'Koment shtese (Nese ka)': document.getElementById('edit-comment').value.trim(),
+  });
+
+  closeEditSheet();
+
+  // Save to sheet then approve
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        action: 'updateRow',
+        row:     editingRow,
+        Emri:    updated.Emri,
+        Mbiemri: updated.Mbiemri,
+        Telefoni:updated.Telefoni,
+        Qyteti:  updated.Qyteti,
+        Adresa:  updated.Adresa,
+        Produkti:updated.Produkti,
+        comment: updated['Koment shtese (Nese ka)'],
+      })
+    });
+  } catch(e) { /* sheet update failed — still proceed with local data */ }
+
+  // Approve with updated data
+  const res = await fetch(SCRIPT_URL+'?action=approve&row='+editingRow+'&t='+Date.now()).catch(()=>null);
+  showNotif('📤','Updated & Sent!',
+    `#${editingRow} — ${updated.Emri} ${updated.Mbiemri}
+Desktop will place it shortly.`,'green');
+  // Update local allOrders
+  const idx = allOrders.findIndex(o => o.rowNumber === editingRow);
+  if (idx >= 0) allOrders[idx] = updated;
+  pollForResult(editingRow, `${updated.Emri} ${updated.Mbiemri}`, getProduct(updated.Produkti).name, updated, 0);
+}
+
+// ─── DETAIL SHEET ─────────────────────────────────────────────────────────────
+let detailRow = null;
+function openDetailSheet(row, e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  closeSwipe(row);
+  const o = allOrders.find(o => o.rowNumber === row);
+  if (!o) return;
+  detailRow = row;
+
+  document.getElementById('detail-name').innerText =
+    `${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}`;
+
+  const prod = getProduct(o.Produkti||'');
+  const rows = [
+    ['📦','Product',     prod.name],
+    ['📍','City',        o.Qyteti||'—'],
+    ['📞','Phone',       (o.Telefoni||'').toString().trim()||'—'],
+    ['🏠','Address',     (o.Adresa||'').toString().trim()||'—'],
+    ['✉️','Email',       (o['Email(Opsionale)']||'').toString().trim()||'—'],
+    ['💬','Comment',     (o['Koment shtese (Nese ka)']||'').toString().trim()||'—'],
+    ['🔢','Row',         `#${row}`],
+  ];
+  document.getElementById('detail-rows').innerHTML = rows
+    .filter(([,, v]) => v !== '—' && v !== '')
+    .map(([ico, key, val]) =>
+      `<div class="detail-row">
+        <span class="detail-ico">${ico}</span>
+        <div class="detail-info">
+          <div class="detail-lbl">${key}</div>
+          <div class="detail-val">${val}</div>
+        </div>
+      </div>`).join('');
+
+  document.getElementById('detail-overlay').classList.add('show');
+}
+function closeDetailSheet() {
+  document.getElementById('detail-overlay').classList.remove('show');
+  detailRow = null;
+}
+function placeFromDetail() {
+  if (!detailRow) return;
+  quickPlace(detailRow, { stopPropagation: ()=>{} });
+  closeDetailSheet();
+}
+function cancelFromDetail() {
+  if (!detailRow) return;
+  const r = detailRow;
+  closeDetailSheet();
+  cancelOrder(r, { stopPropagation: ()=>{} });
+}
+
+// ─── PULL TO REFRESH ──────────────────────────────────────────────────────────
+let ptrStartY = 0, ptrActive = false;
+const ptrEl = document.getElementById('ptr-indicator');
+
+document.addEventListener('touchstart', e => {
+  if (window.scrollY === 0) ptrStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', e => {
+  if (window.scrollY > 0 || ptrStartY === 0) return;
+  const dy = e.touches[0].clientY - ptrStartY;
+  if (dy > 60 && !ptrActive) {
+    ptrActive = true;
+    ptrEl.classList.add('show');
+  }
+}, { passive: true });
+
+document.addEventListener('touchend', () => {
+  if (ptrActive) {
+    ptrActive = false;
+    ptrEl.classList.remove('show');
+    loadOrders(true);
+  }
+  ptrStartY = 0;
+}, { passive: true });
+
+// ─── OVERRIDE switchTab to show/hide search ───────────────────────────────────
+const _origSwitchTab = switchTab;
+// (switchTab is already defined in original JS — patch it below)
+
+// ─── OVERRIDE renderOrderList to init swipes + search filter ─────────────────
+const _origRenderOrderList = renderOrderList;
+
+// Patch renderOrderList after it renders
+const _patchRender = () => {
+  const list = document.getElementById('order-list');
+  if (!list) return;
+  const observer = new MutationObserver(() => {
+    initCardInteractions();
+  });
+  observer.observe(list, { childList: true, subtree: false });
+};
+_patchRender();
+
+// ─── SEARCH FILTER in renderOrderList ────────────────────────────────────────
+// Override to apply search filtering
+window.addEventListener('load', () => {
+  const origRender = window.renderOrderList;
+  if (!origRender) return;
+});
+
+// ─── CANCEL ORDER endpoint ────────────────────────────────────────────────────
+// Note: Apps Script needs 'cancelOrder' and 'updateRow' actions
+// cancelOrder: sets OrderID = 'ANULUAR' for that row
+// updateRow: updates Emri/Mbiemri/Telefoni/Qyteti/Adresa/Produkti for that row
+
+// ─── PATCH switchTab to show/hide search ─────────────────────────────────────
+const _stOrig = switchTab;
+window.switchTab = function(name) {
+  _stOrig(name);
+  showSearchBar(name === 'orders');
+  if (name !== 'orders') { searchInput.value=''; searchQuery=''; }
+};
+
+// ─── PATCH loadOrders to filter by search ────────────────────────────────────
+const _loadOrig = window.loadOrders;
+window.loadOrders = async function(silent) {
+  await _loadOrig(silent);
+  if (searchQuery) renderOrderList();
+};
+
+// ─── PATCH renderOrderList to filter + init swipes ───────────────────────────
+const _renderOrig = window.renderOrderList;
+window.renderOrderList = function() {
+  _renderOrig();
+  // Apply search filter
+  if (searchQuery) {
+    const cards = document.querySelectorAll('.card-swipe-wrap');
+    cards.forEach(wrap => {
+      const text = wrap.innerText.toLowerCase();
+      wrap.style.display = text.includes(searchQuery) ? '' : 'none';
+    });
+  }
+  // Init swipes on all cards
+  initCardInteractions();
+  // Show search bar
+  showSearchBar(document.getElementById('page-orders').classList.contains('active'));
+};
+
+async function saveEditOnly() {
+  if (!editingRow) return;
+  const updated = {
+    action:  'updateRow',
+    row:      editingRow,
+    Emri:     document.getElementById('edit-emri').value.trim(),
+    Mbiemri:  document.getElementById('edit-mbiemri').value.trim(),
+    Telefoni: document.getElementById('edit-telefoni').value.trim(),
+    Qyteti:   document.getElementById('edit-qyteti').value,
+    Adresa:   document.getElementById('edit-adresa').value.trim(),
+    Produkti: document.getElementById('edit-produkti').value,
+    comment:  document.getElementById('edit-comment').value.trim(),
+  };
+  closeEditSheet();
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(updated)
+    });
+    // Update local data
+    const idx = allOrders.findIndex(o => o.rowNumber === editingRow);
+    if (idx >= 0) {
+      allOrders[idx].Emri     = updated.Emri;
+      allOrders[idx].Mbiemri  = updated.Mbiemri;
+      allOrders[idx].Telefoni = updated.Telefoni;
+      allOrders[idx].Qyteti   = updated.Qyteti;
+      allOrders[idx].Adresa   = updated.Adresa;
+      allOrders[idx].Produkti = updated.Produkti;
+      allOrders[idx]['Koment shtese (Nese ka)'] = updated.comment;
+    }
+    renderOrderList(allOrders);
+    showNotif('✅','Saved!','Order updated in sheet.','green');
+  } catch(e) {
+    showNotif('⚠️','Error',e.message,'red');
+  }
+}
+
+function editFromDetail() {
+  const row = detailRow;
+  closeDetailSheet();
+  setTimeout(() => openEditSheet(row, null), 200);
+}
+
+
+// ─── HAPTIC FEEDBACK ─────────────────────────────────────────────────────────
+function haptic(style='light') {
+  if (window.navigator?.vibrate) {
+    const patterns = { light: [10], medium: [20], heavy: [30,10,30], success: [10,20,10] };
+    window.navigator.vibrate(patterns[style] || [10]);
+  }
+}
+
+// ─── DISMISS KEYBOARD ON SCROLL ───────────────────────────────────────────────
+document.addEventListener('touchmove', () => {
+  if (document.activeElement &&
+      ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+    document.activeElement.blur();
+  }
+}, { passive: true });
+
+// ─── CLOSE OVERLAYS ON BACKDROP TAP ──────────────────────────────────────────
+['edit-overlay','detail-overlay','notif-overlay'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('click', e => {
+    if (e.target === el) {
+      el.classList.remove('show');
+      if (id === 'edit-overlay')   editingRow = null;
+      if (id === 'detail-overlay') detailRow  = null;
+    }
+  });
+});
+
+// ─── SWIPE HINT (shown once) ──────────────────────────────────────────────────
+(function() {
+  if (localStorage.getItem('swipeHintShown')) return;
+  setTimeout(() => {
+    const hint = document.getElementById('swipe-hint');
+    if (hint) {
+      hint.style.display = 'flex';
+      setTimeout(() => {
+        hint.style.opacity = '0';
+        hint.style.transition = 'opacity 0.5s';
+        setTimeout(() => hint.style.display = 'none', 500);
+        localStorage.setItem('swipeHintShown', '1');
+      }, 3000);
+    }
+  }, 1500);
+})();
+
+</script>
+</body>
+</html>
