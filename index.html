@@ -436,7 +436,7 @@ body.light .tab-badge { border-color: rgba(250,250,255,0.95); }
   <div class="app-mark">🤖</div>
   <div class="header-info">
     <div class="header-name">Argati</div>
-    <div class="header-sub" id="header-sub">Lavdot</div>
+    <div class="header-sub" id="header-sub">Parts Center</div>
   </div>
   <div class="hbtns">
     <button class="hbtn" id="reload-btn" title="Sync">↻</button>
@@ -1125,22 +1125,61 @@ async function approveSelected() {
   const btn=document.getElementById('fab-btn');
   btn.disabled=true; btn.innerText='⏳ Sending...';
   const toProcess=allOrders.filter(o=>selectedRows.has(o.rowNumber));
-  let failed=0;
-  for (const order of toProcess) {
-    try {
-      const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
-      let ok=false;
-      try { const d=JSON.parse(await res.text()); ok=d.success===true; } catch(e) { ok=res.status>=200&&res.status<400; }
-      if (!ok) failed++;
-    } catch(e) { failed++; }
-  }
-  clearSelection(); btn.disabled=false; btn.innerText='▶ Place';
   const n=toProcess.length;
-  if (failed===0) {
-    showNotif('📤', n===1?'1 order sent!':n+' orders sent!','Desktop will place them within 1 minute.\nYou\'ll be notified as each completes.','green');
-    toProcess.forEach(o=>pollForResult(o.rowNumber,(o.Emri||'').trim()+' '+(o.Mbiemri||'').trim(),getProduct(o.Produkti).name,o,0));
-  } else {
-    showNotif('⚠️','Some failed',failed+' of '+n+' approvals failed. Please retry.','red');
+
+  try {
+    // 1. Approve all rows in Apps Script in parallel
+    const approvalResults = await Promise.all(
+      toProcess.map(async order => {
+        try {
+          const res = await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
+          const d   = await res.json().catch(()=>({}));
+          return { order, ok: d.success===true };
+        } catch(e) {
+          return { order, ok: false };
+        }
+      })
+    );
+
+    const approved = approvalResults.filter(r=>r.ok).map(r=>r.order);
+    const failed   = approvalResults.filter(r=>!r.ok).length;
+
+    if (approved.length === 0) {
+      showNotif('⚠️','All failed','Could not approve orders. Check connection.','red');
+      btn.disabled=false; btn.innerText='Place ▶'; return;
+    }
+
+    // 2. Send ALL approved orders to watcher in one batch call
+    // This ensures server queues them all at once instead of receiving
+    // separate notify calls that could race
+    try {
+      const watcherUrl = SCRIPT_URL.replace('script.google.com/macros/s/', '')
+        .replace('/exec', ''); // not used directly — go via Apps Script
+      // Use a dedicated batch endpoint in Apps Script
+      await fetch(SCRIPT_URL+'?action=approveAll&rows='+approved.map(o=>o.rowNumber).join(',')+'&t='+Date.now());
+    } catch(e) { /* fallback: individual notifies already sent above */ }
+
+    clearSelection();
+    btn.disabled=false; btn.innerText='Place ▶';
+
+    if (failed===0) {
+      showNotif('📤', n===1?'1 order sent!':n+' orders sent!',
+        'Desktop is placing them in sequence.\nYou\'ll be notified as each completes.','green');
+    } else {
+      showNotif('⚠️','Mostly sent',
+        (n-failed)+' of '+n+' sent. '+failed+' failed — retry those.','green');
+    }
+
+    // Poll for results on all approved orders
+    approved.forEach(o => {
+      pollForResult(o.rowNumber,
+        (o.Emri||'').trim()+' '+(o.Mbiemri||'').trim(),
+        getProduct(o.Produkti).name, o, 0);
+    });
+
+  } catch(e) {
+    btn.disabled=false; btn.innerText='Place ▶';
+    showNotif('❌','Error',e.message,'red');
   }
 }
 
