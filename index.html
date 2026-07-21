@@ -611,6 +611,7 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
         <option value="210">210 — Pastrues Injektimit Benzine</option>
         <option value="201+106">201+106 — Set Diesel+DPF</option>
         <option value="204+106+201">204+106+201 — Set Diesel 3in1</option>
+        <option value="204+107">204+107 — Set 204+107 — Pastrues Injektor+DPF</option>
         <option value="204+107+106">204+107+106 — Set Diesel 2+1 Gratis</option>
         <option value="210+209+206">210+209+206 — Set Benzine 2+1 Gratis</option>
       </select>
@@ -1494,7 +1495,7 @@ if(_amt) _amt.addEventListener('change',e=>applyAutoMode(e.target.checked));
 loadAutoModeState();
 
 // ─── KNOWN BUNDLES ────────────────────────────────────────────────────────────
-const KNOWN_BUNDLES = ["201+106","204+106+201","204+107+106","210+209+206"];
+const KNOWN_BUNDLES = ["201+106","204+106+201","204+107","204+107+106","210+209+206"];
 function isKnownBundle(s) { return KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(s)); }
 function normBundle(s) { return s.split('+').map(p=>p.trim()).sort().join('+'); }
 
