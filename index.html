@@ -35,7 +35,7 @@ body.light {
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(env(safe-area-inset-bottom) + 88px)}
+  padding-bottom:100px}
 body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(255,92,26,.09) 0%,transparent 70%),
              radial-gradient(ellipse 40% 30% at 85% 100%,rgba(0,229,160,.05) 0%,transparent 60%)}
@@ -79,64 +79,51 @@ body.light .search-input{color:var(--t1);background-image:url("data:image/svg+xm
 /* ── TAB BAR ────────────────────────────────────────────────────────────────── */
 /* ── FLOATING PILL TAB BAR (GjirafaMall style) ─────────────────────────────── */
 .tab-bar-wrapper{
-  /* Outer wrapper sits at bottom:0, provides safe-area gap */
   position:fixed;
-  bottom:0; left:0; right:0;
-  z-index:100;
-  padding:0 16px;
-  padding-bottom:env(safe-area-inset-bottom);
-  -webkit-transform:translateZ(0);
-  transform:translateZ(0);
-  pointer-events:none;
+  bottom:16px;
+  left:16px;right:16px;
+  z-index:1000;
+  -webkit-transform:translate3d(0,0,0);
+  transform:translate3d(0,0,0);
 }
 .tab-bar{
-  /* The floating pill itself */
-  pointer-events:all;
   display:flex;
   align-items:center;
-  height:60px;
-  margin-bottom:12px;
-  background:rgba(20,20,30,.92);
-  backdrop-filter:blur(40px) saturate(180%);
-  -webkit-backdrop-filter:blur(40px) saturate(180%);
-  border-radius:22px;
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 8px 32px rgba(0,0,0,.6),
-             inset 0 1px 0 rgba(255,255,255,.1);
+  height:58px;
+  background:rgba(20,20,30,.95);
+  -webkit-backdrop-filter:blur(30px);
+  backdrop-filter:blur(30px);
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 4px 24px rgba(0,0,0,.5);
   padding:0 6px;
-  overflow:hidden;
 }
 body.light .tab-bar{
-  background:rgba(248,248,252,.94);
-  border-color:rgba(0,0,0,.08);
-  box-shadow:0 8px 32px rgba(0,0,0,.15),
-             inset 0 1px 0 rgba(255,255,255,.95);
+  background:rgba(250,250,255,.95);
+  border-color:rgba(0,0,0,.09);
+  box-shadow:0 4px 24px rgba(0,0,0,.12);
 }
 .tab-item{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:3px;
-  height:48px;border-radius:16px;
+  justify-content:center;gap:3px;height:46px;border-radius:14px;
   cursor:pointer;position:relative;
   font-size:9px;font-weight:700;color:var(--t3);
   letter-spacing:.05em;text-transform:uppercase;
-  transition:color .18s,background .18s;
   -webkit-user-select:none;user-select:none;
+  transition:color .15s;
 }
 .tab-item.active{color:var(--flame)}
 .tab-item.active::before{
   content:'';position:absolute;inset:0;
-  background:rgba(255,92,26,.1);
-  border-radius:16px;
+  background:rgba(255,92,26,.12);border-radius:14px;
 }
-.tab-item:active:not(.active){background:rgba(255,255,255,.06)}
 .tab-icon-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;z-index:1}
 .tab-icon{font-size:21px;line-height:1}
-.tab-badge{position:absolute;top:-5px;right:-9px;
+.tab-badge{position:absolute;top:-5px;right:-8px;
   background:var(--flame);color:white;
   font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:9px;
   display:none;align-items:center;justify-content:center;
-  padding:0 4px;border:1.5px solid rgba(20,20,30,.95);
-  box-shadow:0 0 10px var(--fglow);
+  padding:0 4px;border:2px solid #14141e;
   font-family:'JetBrains Mono',monospace;line-height:1;z-index:2}
 
 /* ── PAGES ──────────────────────────────────────────────────────────────────── */
@@ -241,7 +228,7 @@ body.light .tab-bar{
 .loading-txt{font-size:13px;color:var(--t3);font-weight:500}
 
 /* ── FAB ────────────────────────────────────────────────────────────────────── */
-#fab{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 86px);left:16px;right:16px;z-index:60;
+#fab{position:fixed;bottom:90px;left:16px;right:16px;z-index:60;
   display:none;animation:fabUp .28s cubic-bezier(.34,1.56,.64,1)}
 @keyframes fabUp{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
 .fab-shell{background:linear-gradient(135deg,var(--flame),#ff8040);border-radius:var(--r4);
@@ -447,6 +434,7 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
   <div class="header-info">
     <div class="header-name">Argati</div>
     <div class="header-sub" id="header-sub" style="display:flex;align-items:center;gap:5px">
+  Parts Center
   <span id="server-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;
     background:var(--t4);margin-left:2px;transition:background .3s" title="Server status"></span>
 </div>
@@ -2234,6 +2222,41 @@ async function checkServerStatus() {
 
 checkServerStatus();
 setInterval(checkServerStatus, 30000);
+
+
+// ─── TAB BAR SAFE AREA POSITIONING ───────────────────────────────────────────
+// iOS Safari resolves env(safe-area-inset-bottom) asynchronously.
+// We set the bottom position via JS after the value is available.
+(function positionTabBar() {
+  function getSAB() {
+    // Create a test element to read the computed safe area
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
+    document.body.appendChild(el);
+    const h = el.getBoundingClientRect().height || 0;
+    document.body.removeChild(el);
+    return h;
+  }
+
+  function apply() {
+    const sab    = getSAB();
+    const bottom = sab + 12; // 12px gap above home indicator
+    const wrapper = document.querySelector('.tab-bar-wrapper');
+    if (wrapper) wrapper.style.bottom = bottom + 'px';
+    // FAB sits above tab bar
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.bottom = (bottom + 70) + 'px';
+  }
+
+  // Apply immediately
+  apply();
+  // Apply again after short delay (safe area sometimes resolves late)
+  setTimeout(apply, 100);
+  setTimeout(apply, 500);
+  // Re-apply on orientation change
+  window.addEventListener('resize', apply);
+  window.addEventListener('orientationchange', () => setTimeout(apply, 300));
+})();
 
 </script>
 </body>
