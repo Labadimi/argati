@@ -93,6 +93,10 @@ body.light .search-input{color:var(--t1);background-image:url("data:image/svg+xm
   box-shadow:0 8px 40px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.3),
              inset 0 1px 0 rgba(255,255,255,.08);
   padding:0 8px;
+  /* Force GPU layer — prevents iOS Safari fixed positioning bugs */
+  -webkit-transform:translateZ(0);
+  transform:translateZ(0);
+  will-change:transform;
 }
 body.light .tab-bar{
   background:rgba(255,255,255,.88);
@@ -379,7 +383,7 @@ select.field-input option{background:var(--s1);color:var(--t1)}
 #search-clear{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);
   background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px 6px}
 #search-wrap{background:rgba(8,8,13,.8);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);
-  padding:0 16px 10px}
+  padding:0 16px 10px;display:none}
 body.light #search-wrap{background:rgba(240,240,247,.88)}
 
 /* ── SWIPE HINT ─────────────────────────────────────────────────────────────── */
@@ -1661,9 +1665,16 @@ const searchWrap  = document.getElementById('search-wrap');
 const searchInput = document.getElementById('search-input');
 const searchClear = document.getElementById('search-clear');
 
-// Show search bar when on Orders tab
+// Search bar hidden by default — only opens via 🔍 button
 function showSearchBar(show) {
-  if (searchWrap) searchWrap.style.display = show ? 'block' : 'none';
+  // Only hide (when switching tabs), never auto-show
+  if (!show && searchWrap) {
+    searchWrap.style.display = 'none';
+    if (searchInput) { searchInput.value = ''; searchQuery = ''; }
+    const clr = document.getElementById('search-clear');
+    if (clr) clr.style.display = 'none';
+    document.getElementById('search-btn').innerText = '🔍';
+  }
 }
 
 searchInput.addEventListener('input', e => {
@@ -2059,7 +2070,7 @@ window.addEventListener('load', () => {
 const _stOrig = switchTab;
 window.switchTab = function(name) {
   _stOrig(name);
-  showSearchBar(name === 'orders');
+  if (name !== 'orders') showSearchBar(false); // only close, never auto-open
   if (name !== 'orders') {
     searchInput.value=''; searchQuery='';
     const wrap=document.getElementById('search-wrap');
@@ -2090,7 +2101,7 @@ window.renderOrderList = function() {
   // Init swipes on all cards
   initCardInteractions();
   // Show search bar
-  showSearchBar(document.getElementById('page-orders').classList.contains('active'));
+  // search bar state managed by button only
 };
 
 async function saveEditOnly() {
