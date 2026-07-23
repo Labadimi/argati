@@ -35,7 +35,7 @@ body.light {
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(max(var(--sab),16px) + 78px)}
+  padding-bottom:calc(env(safe-area-inset-bottom) + 90px)}
 body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(255,92,26,.09) 0%,transparent 70%),
              radial-gradient(ellipse 40% 30% at 85% 100%,rgba(0,229,160,.05) 0%,transparent 60%)}
@@ -79,21 +79,29 @@ body.light .search-input{color:var(--t1);background-image:url("data:image/svg+xm
 /* ── TAB BAR ────────────────────────────────────────────────────────────────── */
 /* ── FLOATING PILL TAB BAR (GjirafaMall style) ─────────────────────────────── */
 .tab-bar{
+  /* Anchor to bottom-0, then use internal padding to push content up */
   position:fixed;
-  bottom:calc(max(var(--sab), 16px));
-  left:16px; right:16px;
+  bottom:0;
+  left:16px;
+  right:16px;
   z-index:100;
-  display:flex;align-items:center;
-  height:62px;
+  display:flex;
+  align-items:flex-start;     /* items align to top of bar */
+  /* Height = pill height + safe area */
+  padding-top:8px;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 8px);
+  height:auto;
+  min-height:62px;
   background:rgba(18,18,28,.88);
   backdrop-filter:blur(40px) saturate(180%);
   -webkit-backdrop-filter:blur(40px) saturate(180%);
-  border-radius:24px;
+  border-radius:24px 24px 0 0;  /* flat bottom touching screen edge */
   border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 8px 40px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.3),
+  border-bottom:none;            /* no border at very bottom */
+  box-shadow:0 -4px 40px rgba(0,0,0,.55),
              inset 0 1px 0 rgba(255,255,255,.08);
-  padding:0 8px;
-  /* Force GPU layer — prevents iOS Safari fixed positioning bugs */
+  padding-left:8px;
+  padding-right:8px;
   -webkit-transform:translateZ(0);
   transform:translateZ(0);
   will-change:transform;
@@ -101,18 +109,18 @@ body.light .search-input{color:var(--t1);background-image:url("data:image/svg+xm
 body.light .tab-bar{
   background:rgba(255,255,255,.88);
   border-color:rgba(0,0,0,.07);
-  box-shadow:0 8px 40px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.07),
+  box-shadow:0 -4px 40px rgba(0,0,0,.1),
              inset 0 1px 0 rgba(255,255,255,.9);
 }
 .tab-item{
   flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;padding:8px 4px;cursor:pointer;
-  position:relative;border-radius:18px;
+  position:relative;border-radius:16px;
   font-size:9px;font-weight:700;color:var(--t3);
   letter-spacing:.05em;text-transform:uppercase;
   transition:color .2s, background .2s;
   -webkit-user-select:none;user-select:none;
-  height:100%;
+  height:46px;  /* fixed pill height */
 }
 .tab-item.active{color:var(--flame)}
 /* Active pill highlight behind the active tab */
@@ -233,7 +241,7 @@ body.light .tab-badge{border-color:rgba(255,255,255,.9)}
 .loading-txt{font-size:13px;color:var(--t3);font-weight:500}
 
 /* ── FAB ────────────────────────────────────────────────────────────────────── */
-#fab{position:fixed;bottom:calc(max(var(--sab),16px) + 80px);left:16px;right:16px;z-index:60;
+#fab{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 76px);left:16px;right:16px;z-index:60;
   display:none;animation:fabUp .28s cubic-bezier(.34,1.56,.64,1)}
 @keyframes fabUp{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
 .fab-shell{background:linear-gradient(135deg,var(--flame),#ff8040);border-radius:var(--r4);
@@ -605,7 +613,7 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
 <!-- PROGRESS OVERLAY — shown while order is being placed -->
 <div id="progress-overlay" style="display:none;position:fixed;inset:0;z-index:150;
   background:rgba(8,8,13,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  align-items:flex-end;justify-content:center;padding-bottom:calc(24px + var(--sab))">
+  align-items:flex-end;justify-content:center;padding-bottom:calc(env(safe-area-inset-bottom) + 24px)">
   <div style="width:calc(100% - 32px);max-width:420px;background:#0e0e16;
     border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:20px 22px 24px;
     box-shadow:0 -8px 60px rgba(0,0,0,.7)">
