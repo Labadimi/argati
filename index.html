@@ -408,7 +408,11 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
   <div class="app-mark">🤖</div>
   <div class="header-info">
     <div class="header-name">Argati</div>
-    <div class="header-sub" id="header-sub">Parts Center</div>
+    <div class="header-sub" id="header-sub" style="display:flex;align-items:center;gap:5px">
+  Parts Center
+  <span id="server-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;
+    background:var(--t4);margin-left:2px;transition:background .3s" title="Server status"></span>
+</div>
   </div>
   <div class="hbtns">
     <button class="hbtn" id="search-btn" title="Search">🔍</button>
@@ -568,6 +572,49 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
 </nav>
 
 <!-- FAB -->
+<!-- PROGRESS OVERLAY — shown while order is being placed -->
+<div id="progress-overlay" style="display:none;position:fixed;inset:0;z-index:150;
+  background:rgba(8,8,13,.75);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  align-items:flex-end;justify-content:center;padding-bottom:calc(24px + var(--sab))">
+  <div style="width:calc(100% - 32px);max-width:420px;background:#0e0e16;
+    border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:20px 22px 24px;
+    box-shadow:0 -8px 60px rgba(0,0,0,.7)">
+    <!-- Header row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--t1)" id="prog-title">Placing Order</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px" id="prog-name"></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:700;
+        color:var(--flame)" id="prog-timer">00:00</div>
+    </div>
+    <!-- Progress bar -->
+    <div style="height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-bottom:20px;overflow:hidden">
+      <div id="prog-bar" style="height:100%;background:linear-gradient(90deg,var(--flame),#ff8040);
+        border-radius:2px;transition:width .6s ease;width:0%"></div>
+    </div>
+    <!-- Steps -->
+    <div id="prog-steps" style="display:flex;flex-direction:column;gap:8px"></div>
+    <!-- Error -->
+    <div id="prog-error" style="display:none;margin-top:14px;padding:10px 12px;
+      background:rgba(255,64,96,.1);border:1px solid rgba(255,64,96,.25);
+      border-radius:10px;font-size:12px;color:#ff7090;line-height:1.5"></div>
+    <!-- Result -->
+    <div id="prog-result" style="display:none;margin-top:14px;padding:12px;
+      background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);
+      border-radius:10px;text-align:center">
+      <div style="font-size:22px;margin-bottom:6px">✅</div>
+      <div style="font-size:13px;font-weight:700;color:var(--mint)" id="prog-oid"></div>
+    </div>
+    <!-- Done button -->
+    <button id="prog-done" onclick="closeProgress()" style="display:none;width:100%;
+      margin-top:14px;padding:14px;border:none;border-radius:14px;font-family:inherit;
+      font-size:14px;font-weight:700;cursor:pointer;
+      background:linear-gradient(135deg,var(--flame),#ff8040);color:white;
+      box-shadow:0 4px 18px var(--fglow)">Got it</button>
+  </div>
+</div>
+
 <div id="fab">
   <div class="fab-shell">
     <div class="fab-info">
@@ -949,7 +996,8 @@ function loadTodayHistory(orders) {
 // ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
 async function loadOrders(silent=false) {
   const list = document.getElementById('order-list');
-  if (!silent) list.innerHTML=`<div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div><div class="skel-line w40"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>`;
+  // Never clear the list while an order is processing
+  if (!silent && !isProcessing) list.innerHTML=`<div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div><div class="skel-line w40"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>`;
   try {
     const res  = await Promise.race([fetch(SCRIPT_URL+'?t='+Date.now()),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Timed out.')),10000))]);
     if (!res.ok) throw new Error('Server error ' + res.status);
@@ -1127,115 +1175,188 @@ function clearSelection() {
   selectedRows.clear(); updateFAB();
 }
 function updateFAB() {
-  const fab=document.getElementById('fab'), n=selectedRows.size;
-  const bar=document.getElementById('autopilot-bar');
-  fab.style.display=n>0?'block':'none';
-  if(bar) bar.style.display=n>0?'none':'block'; // show pilot bar when nothing selected
-  document.getElementById('fab-count').innerText=n+(n===1?' order selected':' orders selected');
+  const fab = document.getElementById('fab');
+  const n   = selectedRows.size;
+  // Don't show FAB while an order is being placed
+  fab.style.display = (n > 0 && !isProcessing) ? 'block' : 'none';
+  document.getElementById('fab-count').innerText = n + (n === 1 ? ' order selected' : ' orders selected');
 }
 
 // renderPlacePage removed
 
 // ─── TIMER ────────────────────────────────────────────────────────────────────
 function startTimer() {
-  timerStart=Date.now(); document.getElementById('timer-bar').style.display='flex';
+  timerStart = Date.now();
   if (timerInterval) clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    const e=Math.floor((Date.now()-timerStart)/1000);
-    document.getElementById('timer-val').innerText=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');
-  },1000);
+  timerInterval = setInterval(() => {
+    const e   = Math.floor((Date.now() - timerStart) / 1000);
+    const str = String(Math.floor(e / 60)).padStart(2,'0') + ':' + String(e % 60).padStart(2,'0');
+    const el  = document.getElementById('prog-timer');
+    if (el) el.innerText = str;
+  }, 1000);
 }
 function stopTimer() {
-  if (timerInterval) { clearInterval(timerInterval); timerInterval=null; }
-  document.getElementById('timer-bar').style.display='none';
-  const elapsed=timerStart?Math.floor((Date.now()-timerStart)/1000):0;
-  timerStart=null; return elapsed;
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  const elapsed = timerStart ? Math.floor((Date.now() - timerStart) / 1000) : 0;
+  timerStart = null;
+  return elapsed;
 }
 
 // ─── PLACE ORDER ──────────────────────────────────────────────────────────────
 // On iPhone: approve flag → desktop extension picks up within 1 min → places order
 // Desktop result comes back via poll → push notification
+// ─── PROGRESS UI ──────────────────────────────────────────────────────────────
+const PLACE_STEPS = [
+  'Sending to desktop…',
+  'Opening product page',
+  'Clicking buy button',
+  'Selecting shipping',
+  'Filling name & phone',
+  'Selecting city',
+  'Filling address',
+  'Payment method',
+  'Submitting order',
+  'Waiting for confirmation',
+  'Writing Order ID ✅',
+];
+
+function openProgress(order) {
+  const overlay = document.getElementById('progress-overlay');
+  overlay.style.display = 'flex';
+  document.getElementById('prog-title').innerText = 'Placing Order #' + order.rowNumber;
+  document.getElementById('prog-name').innerText = (order.Emri||'').trim() + ' ' + (order.Mbiemri||'').trim() + ' — ' + getProduct(order.Produkti).name;
+  document.getElementById('prog-bar').style.width = '5%';
+  document.getElementById('prog-error').style.display  = 'none';
+  document.getElementById('prog-result').style.display = 'none';
+  document.getElementById('prog-done').style.display   = 'none';
+  renderProgSteps(0);
+  startTimer();
+}
+
+function renderProgSteps(activeStep) {
+  const container = document.getElementById('prog-steps');
+  if (!container) return;
+  // Show steps 0..10, highlight current
+  container.innerHTML = PLACE_STEPS.map((label, i) => {
+    const done   = i < activeStep;
+    const active = i === activeStep;
+    const col    = done ? 'var(--mint)' : active ? 'var(--flame)' : 'var(--t4)';
+    const dot    = done ? '✓' : active ? '◉' : '○';
+    const weight = active ? '700' : done ? '600' : '400';
+    return `<div style="display:flex;align-items:center;gap:10px;font-size:12px;
+      color:${col};font-weight:${weight};transition:all .3s">
+      <span style="font-size:10px;width:12px;text-align:center;flex-shrink:0">${dot}</span>
+      <span>${label}</span>
+    </div>`;
+  }).join('');
+  // Progress bar
+  const pct = Math.round((activeStep / (PLACE_STEPS.length - 1)) * 100);
+  const bar = document.getElementById('prog-bar');
+  if (bar) bar.style.width = Math.max(5, pct) + '%';
+}
+
+function updateProgStep(step) {
+  renderProgSteps(step);
+}
+
+function closeProgress() {
+  document.getElementById('progress-overlay').style.display = 'none';
+  stopTimer();
+}
+
 async function placeOrder(order) {
   if (isProcessing) return;
-  const phone=validatePhone(order.Telefoni);
-  if (phone.warning) { showNotif('⚠️','Invalid Phone',phone.warning,'red'); return; }
+  const phone = validatePhone(order.Telefoni);
+  if (phone.warning) { showNotif('⚠️', 'Invalid Phone', phone.warning, 'red'); return; }
 
-  isProcessing=true;
-
-  const _cb=document.getElementById('checklist-box'); if(_cb) _cb.style.display='block';
-  const steps=['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'];
-  [1,2,3,4].forEach(i=>{ const el=document.getElementById('p-step-'+i); el.innerText='○ '+steps[i-1]; el.className='step'; });
-  const _ps=document.getElementById('place-status'); if(_ps) _ps.innerText='Sending to desktop...';
-  startTimer();
+  isProcessing = true;
+  openProgress(order);
+  // Hide FAB while processing
+  document.getElementById('fab').style.display = 'none';
 
   try {
-    // Write approval flag to Apps Script
-    const res=await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
-    let success=false;
-    try { const d=JSON.parse(await res.text()); success=d.success===true; } catch(e) { success=res.status>=200&&res.status<400; }
+    const res = await fetch(SCRIPT_URL + '?action=approve&row=' + order.rowNumber + '&t=' + Date.now());
+    let success = false;
+    try { const d = JSON.parse(await res.text()); success = d.success === true; }
+    catch(e) { success = res.status >= 200 && res.status < 400; }
 
     if (success) {
-      // Visually simulate steps while polling
-      const delays=[800,1800,2800,0];
-      delays.slice(0,3).forEach((delay,i)=>{
-        setTimeout(()=>{
-          const el=document.getElementById('p-step-'+(i+1));
-          if (el) { el.innerText='✅ '+steps[i]; el.className='step done'; }
-        }, delay);
-      });
-      const _ps2=document.getElementById('place-status'); if(_ps2) _ps2.innerText='⏳ Desktop is placing order... (up to 1 min)';
-      // Poll for result
-      pollForResult(order.rowNumber, (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), getProduct(order.Produkti).name, order, 0);
+      updateProgStep(1);
+      pollForResult(order.rowNumber, order, 0);
     } else {
-      finishOrder(false, order, null, 'Approval failed — please retry.');
+      finishOrder(false, order, null, 'Approval failed — check connection and retry.');
     }
   } catch(e) {
-    finishOrder(false, order, null, e.message||'Connection error');
+    finishOrder(false, order, null, e.message || 'Connection error');
   }
 }
 
-function pollForResult(rowNumber, name, product, order, attempts) {
-  const MAX=24; // 24×5s = 2min
-  setTimeout(async()=>{
+function pollForResult(rowNumber, order, attempts) {
+  const MAX = 36; // 36×5s = 3min
+  setTimeout(async () => {
     try {
-      const res=await fetch(SCRIPT_URL+'?t='+Date.now());
-      const orders=await res.json();
-      const row=orders.find(o=>o.rowNumber==rowNumber);
+      const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
+      const orders = await res.json();
+      const row    = orders.find(o => o.rowNumber == rowNumber);
       if (row) {
-        const oid=(row.OrderID||'').toString().trim();
-        if (oid&&oid.toLowerCase()!=='pending') {
-          // Success!
-          const el=document.getElementById('p-step-4');
-          if (el) { el.innerText='✅ '+(['Opening product page...','Filling customer info...','Selecting payment...','Recording Order ID...'][3]); el.className='step done'; }
+        const oid = (row.OrderID || '').toString().trim();
+        if (oid && oid.toLowerCase() !== 'pending') {
+          updateProgStep(10);
           finishOrder(true, order, oid, null);
           return;
         }
       }
-      if (attempts<MAX) pollForResult(rowNumber,name,product,order,attempts+1);
-      else finishOrder(false, order, null, 'Timed out — check if your laptop is on and Chrome is running.');
+      // Simulate realistic step progression based on elapsed time
+      const elapsed = attempts * 5;
+      if      (elapsed < 5)  updateProgStep(1);
+      else if (elapsed < 10) updateProgStep(2);
+      else if (elapsed < 15) updateProgStep(4);
+      else if (elapsed < 20) updateProgStep(6);
+      else if (elapsed < 30) updateProgStep(8);
+      else                   updateProgStep(9);
+
+      if (attempts < MAX) pollForResult(rowNumber, order, attempts + 1);
+      else finishOrder(false, order, null, 'Timed out after 3 minutes.\nMake sure your PC is on and server is running.');
     } catch(e) {
-      if (attempts<MAX) pollForResult(rowNumber,name,product,order,attempts+1);
+      if (attempts < MAX) pollForResult(rowNumber, order, attempts + 1);
+      else finishOrder(false, order, null, 'Connection lost. Check server.');
     }
   }, 5000);
 }
 
 function finishOrder(success, order, orderId, errorMsg) {
-  const elapsed=stopTimer();
-  isProcessing=false;
-
-  const _cb2=document.getElementById('checklist-box'); if(_cb2) _cb2.style.display='none';
+  const elapsed = stopTimer();
+  isProcessing  = false;
 
   if (success) {
+    updateProgStep(10);
     sessionTimings.push(elapsed); saveTimings();
     addHistory(order, orderId, elapsed);
-    const _ps3=document.getElementById('place-status'); if(_ps3) _ps3.innerText='✅ Order placed!';
-    showNotif('✅','Order Placed!', '#'+order.rowNumber+' — '+(order.Emri||'').trim()+' '+(order.Mbiemri||'').trim()+'\n'+getProduct(order.Produkti).name+'\nOrder ID: '+orderId, 'green');
+    haptic('success');
     playSound();
-    setTimeout(()=>loadOrders(true), 2000);
+    // Show success in overlay
+    document.getElementById('prog-result').style.display = 'block';
+    document.getElementById('prog-oid').innerText = 'Order ID: ' + orderId;
+    document.getElementById('prog-done').style.display = 'block';
+    document.getElementById('prog-done').style.background = 'linear-gradient(135deg,var(--mint),#00c48a)';
+    document.getElementById('prog-done').style.color = '#003d2a';
+    document.getElementById('prog-title').innerText = '✅ Order Placed!';
+    // Auto-close after 4s
+    setTimeout(() => {
+      closeProgress();
+      loadOrders(true);
+    }, 4000);
   } else {
-    const _ps4=document.getElementById('place-status'); if(_ps4) _ps4.innerText='⚠ '+errorMsg;
-    showNotif('❌','Failed', errorMsg, 'red');
+    haptic('heavy');
+    document.getElementById('prog-error').style.display = 'block';
+    document.getElementById('prog-error').innerText = errorMsg;
+    document.getElementById('prog-done').style.display = 'block';
+    document.getElementById('prog-done').style.background = 'linear-gradient(135deg,#ef4444,#f87171)';
+    document.getElementById('prog-done').style.color = 'white';
+    document.getElementById('prog-title').innerText = '❌ Order Failed';
   }
+  // Restore FAB
+  updateFAB();
 }
 
 // ─── APPROVE SELECTED (multi-select from Orders tab) ─────────────────────────
@@ -1290,12 +1411,21 @@ async function approveSelected() {
         (n-failed)+' of '+n+' sent. '+failed+' failed — retry those.','green');
     }
 
-    // Poll for results on all approved orders
-    approved.forEach(o => {
-      pollForResult(o.rowNumber,
-        (o.Emri||'').trim()+' '+(o.Mbiemri||'').trim(),
-        getProduct(o.Produkti).name, o, 0);
-    });
+    // Show progress for first order; others tracked silently
+    if (approved.length === 1) {
+      isProcessing = true;
+      openProgress(approved[0]);
+      updateProgStep(1);
+      pollForResult(approved[0].rowNumber, approved[0], 0);
+    } else {
+      // Multi-order: just reload when done, no individual progress overlay
+      const checkDone = (idx) => {
+        if (idx >= approved.length) { setTimeout(() => loadOrders(true), 1000); return; }
+        pollForResult(approved[idx].rowNumber, approved[idx], 0);
+        setTimeout(() => checkDone(idx + 1), 500);
+      };
+      checkDone(0);
+    }
 
   } catch(e) {
     btn.disabled=false; btn.innerText='Place ▶';
@@ -2027,6 +2157,37 @@ document.addEventListener('touchmove', () => {
     }
   }, 1500);
 })();
+
+
+// ─── SERVER STATUS INDICATOR ──────────────────────────────────────────────────
+// The dot in the header shows if argati_server.py is reachable via watcher
+const WATCHER_CHECK_URL = null; // set to 'http://YOUR_PC_IP:5051/health' if desired
+let serverOnline = null;
+
+async function checkServerStatus() {
+  const dot = document.getElementById('server-dot');
+  if (!dot) return;
+  // Heuristic: if loadOrders succeeded, server/Apps Script is reachable
+  // Real watcher check would need CORS-enabled endpoint
+  // We use the last loadOrders result as proxy
+  try {
+    const r = await fetch(SCRIPT_URL + '?action=count&t=' + Date.now(), { signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      serverOnline = true;
+      dot.style.background = 'var(--mint)';
+      dot.style.boxShadow  = '0 0 6px var(--mint)';
+      dot.title = 'Connected';
+    } else throw new Error('not ok');
+  } catch(e) {
+    serverOnline = false;
+    dot.style.background = 'var(--crimson)';
+    dot.style.boxShadow  = '0 0 6px var(--crimson)';
+    dot.title = 'Offline';
+  }
+}
+
+checkServerStatus();
+setInterval(checkServerStatus, 30000);
 
 </script>
 </body>
