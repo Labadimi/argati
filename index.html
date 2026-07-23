@@ -35,7 +35,7 @@ body.light {
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t1);
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(80px + max(var(--sab),8px))}
+  padding-bottom:calc(max(var(--sab),16px) + 78px)}
 body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:radial-gradient(ellipse 60% 40% at 15% 0%,rgba(255,92,26,.09) 0%,transparent 70%),
              radial-gradient(ellipse 40% 30% at 85% 100%,rgba(0,229,160,.05) 0%,transparent 60%)}
@@ -77,30 +77,56 @@ body.light .search-input{color:var(--t1);background-image:url("data:image/svg+xm
 .search-input:focus{border-color:var(--flame)}
 
 /* ── TAB BAR ────────────────────────────────────────────────────────────────── */
-.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;
-  display:flex;align-items:stretch;
-  padding-bottom:max(var(--sab), 8px);
-  background:rgba(8,8,13,.85);
-  backdrop-filter:blur(48px) saturate(200%);-webkit-backdrop-filter:blur(48px) saturate(200%);
-  border-top:.5px solid var(--gbb)}
-body.light .tab-bar{background:rgba(240,240,247,.92)}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:3px;padding:8px 4px 10px;cursor:pointer;
-  position:relative;font-size:9px;font-weight:600;color:var(--t3);
-  letter-spacing:.05em;text-transform:uppercase;transition:color .2s;
-  -webkit-user-select:none;user-select:none}
+/* ── FLOATING PILL TAB BAR (GjirafaMall style) ─────────────────────────────── */
+.tab-bar{
+  position:fixed;
+  bottom:calc(max(var(--sab), 16px));
+  left:16px; right:16px;
+  z-index:100;
+  display:flex;align-items:center;
+  height:62px;
+  background:rgba(18,18,28,.88);
+  backdrop-filter:blur(40px) saturate(180%);
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 8px 40px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.3),
+             inset 0 1px 0 rgba(255,255,255,.08);
+  padding:0 8px;
+}
+body.light .tab-bar{
+  background:rgba(255,255,255,.88);
+  border-color:rgba(0,0,0,.07);
+  box-shadow:0 8px 40px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.07),
+             inset 0 1px 0 rgba(255,255,255,.9);
+}
+.tab-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;padding:8px 4px;cursor:pointer;
+  position:relative;border-radius:18px;
+  font-size:9px;font-weight:700;color:var(--t3);
+  letter-spacing:.05em;text-transform:uppercase;
+  transition:color .2s, background .2s;
+  -webkit-user-select:none;user-select:none;
+  height:100%;
+}
 .tab-item.active{color:var(--flame)}
-.tab-item.active .tab-icon-wrap::after{content:'';position:absolute;
-  bottom:-3px;left:50%;transform:translateX(-50%);
-  width:4px;height:4px;border-radius:50%;background:var(--flame);box-shadow:0 0 6px var(--flame)}
-.tab-icon-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
+/* Active pill highlight behind the active tab */
+.tab-item.active::before{
+  content:'';position:absolute;inset:6px 4px;
+  background:rgba(255,92,26,.1);
+  border-radius:14px;
+}
+.tab-item:active{background:rgba(255,255,255,.05)}
+.tab-icon-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;z-index:1}
 .tab-icon{font-size:22px;line-height:1}
 .tab-badge{position:absolute;top:-5px;right:-9px;
   background:var(--flame);color:white;
   font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:9px;
   display:none;align-items:center;justify-content:center;
-  padding:0 4px;border:1.5px solid var(--bg);
+  padding:0 4px;border:1.5px solid rgba(18,18,28,.9);
   box-shadow:0 0 10px var(--fglow);font-family:'JetBrains Mono',monospace;line-height:1}
+body.light .tab-badge{border-color:rgba(255,255,255,.9)}
 
 /* ── PAGES ──────────────────────────────────────────────────────────────────── */
 .page{display:none;padding:14px 16px 0}
@@ -203,7 +229,7 @@ body.light .tab-bar{background:rgba(240,240,247,.92)}
 .loading-txt{font-size:13px;color:var(--t3);font-weight:500}
 
 /* ── FAB ────────────────────────────────────────────────────────────────────── */
-#fab{position:fixed;bottom:calc(80px + max(var(--sab),8px));left:16px;right:16px;z-index:60;
+#fab{position:fixed;bottom:calc(max(var(--sab),16px) + 80px);left:16px;right:16px;z-index:60;
   display:none;animation:fabUp .28s cubic-bezier(.34,1.56,.64,1)}
 @keyframes fabUp{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
 .fab-shell{background:linear-gradient(135deg,var(--flame),#ff8040);border-radius:var(--r4);
