@@ -8,10 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="Argati">
 <link rel="manifest" href="manifest.json">
 <title>Argati</title>
-<!-- Syne: geometric display for numbers — Argati's signature typeface -->
-<!-- Inter: clean utility face for all UI copy -->
+<!-- DM Sans: display + body — one face, two weights, zero friction -->
 <!-- JetBrains Mono: data, IDs, codes -->
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════════
    ARGATI — DESIGN SYSTEM v6
@@ -66,7 +65,7 @@
 /* ── RESET ──────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent }
 body {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
   background: var(--bg);
   color: var(--t1);
   min-height: 100dvh;
@@ -110,9 +109,9 @@ body::before {
 }
 .header-info { flex: 1; min-width: 0 }
 .header-name {
-  font-family: 'Syne', sans-serif;
-  font-size: 17px; font-weight: 800;
-  letter-spacing: -.02em; color: var(--t1);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 18px; font-weight: 800;
+  letter-spacing: -.03em; color: var(--t1);
 }
 .header-sub {
   font-size: 11px; color: var(--t3);
@@ -148,7 +147,7 @@ body::before {
   width: 100%; padding: 11px 36px 11px 38px;
   background: var(--g2); border: 1px solid var(--gb);
   border-radius: var(--r2); color: var(--t1);
-  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
   outline: none; transition: border-color .15s;
 }
 .search-input:focus { border-color: rgba(255,77,13,.5) }
@@ -197,9 +196,9 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none }
   margin-bottom: 8px; box-shadow: 0 0 8px currentColor;
 }
 .stat-val {
-  font-family: 'Syne', sans-serif;
-  font-size: 28px; font-weight: 800;
-  line-height: 1; letter-spacing: -.04em; margin-bottom: 5px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 30px; font-weight: 800;
+  line-height: 1; letter-spacing: -.03em; margin-bottom: 5px;
 }
 .stat-lbl {
   font-size: 8px; font-weight: 700; color: var(--t3);
@@ -333,7 +332,7 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none }
   color: white; box-shadow: 0 0 14px var(--fglow);
 }
 .card-name {
-  font-family: 'Syne', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 17px; font-weight: 700;
   letter-spacing: -.025em; margin-bottom: 11px; color: var(--t1); line-height: 1.2;
 }
@@ -381,7 +380,7 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none }
   display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
 .empty-glyph { font-size: 52px }
-.empty-h { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; letter-spacing:-.02em }
+.empty-h { font-family:'DM Sans',sans-serif; font-size:18px; font-weight:700; letter-spacing:-.02em }
 .empty-p { font-size: 13px; color: var(--t3); max-width: 200px; line-height: 1.65 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -405,7 +404,7 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none }
 }
 .prog-handle { width: 36px; height: 4px; background: var(--g3); border-radius: 2px; margin: 0 auto 20px }
 .prog-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px }
-.prog-title-name { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--t1) }
+.prog-title-name { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; color:var(--t1) }
 .prog-title-sub  { font-size:11px; color:var(--t3); margin-top:3px }
 .prog-timer      { font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--flame) }
 .prog-track      { height:3px; background:var(--g3); border-radius:2px; margin-bottom:20px; overflow:hidden }
@@ -447,7 +446,7 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none }
   background: linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
 }
 .fab-info   { display:flex; flex-direction:column; gap:1px }
-.fab-count  { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:white; letter-spacing:-.02em }
+.fab-count  { font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; color:white; letter-spacing:-.02em }
 .fab-hint   { font-size:11px; color:rgba(255,255,255,.6); font-weight:500 }
 .fab-act    {
   background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
@@ -556,7 +555,7 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none }
 }
 .sh-handle { width:36px; height:4px; background:var(--g3); border-radius:2px; margin:0 auto 20px }
 .modal-icon  { font-size:52px; margin-bottom:12px }
-.modal-title { font-family:'Syne',sans-serif; font-size:21px; font-weight:800; letter-spacing:-.03em; margin-bottom:8px }
+.modal-title { font-family:'DM Sans',sans-serif; font-size:21px; font-weight:800; letter-spacing:-.03em; margin-bottom:8px }
 .modal-body  { font-size:14px; color:var(--t2); line-height:1.65; margin-bottom:22px; white-space:pre-line }
 .modal-btn   {
   width:100%; padding:15px; border:none; border-radius:var(--r2);
@@ -573,7 +572,7 @@ input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none }
 /* ═══════════════════════════════════════════════════════════════════════════
    EDIT SHEET
 ═══════════════════════════════════════════════════════════════════════════ */
-.edit-sheet-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; letter-spacing:-.025em; margin-bottom:20px; text-align:left }
+.edit-sheet-title { font-family:'DM Sans',sans-serif; font-size:18px; font-weight:800; letter-spacing:-.025em; margin-bottom:20px; text-align:left }
 .field-group { margin-bottom:14px; text-align:left }
 .field-label { font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px }
 .field-input {
@@ -595,7 +594,7 @@ select.field-input option { background:var(--s1); color:var(--t1) }
 /* ═══════════════════════════════════════════════════════════════════════════
    DETAIL SHEET
 ═══════════════════════════════════════════════════════════════════════════ */
-.detail-name { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; letter-spacing:-.03em; margin-bottom:18px; text-align:left }
+.detail-name { font-family:'DM Sans',sans-serif; font-size:22px; font-weight:800; letter-spacing:-.03em; margin-bottom:18px; text-align:left }
 .detail-row  { display:flex; align-items:flex-start; gap:12px; padding:11px 0; border-bottom:1px solid var(--gb) }
 .detail-row:last-of-type { border-bottom:none }
 .detail-ico  { font-size:18px; width:28px; text-align:center; flex-shrink:0; margin-top:1px }
@@ -739,15 +738,15 @@ select.field-input option { background:var(--s1); color:var(--t1) }
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
     <div class="glass-card" style="padding:14px 12px;text-align:center;margin-bottom:0">
       <div style="font-size:8px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">Total</div>
-      <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--mint)" id="an-total">—</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:24px;font-weight:800;color:var(--mint)" id="an-total">—</div>
     </div>
     <div class="glass-card" style="padding:14px 12px;text-align:center;margin-bottom:0">
       <div style="font-size:8px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">Failed</div>
-      <div style="font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--crimson)" id="an-failed">—</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:24px;font-weight:800;color:var(--crimson)" id="an-failed">—</div>
     </div>
     <div class="glass-card" style="padding:14px 12px;text-align:center;margin-bottom:0">
       <div style="font-size:8px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">Revenue</div>
-      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--amber)" id="an-revenue">—</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:800;color:var(--amber)" id="an-revenue">—</div>
     </div>
   </div>
 
