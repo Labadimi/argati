@@ -494,9 +494,27 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
 
 <!-- ANALYTICS PAGE -->
 <div class="page" id="page-analytics">
+
+  <!-- KPI row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="glass-card" style="padding:14px 12px;text-align:center;margin-bottom:0">
+      <div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Total</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--mint)" id="an-total">—</div>
+    </div>
+    <div class="glass-card" style="padding:14px 12px;text-align:center;margin-bottom:0">
+      <div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Failed</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--crimson)" id="an-failed">—</div>
+    </div>
+    <div class="glass-card" style="padding:14px 12px;text-align:center;margin-bottom:0">
+      <div style="font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Revenue</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;color:var(--amber)" id="an-revenue">—</div>
+    </div>
+  </div>
+
+  <!-- 30-day trend -->
   <div class="glass-card">
-    <p class="card-label">Orders — Last 7 Days</p>
-    <div class="chart-wrap" id="perf-chart"></div>
+    <p class="card-label">30-Day Trend</p>
+    <div id="trend-chart" style="display:flex;align-items:flex-end;gap:3px;height:70px;padding-top:8px"></div>
     <div class="avg-strip">
       <span class="avg-lbl">Avg time today</span>
       <div style="text-align:right">
@@ -505,6 +523,31 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
       </div>
     </div>
   </div>
+
+  <!-- Top products + cities -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+    <div class="glass-card" style="margin-bottom:0">
+      <p class="card-label">Top Products</p>
+      <div id="an-products"><div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">Switch to Analytics tab to load</div></div>
+    </div>
+    <div class="glass-card" style="margin-bottom:0">
+      <p class="card-label">Top Cities</p>
+      <div id="an-cities"><div style="font-size:11px;color:var(--t3);text-align:center;padding:8px 0">—</div></div>
+    </div>
+  </div>
+
+  <!-- Peak hours -->
+  <div class="glass-card">
+    <p class="card-label">Peak Hours</p>
+    <div id="hours-chart" style="display:flex;align-items:flex-end;gap:2px;height:56px;padding-top:6px"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span style="font-size:9px;color:var(--t4)">00:00</span>
+      <span style="font-size:9px;color:var(--t4)">12:00</span>
+      <span style="font-size:9px;color:var(--t4)">23:00</span>
+    </div>
+  </div>
+
+  <!-- Today's orders -->
   <p class="sec-eye">Today's Orders</p>
   <div class="glass-card">
     <div id="history-list-a">
@@ -517,7 +560,6 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
   </div>
 </div>
 
-<!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
   <div class="set-group">
     <p class="set-lbl">Automation</p>
@@ -552,6 +594,18 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
         </div>
         <button class="s-btn sec" onclick="testNotification()">Test</button>
       </div>
+    </div>
+  </div>
+
+  <div class="set-group">
+    <p class="set-lbl">Failure Screenshots</p>
+    <div class="glass-card" style="padding:12px">
+      <div id="screenshots-list" style="font-size:12px;color:var(--t3);text-align:center;padding:8px 0">
+        Tap refresh to load
+      </div>
+      <button class="s-btn sec" style="width:100%;margin-top:10px" onclick="loadScreenshots()">
+        🔄 Load Screenshots
+      </button>
     </div>
   </div>
 
@@ -824,7 +878,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', app
 function switchTab(name) {
   document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.page === name));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
-  if (name === 'analytics') { renderChart(weeklyData); updateAvgTime(); renderHistory(); }
+  if (name === 'analytics') { renderChart(weeklyData); updateAvgTime(); renderHistory(); loadAnalytics(); }
 }
 
 // ─── RELOAD ───────────────────────────────────────────────────────────────────
@@ -2257,6 +2311,120 @@ setInterval(checkServerStatus, 30000);
   window.addEventListener('resize', apply);
   window.addEventListener('orientationchange', () => setTimeout(apply, 300));
 })();
+
+
+// ─── RICH ANALYTICS ───────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  try {
+    const r    = await fetch('/api/analytics');
+    const data = await r.json();
+    if (!data || data.error) return;
+
+    // KPIs
+    const setEl = (id, val) => { const e=document.getElementById(id); if(e) e.innerText=val; };
+    setEl('an-total',   data.placed  || 0);
+    setEl('an-failed',  data.failed  || 0);
+    setEl('an-revenue', '€' + Math.round(data.revenue || 0));
+
+    // 30-day trend
+    const trend = document.getElementById('trend-chart');
+    if (trend && data.trend) {
+      const max = Math.max(...data.trend.map(d => d.count), 1);
+      const todayStr = new Date().toISOString().slice(0,10);
+      trend.innerHTML = data.trend.map(d => {
+        const pct   = Math.max(4, Math.round((d.count/max)*100));
+        const today = d.date === todayStr;
+        return `<div style="flex:1;display:flex;align-items:flex-end;height:100%">
+          <div title="${d.date}: ${d.count}" style="width:100%;border-radius:3px 3px 0 0;
+            background:${today?'var(--flame)':'var(--t3)'};height:${pct}%;min-height:3px;
+            opacity:${today?1:0.55}"></div></div>`;
+      }).join('');
+    }
+
+    // Top products bar chart
+    const prodsEl = document.getElementById('an-products');
+    if (prodsEl && data.top_products && data.top_products.length) {
+      const maxP = data.top_products[0][1] || 1;
+      prodsEl.innerHTML = data.top_products.slice(0,5).map(([name,cnt]) => {
+        const pct   = Math.round((cnt/maxP)*100);
+        const short = name.split('—')[0].trim().replace(/Pastrues |Additiv |Set /g,'').trim();
+        return `<div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+            <span style="color:var(--t2);font-weight:600;overflow:hidden;text-overflow:ellipsis;
+              white-space:nowrap;max-width:75%">${short}</span>
+            <span style="color:var(--flame);font-family:'JetBrains Mono',monospace;font-weight:700">${cnt}</span>
+          </div>
+          <div style="height:4px;background:var(--g3);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--flame);border-radius:2px;transition:width .4s"></div>
+          </div></div>`;
+      }).join('');
+    }
+
+    // Top cities
+    const citiesEl = document.getElementById('an-cities');
+    if (citiesEl && data.top_cities && data.top_cities.length) {
+      const maxC = data.top_cities[0][1] || 1;
+      citiesEl.innerHTML = data.top_cities.slice(0,5).map(([city,cnt]) => {
+        const pct = Math.round((cnt/maxC)*100);
+        return `<div style="margin-bottom:9px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+            <span style="color:var(--t2);font-weight:600">${city}</span>
+            <span style="color:var(--mint);font-family:'JetBrains Mono',monospace;font-weight:700">${cnt}</span>
+          </div>
+          <div style="height:4px;background:var(--g3);border-radius:2px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--mint);border-radius:2px;transition:width .4s"></div>
+          </div></div>`;
+      }).join('');
+    }
+
+    // Peak hours
+    const hoursEl = document.getElementById('hours-chart');
+    if (hoursEl && data.hours) {
+      const vals = Array.from({length:24}, (_,i) => data.hours[String(i)] || 0);
+      const maxH = Math.max(...vals, 1);
+      const now  = new Date().getHours();
+      hoursEl.innerHTML = vals.map((v,h) => {
+        const pct   = Math.max(3, Math.round((v/maxH)*100));
+        const color = h===now ? 'var(--flame)' : (h>=8&&h<=20 ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.1)');
+        return `<div style="flex:1;display:flex;align-items:flex-end;height:100%">
+          <div title="${h}:00 — ${v} orders" style="width:100%;border-radius:2px 2px 0 0;
+            background:${color};height:${pct}%;min-height:2px"></div></div>`;
+      }).join('');
+    }
+  } catch(e) { /* silent */ }
+}
+
+
+// ─── FAILURE SCREENSHOTS ──────────────────────────────────────────────────────
+async function loadScreenshots() {
+  const el = document.getElementById('screenshots-list');
+  if (!el) return;
+  el.innerText = 'Loading…';
+  try {
+    const r    = await fetch('/api/screenshots');
+    const data = await r.json();
+    if (!data.screenshots || !data.screenshots.length) {
+      el.innerText = 'No failure screenshots yet ✅';
+      return;
+    }
+    el.innerHTML = data.screenshots.map(f => {
+      const ts = f.replace('fail_row','').replace('.png','').replace(/_/g,' ');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;
+        padding:7px 0;border-bottom:1px solid var(--gb);gap:8px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--crimson)">📸 ${ts}</div>
+        </div>
+        <a href="/api/screenshot/${f}" target="_blank"
+          style="background:var(--flame);color:white;border:none;border-radius:7px;
+          padding:5px 12px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer">
+          View
+        </a>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerText = 'Server not reachable — open desktop app first';
+  }
+}
 
 </script>
 </body>
