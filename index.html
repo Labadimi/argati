@@ -557,7 +557,8 @@ select.field-input option{background:var(--s1);color:var(--t1)}
       </div>
       <div class="set-row">
         <span class="s-ico"><i class="ti ti-device-desktop"></i></span>
-        <div class="s-info"><div class="s-lbl">Desktop server</div><div class="s-desc">Flask + Playwright — always on</div></div>
+        <div class="s-info"><div class="s-lbl">Desktop server</div><div class="s-desc" id="desktop-url-desc">Flask + Playwright — always on</div></div>
+        <button class="s-btn sec" onclick="promptDesktopUrl()">Set IP</button>
       </div>
     </div>
   </div>
@@ -2442,38 +2443,73 @@ document.addEventListener('touchmove', function() {
   }, 2000);
 })();
 
+// Desktop server URL — set this to your PC's local IP
+// e.g. 'http://192.168.1.50:5052' — find it with ipconfig on your PC
+const DESKTOP_URL = localStorage.getItem('argati_desktop_url') || '';
+
 async function loadVideos() {
   const el = document.getElementById('videos-list');
   if (!el) return;
+
+  if (!DESKTOP_URL) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--t2);padding:8px 0">
+      Set your PC IP to load videos.<br>
+      <button onclick="promptDesktopUrl()" style="margin-top:8px;background:var(--flame);
+        color:white;border:none;border-radius:8px;padding:7px 14px;font-family:inherit;
+        font-size:12px;font-weight:700;cursor:pointer">Set PC IP</button>
+    </div>`;
+    return;
+  }
+
   el.innerText = 'Loading…';
   try {
-    const r    = await fetch('/api/videos');
+    const r    = await fetch(DESKTOP_URL + '/api/videos');
     const data = await r.json();
     if (!data.videos || !data.videos.length) {
-      el.innerText = 'No recordings yet';
+      el.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0">No recordings yet</div>';
       return;
     }
     el.innerHTML = data.videos.map(f => {
-      const label = f.replace('order_row','Row ').replace('.webm','').replace(/_/g,' ');
-      const failed = f.includes('fail');
+      const label  = f.replace('order_','Order #').replace('fail_row','Failed Row ').replace('.webm','');
+      const failed = f.startsWith('fail');
       return `<div style="display:flex;align-items:center;justify-content:space-between;
-        padding:7px 0;border-bottom:1px solid var(--gb);gap:8px">
-        <div>
-          <div style="font-size:11px;font-weight:600;color:${failed?'var(--crimson)':'var(--t1)'}">
-            ${failed?'❌':'✅'} ${label}
-          </div>
+        padding:8px 0;border-bottom:1px solid var(--gb);gap:8px">
+        <div style="font-size:12px;font-weight:600;color:${failed?'var(--crimson)':'var(--t1)'}">
+          ${failed?'❌':'✅'} ${label}
         </div>
-        <a href="/api/video/${f}" target="_blank"
+        <a href="${DESKTOP_URL}/api/video/${f}" target="_blank"
           style="background:var(--flame);color:white;border:none;border-radius:7px;
-          padding:5px 12px;font-size:11px;font-weight:700;text-decoration:none">
-          Play
+          padding:5px 12px;font-size:11px;font-weight:700;text-decoration:none;flex-shrink:0">
+          ▶ Play
         </a>
       </div>`;
     }).join('');
   } catch(e) {
-    el.innerText = 'Server not reachable — open desktop app first';
+    el.innerHTML = `<div style="font-size:12px;color:var(--t2);padding:8px 0">
+      Can't reach server at ${DESKTOP_URL}<br>
+      <button onclick="promptDesktopUrl()" style="margin-top:8px;background:var(--g3);
+        color:var(--t2);border:1px solid var(--gb);border-radius:8px;padding:6px 12px;
+        font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">Change IP</button>
+    </div>`;
   }
 }
+
+function promptDesktopUrl() {
+  const current = localStorage.getItem('argati_desktop_url') || 'http://192.168.1.';
+  const url = prompt('Enter your PC\'s local IP address:\n(e.g. http://192.168.1.50:5052)', current);
+  if (url && url.startsWith('http')) {
+    localStorage.setItem('argati_desktop_url', url.replace(/\/$/, ''));
+    location.reload();
+  }
+}
+
+
+// Show current desktop URL in settings
+(function() {
+  const url = localStorage.getItem('argati_desktop_url');
+  const el  = document.getElementById('desktop-url-desc');
+  if (el && url) el.innerText = url;
+})();
 
 </script>
 </body>
