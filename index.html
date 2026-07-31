@@ -537,10 +537,14 @@ select.field-input option{background:var(--s1);color:var(--t1)}
   </div>
 
   <div class="set-group">
-    <p class="set-lbl">Failure screenshots</p>
+    <p class="set-lbl">Order recordings &amp; screenshots</p>
     <div class="glass-card" style="padding:12px">
-      <div id="screenshots-list" style="font-size:12px;color:var(--t3);text-align:center;padding:8px 0">Tap below to load</div>
-      <button class="s-btn sec" style="width:100%;margin-top:10px" onclick="loadScreenshots()">Load screenshots</button>
+      <div id="videos-list" style="font-size:12px;color:var(--t3);text-align:center;padding:8px 0">Every order is recorded as video</div>
+      <button class="s-btn sec" style="width:100%;margin-top:10px" onclick="loadVideos()">📹 Load Videos</button>
+    </div>
+    <div class="glass-card" style="padding:12px;margin-top:8px">
+      <div id="screenshots-list" style="font-size:12px;color:var(--t3);text-align:center;padding:8px 0">Failure screenshots</div>
+      <button class="s-btn sec" style="width:100%;margin-top:10px" onclick="loadScreenshots()">📸 Load Screenshots</button>
     </div>
   </div>
 
@@ -2437,6 +2441,40 @@ document.addEventListener('touchmove', function() {
     }
   }, 2000);
 })();
+
+async function loadVideos() {
+  const el = document.getElementById('videos-list');
+  if (!el) return;
+  el.innerText = 'Loading…';
+  try {
+    const r    = await fetch('/api/videos');
+    const data = await r.json();
+    if (!data.videos || !data.videos.length) {
+      el.innerText = 'No recordings yet';
+      return;
+    }
+    el.innerHTML = data.videos.map(f => {
+      const label = f.replace('order_row','Row ').replace('.webm','').replace(/_/g,' ');
+      const failed = f.includes('fail');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;
+        padding:7px 0;border-bottom:1px solid var(--gb);gap:8px">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:${failed?'var(--crimson)':'var(--t1)'}">
+            ${failed?'❌':'✅'} ${label}
+          </div>
+        </div>
+        <a href="/api/video/${f}" target="_blank"
+          style="background:var(--flame);color:white;border:none;border-radius:7px;
+          padding:5px 12px;font-size:11px;font-weight:700;text-decoration:none">
+          Play
+        </a>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerText = 'Server not reachable — open desktop app first';
+  }
+}
+
 </script>
 </body>
 </html>
