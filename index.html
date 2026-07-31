@@ -2445,7 +2445,7 @@ document.addEventListener('touchmove', function() {
 
 // Desktop server URL — set this to your PC's local IP
 // e.g. 'http://192.168.1.50:5052' — find it with ipconfig on your PC
-const DESKTOP_URL = localStorage.getItem('argati_desktop_url') || '';
+const DESKTOP_URL = localStorage.getItem('argati_desktop_url') || 'https://10.10.10.17:5052';
 
 async function loadVideos() {
   const el = document.getElementById('videos-list');
@@ -2495,7 +2495,7 @@ async function loadVideos() {
 }
 
 function promptDesktopUrl() {
-  const current = localStorage.getItem('argati_desktop_url') || 'http://192.168.1.';
+  const current = localStorage.getItem('argati_desktop_url') || 'https://10.10.10.17:5052';
   const url = prompt('Enter your PC\'s local IP address:\n(e.g. http://192.168.1.50:5052)', current);
   if (url && url.startsWith('http')) {
     localStorage.setItem('argati_desktop_url', url.replace(/\/$/, ''));
