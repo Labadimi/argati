@@ -2234,71 +2234,83 @@ setInterval(checkServerStatus, 30000);
 
 // ─── RICH ANALYTICS ───────────────────────────────────────────────────────────
 async function loadAnalytics() {
+  const apiBase = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL) ? DESKTOP_URL : '';
   try {
-    const apiBase = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL)
-                    ? DESKTOP_URL : '';
     const r    = await fetch(apiBase + '/api/analytics');
     const data = await r.json();
     if (!data || data.error) return;
 
-    // KPIs
+    // ── KPIs ──────────────────────────────────────────────────────────────
     const setEl = (id, val) => { const e=document.getElementById(id); if(e) e.innerText=val; };
     setEl('an-total',   data.placed  || 0);
     setEl('an-failed',  data.failed  || 0);
-    setEl('an-revenue', '€' + Math.round(data.revenue || 0));
+    setEl('an-revenue', '€' + ((data.revenue||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})));
 
-    // 30-day trend
-    const trend = document.getElementById('trend-chart');
-    if (trend && data.trend) {
-      const max = Math.max(...data.trend.map(d => d.count), 1);
+    // ── 30-day trend ──────────────────────────────────────────────────────
+    const trendEl = document.getElementById('trend-chart');
+    if (trendEl && data.trend && data.trend.length) {
+      const max      = Math.max(...data.trend.map(d=>d.count), 1);
       const todayStr = new Date().toISOString().slice(0,10);
-      trend.innerHTML = data.trend.map(d => {
-        const pct   = Math.max(4, Math.round((d.count/max)*100));
-        const today = d.date === todayStr;
-        return `<div style="flex:1;display:flex;align-items:flex-end;height:100%">
-          <div title="${d.date}: ${d.count}" style="width:100%;border-radius:3px 3px 0 0;
-            background:${today?'var(--flame)':'var(--t3)'};height:${pct}%;min-height:3px;
-            opacity:${today?1:0.55}"></div></div>`;
+      trendEl.innerHTML = data.trend.map(d => {
+        const pct   = Math.max(3, Math.round((d.count/max)*100));
+        const isToday = d.date === todayStr;
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px">
+          <div style="font-size:9px;color:${d.count>0?(isToday?'var(--flame)':'var(--t2)'):'var(--t4)'};
+            font-family:'DM Mono',monospace;font-weight:700">${d.count>0?d.count:''}</div>
+          <div title="${d.date}: ${d.count} orders" style="width:100%;border-radius:4px 4px 0 0;
+            background:${isToday?'var(--flame)':'rgba(255,77,13,.3)'};
+            height:${pct}%;min-height:3px;transition:height .3s"></div>
+        </div>`;
       }).join('');
     }
 
-    // Top products bar chart
+    // ── Top products ──────────────────────────────────────────────────────
     const prodsEl = document.getElementById('an-products');
     if (prodsEl && data.top_products && data.top_products.length) {
       const maxP = data.top_products[0][1] || 1;
-      prodsEl.innerHTML = data.top_products.slice(0,5).map(([name,cnt]) => {
+      prodsEl.innerHTML = data.top_products.slice(0,8).map(([name,cnt]) => {
         const pct   = Math.round((cnt/maxP)*100);
-        const short = name.split('—')[0].trim().replace(/Pastrues |Additiv |Set /g,'').trim();
-        return `<div style="margin-bottom:9px">
-          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
-            <span style="color:var(--t2);font-weight:600;overflow:hidden;text-overflow:ellipsis;
-              white-space:nowrap;max-width:75%">${short}</span>
-            <span style="color:var(--flame);font-family:'JetBrains Mono',monospace;font-weight:700">${cnt}</span>
+        const short = name.split('—')[0].trim()
+          .replace('Pastrues Injektimit Dizel ','')
+          .replace('Pastrues Filtrave DPF ','DPF ')
+          .replace('Additiv Vaj Motorik ','')
+          .replace('Super Diesel Additiv ','')
+          .replace('Set ','');
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+            <span style="color:var(--t1);font-weight:600;overflow:hidden;text-overflow:ellipsis;
+              white-space:nowrap;max-width:72%">${short}</span>
+            <span style="color:var(--flame);font-family:'DM Mono',monospace;
+              font-weight:700;flex-shrink:0">${cnt}</span>
           </div>
-          <div style="height:4px;background:var(--g3);border-radius:2px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:var(--flame);border-radius:2px;transition:width .4s"></div>
-          </div></div>`;
+          <div style="height:5px;background:var(--g3);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--flame);
+              border-radius:3px;transition:width .4s ease"></div>
+          </div>
+        </div>`;
       }).join('');
     }
 
-    // Top cities
+    // ── Top cities ────────────────────────────────────────────────────────
     const citiesEl = document.getElementById('an-cities');
     if (citiesEl && data.top_cities && data.top_cities.length) {
       const maxC = data.top_cities[0][1] || 1;
-      citiesEl.innerHTML = data.top_cities.slice(0,5).map(([city,cnt]) => {
+      citiesEl.innerHTML = data.top_cities.slice(0,8).map(([city,cnt]) => {
         const pct = Math.round((cnt/maxC)*100);
-        return `<div style="margin-bottom:9px">
-          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
-            <span style="color:var(--t2);font-weight:600">${city}</span>
-            <span style="color:var(--mint);font-family:'JetBrains Mono',monospace;font-weight:700">${cnt}</span>
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+            <span style="color:var(--t1);font-weight:600">${city}</span>
+            <span style="color:var(--mint);font-family:'DM Mono',monospace;font-weight:700">${cnt}</span>
           </div>
-          <div style="height:4px;background:var(--g3);border-radius:2px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:var(--mint);border-radius:2px;transition:width .4s"></div>
-          </div></div>`;
+          <div style="height:5px;background:var(--g3);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:var(--mint);
+              border-radius:3px;transition:width .4s ease"></div>
+          </div>
+        </div>`;
       }).join('');
     }
 
-    // Peak hours
+    // ── Peak hours ────────────────────────────────────────────────────────
     const hoursEl = document.getElementById('hours-chart');
     if (hoursEl && data.hours) {
       const vals = Array.from({length:24}, (_,i) => data.hours[String(i)] || 0);
@@ -2306,12 +2318,24 @@ async function loadAnalytics() {
       const now  = new Date().getHours();
       hoursEl.innerHTML = vals.map((v,h) => {
         const pct   = Math.max(3, Math.round((v/maxH)*100));
-        const color = h===now ? 'var(--flame)' : (h>=8&&h<=20 ? 'rgba(255,255,255,.25)' : 'rgba(255,255,255,.1)');
+        const isNow = h === now;
         return `<div style="flex:1;display:flex;align-items:flex-end;height:100%">
           <div title="${h}:00 — ${v} orders" style="width:100%;border-radius:2px 2px 0 0;
-            background:${color};height:${pct}%;min-height:2px"></div></div>`;
+            background:${isNow?'var(--flame)':(h>=8&&h<=20?'rgba(255,77,13,.35)':'rgba(255,77,13,.12)')};
+            height:${pct}%;min-height:2px"></div>
+        </div>`;
       }).join('');
     }
+
+    // ── Revenue breakdown in KPI ───────────────────────────────────────────
+    const avgEl = document.getElementById('avg-time-val');
+    const avgSub = document.getElementById('avg-time-sub');
+    if (data.placed > 0 && data.revenue > 0) {
+      const avgOrder = (data.revenue / data.placed).toFixed(2);
+      if (avgEl)  avgEl.innerText  = '€' + avgOrder;
+      if (avgSub) avgSub.innerText = 'avg order value';
+    }
+
   } catch(e) { /* silent */ }
 }
 
