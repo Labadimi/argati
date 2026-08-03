@@ -779,7 +779,12 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', app
 function switchTab(name) {
   document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.page === name));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
-  if (name === 'analytics') { renderChart(weeklyData); updateAvgTime(); renderHistory(); loadAnalytics(); }
+  if (name === 'analytics') {
+    if (typeof weeklyData !== 'undefined' && weeklyData) renderChart(weeklyData);
+    updateAvgTime();
+    renderHistory();
+    loadAnalytics();
+  }
 }
 
 // ─── RELOAD ───────────────────────────────────────────────────────────────────
@@ -2230,7 +2235,9 @@ setInterval(checkServerStatus, 30000);
 // ─── RICH ANALYTICS ───────────────────────────────────────────────────────────
 async function loadAnalytics() {
   try {
-    const r    = await fetch('/api/analytics');
+    const apiBase = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL)
+                    ? DESKTOP_URL : '';
+    const r    = await fetch(apiBase + '/api/analytics');
     const data = await r.json();
     if (!data || data.error) return;
 
