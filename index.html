@@ -2588,11 +2588,12 @@ async function loadProductManager() {
   if (pm.style.display === 'block') { pm.style.display = 'none'; return; }
   pm.style.display = 'block';
   try {
-    const r = await fetch('/api/products');
+    const apiBase = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL) ? DESKTOP_URL : '';
+    const r = await fetch(apiBase + '/api/products');
     prodData = await r.json();
     renderProdList();
   } catch(e) {
-    showProdMsg('Cannot reach server — open desktop app first', 'var(--crimson)');
+    showProdMsg('Cannot reach server — make sure desktop app is running and IP is set in Settings', 'var(--crimson)');
   }
 }
 
@@ -2655,7 +2656,8 @@ function removeProduct(type, idx) {
 
 async function saveProdData() {
   try {
-    const r = await fetch('/api/products', {
+    const apiBase2 = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL) ? DESKTOP_URL : '';
+    const r = await fetch(apiBase2 + '/api/products', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify(prodData)
