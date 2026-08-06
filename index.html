@@ -549,6 +549,41 @@ select.field-input option{background:var(--s1);color:var(--t1)}
   </div>
 
   <div class="set-group">
+    <p class="set-lbl">Products</p>
+    <div class="glass-card" style="padding:0;overflow:hidden">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:600;color:var(--t1)">Manage Products</span>
+        <button class="s-btn sec" onclick="loadProductManager()">Open</button>
+      </div>
+      <div id="product-manager" style="display:none;padding:14px">
+        <!-- Tabs -->
+        <div style="display:flex;gap:6px;margin-bottom:14px">
+          <button onclick="showProdTab('singles')" id="tab-singles"
+            style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
+            font-size:12px;font-weight:700;cursor:pointer;background:var(--flame);color:white">Singles</button>
+          <button onclick="showProdTab('bundles')" id="tab-bundles"
+            style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
+            font-size:12px;font-weight:700;cursor:pointer;background:var(--g3);color:var(--t2)">Bundles</button>
+        </div>
+        <!-- Product list -->
+        <div id="prod-list" style="margin-bottom:12px"></div>
+        <!-- Add form -->
+        <div style="background:var(--g2);border:1px solid var(--gb);border-radius:12px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Add Product</div>
+          <input id="new-prod-code" class="field-input" style="margin-bottom:8px" placeholder="Code (e.g. 211 or 207+104)" autocomplete="off">
+          <input id="new-prod-name" class="field-input" style="margin-bottom:8px" placeholder="Name (e.g. Additiv 211)" autocomplete="off">
+          <input id="new-prod-url"  class="field-input" style="margin-bottom:10px" placeholder="https://gjirafamall.com/..." autocomplete="off">
+          <button onclick="addProduct()" style="width:100%;padding:10px;background:var(--mint);color:#002820;
+            border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
+            + Add Product
+          </button>
+        </div>
+        <div id="prod-msg" style="font-size:12px;text-align:center;padding:8px 0;display:none"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="set-group">
     <p class="set-lbl">About</p>
     <div class="set-list">
       <div class="set-row">
@@ -2541,6 +2576,107 @@ function promptDesktopUrl() {
   const el  = document.getElementById('desktop-url-desc');
   if (el && url) el.innerText = url;
 })();
+
+
+// ─── PRODUCT MANAGER ─────────────────────────────────────────────────────────
+let prodData   = {singles:[], bundles:[]};
+let prodTabNow = 'singles';
+
+async function loadProductManager() {
+  const pm = document.getElementById('product-manager');
+  if (!pm) return;
+  if (pm.style.display === 'block') { pm.style.display = 'none'; return; }
+  pm.style.display = 'block';
+  try {
+    const r = await fetch('/api/products');
+    prodData = await r.json();
+    renderProdList();
+  } catch(e) {
+    showProdMsg('Cannot reach server — open desktop app first', 'var(--crimson)');
+  }
+}
+
+function showProdTab(tab) {
+  prodTabNow = tab;
+  document.getElementById('tab-singles').style.background = tab==='singles' ? 'var(--flame)' : 'var(--g3)';
+  document.getElementById('tab-singles').style.color      = tab==='singles' ? 'white'        : 'var(--t2)';
+  document.getElementById('tab-bundles').style.background = tab==='bundles' ? 'var(--flame)' : 'var(--g3)';
+  document.getElementById('tab-bundles').style.color      = tab==='bundles' ? 'white'        : 'var(--t2)';
+  renderProdList();
+}
+
+function renderProdList() {
+  const list  = document.getElementById('prod-list');
+  const items = prodData[prodTabNow] || [];
+  if (!items.length) { list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0;text-align:center">No products yet</div>'; return; }
+  list.innerHTML = items.map((p,i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gb)">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--t1)">${p.code} — ${p.name}</div>
+        <div style="font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url}</div>
+      </div>
+      <button onclick="removeProduct('${prodTabNow}',${i})"
+        style="background:var(--cdim);color:var(--crimson);border:1px solid rgba(255,51,88,.2);
+        border-radius:7px;padding:4px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">
+        Remove
+      </button>
+    </div>`).join('');
+}
+
+async function addProduct() {
+  const code = document.getElementById('new-prod-code').value.trim();
+  const name = document.getElementById('new-prod-name').value.trim();
+  const url  = document.getElementById('new-prod-url').value.trim();
+  if (!code || !name || !url) { showProdMsg('Fill all three fields', 'var(--amber)'); return; }
+  if (!url.startsWith('https://gjirafamall.com/')) { showProdMsg('URL must start with https://gjirafamall.com/', 'var(--amber)'); return; }
+  if (prodData.singles.find(p=>p.code===code) || prodData.bundles.find(p=>p.code===code)) {
+    showProdMsg('Code already exists', 'var(--amber)'); return;
+  }
+  const isBundle = code.includes('+');
+  prodData[isBundle ? 'bundles' : 'singles'].push({code, name, url});
+  const ok = await saveProdData();
+  if (ok) {
+    document.getElementById('new-prod-code').value = '';
+    document.getElementById('new-prod-name').value = '';
+    document.getElementById('new-prod-url').value  = '';
+    showProdTab(isBundle ? 'bundles' : 'singles');
+    showProdMsg('✅ Product added! Restart server to apply.', 'var(--mint)');
+  }
+}
+
+function removeProduct(type, idx) {
+  const p = prodData[type][idx];
+  if (!confirm('Remove ' + p.code + ' — ' + p.name + '?')) return;
+  prodData[type].splice(idx, 1);
+  saveProdData().then(ok => {
+    if (ok) { renderProdList(); showProdMsg('✅ Removed. Restart server to apply.', 'var(--mint)'); }
+  });
+}
+
+async function saveProdData() {
+  try {
+    const r = await fetch('/api/products', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(prodData)
+    });
+    const d = await r.json();
+    if (d.error) { showProdMsg('Error: ' + d.error, 'var(--crimson)'); return false; }
+    return true;
+  } catch(e) {
+    showProdMsg('Cannot reach server', 'var(--crimson)');
+    return false;
+  }
+}
+
+function showProdMsg(msg, color) {
+  const el = document.getElementById('prod-msg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color   = color || 'var(--t2)';
+  el.innerText     = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
 
 </script>
 </body>
