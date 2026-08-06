@@ -492,6 +492,7 @@ select.field-input option{background:var(--s1);color:var(--t1)}
 
 <!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
+
   <div class="set-group">
     <p class="set-lbl">Automation</p>
     <div class="set-list">
@@ -499,7 +500,7 @@ select.field-input option{background:var(--s1);color:var(--t1)}
         <span class="s-ico"><i class="ti ti-bolt"></i></span>
         <div class="s-info">
           <div class="s-lbl">Full Auto Mode</div>
-          <div class="s-desc" id="auto-mode-desc">Clean orders placed instantly</div>
+          <div class="s-desc" id="auto-mode-desc">Clean orders placed automatically</div>
         </div>
         <label class="tsw"><input type="checkbox" id="auto-mode-toggle"><span class="ttrack"></span></label>
       </div>
@@ -521,7 +522,7 @@ select.field-input option{background:var(--s1);color:var(--t1)}
         <span class="s-ico"><i class="ti ti-bell"></i></span>
         <div class="s-info">
           <div class="s-lbl">Push notifications</div>
-          <div class="s-desc" id="notif-status-text">Not enabled</div>
+          <div class="s-desc" id="notif-status-text">Not enabled yet</div>
         </div>
         <button class="s-btn" id="notif-toggle-btn" onclick="subscribeNotifications()">Enable</button>
       </div>
@@ -550,36 +551,37 @@ select.field-input option{background:var(--s1);color:var(--t1)}
 
   <div class="set-group">
     <p class="set-lbl">Products</p>
-    <div class="glass-card" style="padding:0;overflow:hidden">
-      <div style="padding:12px 14px;border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:13px;font-weight:600;color:var(--t1)">Manage Products</span>
+    <div class="set-list">
+      <div class="set-row">
+        <span class="s-ico"><i class="ti ti-package"></i></span>
+        <div class="s-info">
+          <div class="s-lbl">Manage Products</div>
+          <div class="s-desc">Add or remove products from the system</div>
+        </div>
         <button class="s-btn sec" onclick="loadProductManager()">Open</button>
       </div>
-      <div id="product-manager" style="display:none;padding:14px">
-        <!-- Tabs -->
-        <div style="display:flex;gap:6px;margin-bottom:14px">
-          <button onclick="showProdTab('singles')" id="tab-singles"
-            style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
-            font-size:12px;font-weight:700;cursor:pointer;background:var(--flame);color:white">Singles</button>
-          <button onclick="showProdTab('bundles')" id="tab-bundles"
-            style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
-            font-size:12px;font-weight:700;cursor:pointer;background:var(--g3);color:var(--t2)">Bundles</button>
-        </div>
-        <!-- Product list -->
-        <div id="prod-list" style="margin-bottom:12px"></div>
-        <!-- Add form -->
-        <div style="background:var(--g2);border:1px solid var(--gb);border-radius:12px;padding:12px">
-          <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Add Product</div>
-          <input id="new-prod-code" class="field-input" style="margin-bottom:8px" placeholder="Code (e.g. 211 or 207+104)" autocomplete="off">
-          <input id="new-prod-name" class="field-input" style="margin-bottom:8px" placeholder="Name (e.g. Additiv 211)" autocomplete="off">
-          <input id="new-prod-url"  class="field-input" style="margin-bottom:10px" placeholder="https://gjirafamall.com/..." autocomplete="off">
-          <button onclick="addProduct()" style="width:100%;padding:10px;background:var(--mint);color:#002820;
-            border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
-            + Add Product
-          </button>
-        </div>
-        <div id="prod-msg" style="font-size:12px;text-align:center;padding:8px 0;display:none"></div>
+    </div>
+    <div class="glass-card" style="padding:14px;margin-top:8px;display:none" id="product-manager">
+      <div style="display:flex;gap:6px;margin-bottom:14px">
+        <button onclick="showProdTab('singles')" id="tab-singles"
+          style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
+          font-size:12px;font-weight:700;cursor:pointer;background:var(--flame);color:white">Singles</button>
+        <button onclick="showProdTab('bundles')" id="tab-bundles"
+          style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
+          font-size:12px;font-weight:700;cursor:pointer;background:var(--g3);color:var(--t2)">Bundles</button>
       </div>
+      <div id="prod-list" style="margin-bottom:12px"></div>
+      <div style="background:var(--g2);border:1px solid var(--gb);border-radius:12px;padding:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Add Product</div>
+        <input id="new-prod-code" class="field-input" style="margin-bottom:8px" placeholder="Code (e.g. 211 or 207+104)" autocomplete="off">
+        <input id="new-prod-name" class="field-input" style="margin-bottom:8px" placeholder="Name (e.g. Additiv 211)" autocomplete="off">
+        <input id="new-prod-url"  class="field-input" style="margin-bottom:10px" placeholder="https://gjirafamall.com/..." autocomplete="off">
+        <button onclick="addProduct()" style="width:100%;padding:10px;background:var(--mint);color:#002820;
+          border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
+          + Add Product
+        </button>
+      </div>
+      <div id="prod-msg" style="font-size:12px;text-align:center;padding:8px 0;display:none"></div>
     </div>
   </div>
 
@@ -588,15 +590,22 @@ select.field-input option{background:var(--s1);color:var(--t1)}
     <div class="set-list">
       <div class="set-row">
         <span class="s-ico"><i class="ti ti-robot"></i></span>
-        <div class="s-info"><div class="s-lbl">Argati v7.0</div><div class="s-desc">Parts Center — Order Automation</div></div>
+        <div class="s-info">
+          <div class="s-lbl">Argati v7.0</div>
+          <div class="s-desc">Parts Center — Order Automation</div>
+        </div>
       </div>
       <div class="set-row">
         <span class="s-ico"><i class="ti ti-device-desktop"></i></span>
-        <div class="s-info"><div class="s-lbl">Desktop server</div><div class="s-desc" id="desktop-url-desc">Flask + Playwright — always on</div></div>
+        <div class="s-info">
+          <div class="s-lbl">Desktop server</div>
+          <div class="s-desc" id="desktop-url-desc">Flask + Playwright — always on</div>
+        </div>
         <button class="s-btn sec" onclick="promptDesktopUrl()">Set IP</button>
       </div>
     </div>
   </div>
+
   <div class="ver-tag">ARGATI · v7.0 · PARTS CENTER</div>
 </div>
 
