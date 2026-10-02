@@ -1,5 +1,5 @@
 // Argati PWA service worker — v3
-const CACHE = 'argati-v3.0.0';
+const CACHE = 'argati-v3.0.1';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icon.png'];
 const NEEDS_YOU = ['review', 'unverified', 'manual', 'blocked'];
 
