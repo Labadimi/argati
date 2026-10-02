@@ -37,14 +37,17 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{height:100%;-webkit-text-size-adjust:100%}
-body{min-height:100%;background:var(--paper);color:var(--ink);font:400 16px/1.45 var(--font);
+html,body{overflow:hidden;overscroll-behavior:none}
+body{height:100%;display:flex;flex-direction:column;background:var(--paper);color:var(--ink);font:400 16px/1.45 var(--font);
   -webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) 0 env(safe-area-inset-left,0)}
 button,input{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
 a{color:inherit}
 :focus-visible{outline:2px solid var(--flame);outline-offset:2px;border-radius:6px}
 .num{font-variant-numeric:tabular-nums}
-.wrap{max-width:640px;margin:0 auto;padding:0 18px calc(96px + env(safe-area-inset-bottom,0))}
+#app{flex:1;min-height:0;display:flex;flex-direction:column}
+#view{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+.wrap{max-width:640px;margin:0 auto;padding:6px 18px 28px}
 
 /* ── Top bar ─────────────────────────────────────────── */
 .top{display:flex;align-items:center;gap:12px;padding:14px 0 6px}
@@ -170,8 +173,7 @@ a{color:inherit}
 .switch input:focus-visible+.tr{outline:2px solid var(--flame);outline-offset:2px}
 
 /* ── Tab bar ─────────────────────────────────────────── */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);
-  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--hair);
+.tabs{flex:0 0 auto;position:relative;z-index:20;background:var(--paper);border-top:1px solid var(--hair);
   padding:6px 8px calc(6px + env(safe-area-inset-bottom,0))}
 .tabs nav{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
 .tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:12px;font-weight:600;color:var(--steel);position:relative}
@@ -206,11 +208,11 @@ a{color:inherit}
 .warnline{font-size:14px;color:var(--stop);margin-top:-2px}
 
 /* ── Toast + setup ───────────────────────────────────── */
-.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0));transform:translate(-50%,20px);z-index:60;
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0));transform:translate(-50%,20px);z-index:60;
   background:var(--ink);color:var(--paper);padding:11px 16px;border-radius:12px;font-size:15px;font-weight:500;
   opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 36px)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-.setup{min-height:100vh;display:flex;flex-direction:column;justify-content:center;max-width:440px;margin:0 auto;padding:24px 22px}
+.setup{min-height:100%;display:flex;flex-direction:column;justify-content:center;max-width:440px;margin:0 auto;padding:24px 22px}
 .setup h1{font:700 40px/1.02 var(--display)}
 .setup p{color:var(--steel);margin:10px 0 22px;font-size:16px}
 .setup .err{color:var(--stop);font-size:15px;margin-top:10px;min-height:22px}
@@ -222,7 +224,7 @@ a{color:inherit}
 </style>
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><main id="view"><div id="content"></div></main><div class="tabs" id="tabs" hidden></div></div>
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -230,7 +232,7 @@ a{color:inherit}
 <script>
 'use strict';
 // ── Config ─────────────────────────────────────────────────────────────────
-const APP_VERSION = '3.0.0';
+const APP_VERSION = '3.0.1';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 const VAPID_PUBLIC = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
 const QUIET_MS = 120000, POLL_MS = 10000;
@@ -397,7 +399,8 @@ function render() {
 
   const runnerTxt = !st ? 'Connecting' : online ? (st.state && st.state.mode === 'shadow' ? 'Test mode' : 'Running')
                   : runner && runner.seenAgoSec != null ? 'Offline' : 'No runner';
-  $('#app').innerHTML = `
+  $('#tabs').hidden = false;
+  $('#content').innerHTML = `
     <div class="wrap">
       <header class="top">
         <div class="brand">Argati<small>Parts Center orders</small></div>
@@ -409,13 +412,13 @@ function render() {
         ${S.lastOk ? 'Showing data from ' + ago(Math.round((Date.now() - S.lastOk) / 1000)) + '.' : ''}</div>
         <button data-act="refresh">Try again</button></div>` : ''}
       ${body}
-    </div>
-    <div class="tabs"><nav aria-label="Sections">
+    </div>`;
+  $('#tabs').innerHTML = `<nav aria-label="Sections">
       ${tabBtn('queue', 'ti-list-check', 'Queue', needs.length)}
       ${tabBtn('placed', 'ti-receipt', 'Placed')}
       ${tabBtn('insights', 'ti-chart-bar', 'Insights')}
       ${tabBtn('settings', 'ti-adjustments-horizontal', 'Settings')}
-    </nav></div>`;
+    </nav>`;
   tickCountdowns();
   if (S.open != null) renderSheet();
 }
@@ -693,7 +696,8 @@ function tellWorker() {
 
 // ── Setup screen ───────────────────────────────────────────────────────────
 function renderSetup() {
-  $('#app').innerHTML = `
+  $('#tabs').hidden = true;
+  $('#content').innerHTML = `
     <main class="setup">
       <h1>Connect Argati</h1>
       <p>Paste the access key from the Apps Script setup log. You only do this once per device.</p>
@@ -718,7 +722,7 @@ async function connect() {
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const act = el.dataset.act, row = Number(el.dataset.row);
-  if (act === 'tab') { S.tab = el.dataset.tab; render(); window.scrollTo(0, 0); if (S.tab !== 'queue' && Date.now() - S.recentAt > 30000) refreshRecent().then(render); }
+  if (act === 'tab') { S.tab = el.dataset.tab; render(); $('#view').scrollTop = 0; if (S.tab !== 'queue' && Date.now() - S.recentAt > 30000) refreshRecent().then(render); }
   else if (act === 'refresh') refresh(true);
   else if (act === 'open') { e.preventDefault(); openSheet(row); }
   else if (act === 'approve') { e.stopPropagation(); approve(row, el.dataset.confirm === '1'); }
