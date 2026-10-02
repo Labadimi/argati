@@ -1,2694 +1,807 @@
 <!DOCTYPE html>
-<html lang="sq">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Argati">
+<meta name="theme-color" content="#EEF1EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1517" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
 <title>Argati</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
-:root {
-  --bg:    #06060a; --s1: #0d0d14; --s2: #111119; --s3: #18181f; --s4: #22222c;
-  --g1:rgba(255,255,255,.03); --g2:rgba(255,255,255,.055);
-  --g3:rgba(255,255,255,.085); --gb:rgba(255,255,255,.08); --gbb:rgba(255,255,255,.13);
-  --flame:#ff4d0d; --flame2:#ff7a3d; --fdim:rgba(255,77,13,.12); --fglow:rgba(255,77,13,.4); --fglow2:rgba(255,77,13,.15);
-  --mint:#00dba0; --mdim:rgba(0,219,160,.1); --mglow:rgba(0,219,160,.3);
-  --amber:#ffb830; --adim:rgba(255,184,48,.1);
-  --crimson:#ff3358; --cdim:rgba(255,51,88,.1);
-  --blue:#4d9fff;
-  --t1:rgba(255,255,255,.96); --t2:rgba(255,255,255,.52); --t3:rgba(255,255,255,.25); --t4:rgba(255,255,255,.1);
-  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
-  --r1:10px; --r2:14px; --r3:20px; --r4:26px; --r5:32px;
+:root{
+  --paper:#EEF1EF; --surface:#FFFFFF; --sunk:#E3E8E6; --ink:#1B2226; --steel:#5C6A70; --hair:#D3DAD8;
+  --flame:#FF4D0D; --flame-ink:#C53A07; --flame-wash:#FFE9E0;
+  --ok:#16794C; --ok-wash:#E1F2E9; --wait:#996100; --wait-wash:#FBEFD9;
+  --manual:#2F55A4; --manual-wash:#E4EBF8; --stop:#B3261E; --stop-wash:#F8E3E1;
+  --font:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --display:"Barlow Semi Condensed","Barlow",system-ui,-apple-system,sans-serif;
+  --r-panel:18px; --r-ctl:11px;
+  color-scheme: light dark;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--t1);
-  min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  padding-bottom:calc(96px + var(--sab))}
-body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:radial-gradient(ellipse 55% 35% at 8% -5%,rgba(255,77,13,.1) 0%,transparent 65%),
-             radial-gradient(ellipse 40% 25% at 92% 105%,rgba(0,219,160,.05) 0%,transparent 60%)}
-::-webkit-scrollbar{width:2px}
-::-webkit-scrollbar-thumb{background:var(--gbb);border-radius:1px}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0F1517; --surface:#172024; --sunk:#1F2A2F; --ink:#E6ECEA; --steel:#93A2A8; --hair:#28343A;
+    --flame:#FF6A33; --flame-ink:#FF8A5C; --flame-wash:#3A1D12;
+    --ok:#4CC28A; --ok-wash:#123124; --wait:#E3A23B; --wait-wash:#33260F;
+    --manual:#7FA2EC; --manual-wash:#18243F; --stop:#F2766D; --stop-wash:#3A1715;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;-webkit-text-size-adjust:100%}
+body{min-height:100%;background:var(--paper);color:var(--ink);font:400 16px/1.45 var(--font);
+  -webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) 0 env(safe-area-inset-left,0)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--flame);outline-offset:2px;border-radius:6px}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:640px;margin:0 auto;padding:0 18px calc(96px + env(safe-area-inset-bottom,0))}
 
-/* HEADER */
-.header{position:sticky;top:0;z-index:100;
-  padding:calc(var(--sat) + 12px) 16px 12px;
-  display:flex;align-items:center;gap:10px;
-  background:rgba(6,6,10,.85);
-  backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
-  border-bottom:1px solid var(--gb)}
-.app-mark{width:38px;height:38px;flex-shrink:0;border-radius:12px;
-  background:var(--flame);display:flex;align-items:center;justify-content:center;font-size:18px}
-.header-info{flex:1;min-width:0}
-.header-name{font-size:18px;font-weight:800;letter-spacing:-.03em;color:var(--t1)}
-.header-sub{font-size:11px;color:var(--t3);margin-top:1px;display:flex;align-items:center;gap:5px}
-#server-dot{width:6px;height:6px;border-radius:50%;background:var(--t4);flex-shrink:0;transition:background .4s,box-shadow .4s}
-.hbtns{display:flex;gap:6px}
-.hbtn{width:36px;height:36px;border-radius:11px;background:var(--g2);border:1px solid var(--gb);
-  color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s,background .15s}
-.hbtn i{font-size:17px}
-.hbtn:active{transform:scale(.9);background:var(--g3)}
-#reload-btn.spinning{animation:spin .5s ease}
-
-/* SEARCH */
-#search-wrap{display:none;background:rgba(6,6,10,.85);
-  backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);
-  padding:0 16px 12px;border-bottom:1px solid var(--gb)}
-.search-box{position:relative}
-.search-input{width:100%;padding:11px 34px 11px 38px;
-  background:var(--g2);border:1px solid var(--gb);border-radius:var(--r2);
-  color:var(--t1);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;outline:none;transition:border-color .15s}
-.search-input:focus{border-color:rgba(255,77,13,.5)}
-.search-input::placeholder{color:var(--t3)}
-.search-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;pointer-events:none}
-#search-clear{display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);
-  background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px 6px}
-input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none}
-
-/* PAGES */
-.page{display:none;padding:14px 16px 0}
-.page.active{display:block;animation:pageIn .25s ease}
-@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-
-/* STATS PILLS — horizontal scrollable row */
-.stats-scroll{display:flex;gap:8px;padding:0 16px;margin-bottom:14px;
-  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.stats-scroll::-webkit-scrollbar{display:none}
-.stat-pill{flex-shrink:0;display:flex;align-items:center;gap:10px;
-  padding:10px 14px;border-radius:16px;
-  background:var(--g2);border:1px solid var(--gb);cursor:default;
-  transition:border-color .2s,background .2s}
-.stat-pill.active{background:var(--fdim);border-color:rgba(255,77,13,.3)}
-.stat-pill-num{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1}
-.stat-pill-lbl{font-size:9px;font-weight:700;color:var(--t3);
-  text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
-
-/* SECTION HEADER */
-.sec-row{display:flex;align-items:center;justify-content:space-between;
-  padding:0 0 10px;margin-top:2px}
-.sec-title{font-size:10px;font-weight:700;color:var(--t3);
-  text-transform:uppercase;letter-spacing:.14em}
-.sec-badge{font-size:10px;font-weight:700;color:var(--flame);
-  background:var(--fdim);padding:2px 9px;border-radius:20px}
-
-/* BANNERS */
-#auto-mode-bar{display:none;margin-bottom:12px;padding:10px 14px;
-  text-align:center;font-size:12px;font-weight:700;color:var(--flame);
-  border-radius:var(--r2);background:var(--fdim);border:1px solid rgba(255,77,13,.22)}
-#notif-bar{display:none;margin-bottom:12px;padding:10px 14px;
-  align-items:center;justify-content:space-between;gap:10px;
-  border-radius:var(--r2);border:1px solid rgba(255,184,48,.18);background:var(--adim)}
-#notif-bar span{font-size:12px;color:var(--t2);font-weight:500}
-#notif-bar button{background:var(--flame);color:white;border:none;border-radius:9px;
-  padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
-#new-order-banner{display:none;margin-bottom:12px;background:linear-gradient(135deg,var(--mint),#00b884);
-  color:#002820;font-size:13px;font-weight:700;text-align:center;padding:11px 16px;
-  border-radius:var(--r2);animation:bangIn .35s cubic-bezier(.34,1.56,.64,1)}
-@keyframes bangIn{from{opacity:0;transform:translateY(-8px) scale(.96)}to{opacity:1;transform:none}}
-
-/* ORDER CARDS v7 */
-.card-swipe-wrap{position:relative;margin-bottom:9px;border-radius:var(--r3);overflow:hidden;
-  animation:cardIn .32s cubic-bezier(.25,.8,.25,1) both}
-@keyframes cardIn{from{opacity:0;transform:translateX(-8px) scale(.985)}to{opacity:1;transform:none}}
-.card-actions{position:absolute;right:0;top:0;bottom:0;display:flex;transform:translateX(100%);transition:transform .28s cubic-bezier(.25,.8,.25,1)}
-.card-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  width:70px;border:none;cursor:pointer;font-family:inherit;font-size:9px;font-weight:700;
-  color:white;letter-spacing:.04em;text-transform:uppercase;transition:opacity .15s}
-.card-action:active{opacity:.7}
-.card-action i{font-size:20px}
-.ca-place{background:var(--mint);color:#002820}
-.ca-edit{background:var(--blue)}
-.ca-cancel{background:var(--crimson)}
-
-.order-card{border-radius:var(--r3);background:var(--g2);border:1px solid var(--gb);
-  cursor:pointer;overflow:hidden;transition:border-color .2s,transform .12s;
-  -webkit-user-select:none;user-select:none}
-.order-card:active:not(.selected){transform:scale(.987)}
-.order-card.selected{background:rgba(255,77,13,.07);border-color:rgba(255,77,13,.4);
-  box-shadow:0 0 0 1px rgba(255,77,13,.2)}
-.order-card.processing{border-color:rgba(0,219,160,.3)}
-.order-card.processing .oc-indicator{background:var(--mint);animation:pulsePipe 1.5s ease infinite}
-@keyframes pulsePipe{0%,100%{opacity:.5}50%{opacity:1}}
-
-/* Card top: avatar + info + badge */
-.oc-top{display:flex;align-items:flex-start;gap:11px;padding:13px 14px 10px}
-.oc-avatar{width:40px;height:40px;border-radius:12px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:800;color:white;letter-spacing:-.01em}
-.oc-info{flex:1;min-width:0}
-.oc-name{font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.02em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
-.oc-prod{font-size:11px;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.oc-badge{flex-shrink:0;font-size:9px;font-weight:700;padding:3px 8px;
-  border-radius:6px;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
-.badge-clean{background:var(--mdim);color:var(--mint)}
-.badge-review{background:var(--adim);color:var(--amber)}
-.badge-proc{background:var(--mdim);color:var(--mint);animation:badgePulse 1.5s ease infinite}
-@keyframes badgePulse{0%,100%{opacity:.6}50%{opacity:1}}
-
-/* Card footer: meta row */
-.oc-footer{display:flex;align-items:center;gap:8px;
-  padding:8px 14px 12px;border-top:1px solid var(--gb)}
-.oc-meta{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--t3);font-weight:500}
-.oc-meta i{font-size:12px}
-.oc-meta.warn{color:var(--amber)}
-.oc-rownum{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;
-  color:var(--t4);background:var(--g3);padding:2px 7px;border-radius:5px}
-
-/* Card indicator bar (replaces left stripe) */
-.oc-indicator{width:100%;height:2px;background:var(--flame)}
-
-/* SWIPE HINT */
-.swipe-hint{font-size:11px;color:var(--t4);text-align:center;
-  padding:0 0 10px;display:flex;align-items:center;justify-content:center;gap:5px}
-
-/* SKELETON */
-.skeleton{border-radius:var(--r3);padding:16px;margin-bottom:9px;
-  background:var(--g1);border:1px solid var(--gb);overflow:hidden;position:relative}
-.skeleton::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);
-  animation:shimmer 1.6s ease infinite}
-@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
-.skel-line{height:12px;border-radius:6px;background:var(--g3);margin-bottom:9px}
-.skel-line.tall{height:18px;width:52%;margin-bottom:13px}
-.skel-line.w80{width:80%}.skel-line.w60{width:60%}.skel-line.w40{width:40%}
-
-/* EMPTY */
-.empty-state{text-align:center;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px}
-.empty-glyph{font-size:52px}
-.empty-h{font-size:18px;font-weight:800;letter-spacing:-.02em}
-.empty-p{font-size:13px;color:var(--t3);max-width:200px;line-height:1.65}
-
-/* FAB */
-#fab{position:fixed;bottom:90px;left:16px;right:16px;z-index:60;display:none;animation:fabUp .3s cubic-bezier(.34,1.56,.64,1)}
-@keyframes fabUp{from{opacity:0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
-.fab-shell{background:var(--flame);border-radius:var(--r4);padding:13px 16px;
-  display:flex;align-items:center;justify-content:space-between;
-  box-shadow:0 8px 40px var(--fglow)}
-.fab-info{display:flex;flex-direction:column;gap:1px}
-.fab-count{font-size:15px;font-weight:800;color:white;letter-spacing:-.02em}
-.fab-hint{font-size:10px;color:rgba(255,255,255,.6);font-weight:500}
-.fab-act{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
-  border-radius:var(--r2);color:white;padding:10px 20px;
-  font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s,transform .1s}
-.fab-act:active{background:rgba(255,255,255,.3);transform:scale(.95)}
-.fab-act:disabled{opacity:.5}
-.fab-clear{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:none;
-  border-radius:11px;padding:7px 14px;font-family:inherit;font-size:11px;font-weight:600;
-  cursor:pointer;margin-top:7px;width:100%;text-align:center}
-
-/* PROGRESS OVERLAY */
-#progress-overlay{display:none;position:fixed;inset:0;z-index:150;
-  background:rgba(6,6,10,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  align-items:flex-end;justify-content:center;padding:0 16px calc(16px + var(--sab))}
-.prog-sheet{width:100%;max-width:440px;background:var(--s1);border:1px solid var(--gbb);
-  border-radius:var(--r5) var(--r5) var(--r3) var(--r3);padding:14px 22px 28px;
-  box-shadow:0 -12px 80px rgba(0,0,0,.7);animation:sheetUp .32s cubic-bezier(.34,1.56,.64,1)}
-.prog-handle{width:36px;height:4px;background:var(--g3);border-radius:2px;margin:0 auto 20px}
-.prog-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
-.prog-title-name{font-size:13px;font-weight:700;color:var(--t1)}
-.prog-title-sub{font-size:11px;color:var(--t3);margin-top:3px}
-.prog-timer{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--flame)}
-.prog-track{height:3px;background:var(--g3);border-radius:2px;margin-bottom:20px;overflow:hidden}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--flame),var(--flame2));border-radius:2px;transition:width .6s ease;width:0%}
-#prog-steps{display:flex;flex-direction:column;gap:9px}
-.prog-step{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:500;color:var(--t3);transition:color .25s}
-.prog-step.done{color:var(--mint)}.prog-step.active{color:var(--flame)}
-.prog-dot{width:6px;height:6px;border-radius:50%;background:var(--s4);flex-shrink:0;transition:all .25s}
-.prog-step.done .prog-dot{background:var(--mint)}
-.prog-step.active .prog-dot{background:var(--flame);animation:dotPulse 1s ease infinite}
-@keyframes dotPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
-#prog-error{display:none;margin-top:14px;padding:11px 14px;background:var(--cdim);
-  border:1px solid rgba(255,51,88,.25);border-radius:var(--r2);font-size:12px;color:#ff7090;line-height:1.6}
-#prog-result{display:none;margin-top:14px;padding:14px;background:var(--mdim);
-  border:1px solid rgba(0,219,160,.2);border-radius:var(--r2);text-align:center}
-#prog-oid{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--mint)}
-#prog-done{display:none;width:100%;margin-top:14px;padding:14px;border:none;
-  border-radius:var(--r2);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:transform .1s}
-#prog-done:active{transform:scale(.97)}
-
-/* TOGGLE */
-.tsw{position:relative;width:46px;height:26px;flex-shrink:0}
-.tsw input{opacity:0;width:0;height:0}
-.ttrack{position:absolute;inset:0;background:var(--s3);border-radius:26px;cursor:pointer;transition:background .22s;border:1px solid var(--gb)}
-.ttrack::before{content:'';position:absolute;width:20px;height:20px;left:2px;top:2px;
-  background:white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.4);
-  transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
-.tsw input:checked + .ttrack{background:var(--mint);border-color:var(--mint)}
-.tsw input:checked + .ttrack::before{transform:translateX(20px)}
-
-/* OVERLAYS */
-.overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  display:none;align-items:flex-end;justify-content:center;
-  padding:0 12px calc(16px + var(--sab))}
-.overlay.show{display:flex;animation:overlayIn .2s ease}
-@keyframes overlayIn{from{opacity:0}to{opacity:1}}
-.modal-sheet{width:100%;max-width:440px;background:var(--s1);border:1px solid var(--gbb);
-  border-radius:var(--r5) var(--r5) var(--r3) var(--r3);padding:10px 22px 28px;
-  box-shadow:0 -8px 80px rgba(0,0,0,.7);animation:sheetUp .3s cubic-bezier(.34,1.56,.64,1);
-  text-align:center;max-height:92dvh;overflow-y:auto}
-@keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-.sh-handle{width:36px;height:4px;background:var(--g3);border-radius:2px;margin:0 auto 20px}
-.modal-icon{font-size:52px;margin-bottom:12px}
-.modal-title{font-size:20px;font-weight:800;letter-spacing:-.025em;margin-bottom:8px}
-.modal-body{font-size:14px;color:var(--t2);line-height:1.65;margin-bottom:22px;white-space:pre-line}
-.modal-btn{width:100%;padding:15px;border:none;border-radius:var(--r2);
-  font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:transform .1s}
-.modal-btn:active{transform:scale(.97)}
-.btn-flame{background:var(--flame);color:white;box-shadow:0 4px 20px var(--fglow)}
-.btn-mint{background:var(--mint);color:#002820}
-.btn-crimson{background:var(--crimson);color:white}
-.btn-row{display:flex;gap:10px}.btn-row .modal-btn{flex:1}
-
-/* EDIT SHEET */
-.edit-sheet-title{font-size:18px;font-weight:800;letter-spacing:-.025em;margin-bottom:20px;text-align:left}
-.field-group{margin-bottom:14px;text-align:left}
-.field-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
-.field-input{width:100%;background:var(--g2);border:1px solid var(--gb);border-radius:var(--r2);
-  padding:12px 14px;color:var(--t1);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;outline:none;transition:border-color .15s}
-.field-input:focus{border-color:rgba(255,77,13,.5)}
-.field-input::placeholder{color:var(--t4)}
-select.field-input{-webkit-appearance:none;appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,.3)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-select.field-input option{background:var(--s1);color:var(--t1)}
-
-/* DETAIL SHEET */
-.detail-name{font-size:22px;font-weight:800;letter-spacing:-.03em;margin-bottom:18px;text-align:left}
-.detail-row{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--gb)}
-.detail-row:last-of-type{border-bottom:none}
-.detail-ico{font-size:18px;width:28px;text-align:center;flex-shrink:0;margin-top:1px}
-.detail-info{flex:1}
-.detail-lbl,.detail-key{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:3px}
-.detail-val{font-size:14px;font-weight:600;color:var(--t1);line-height:1.4;word-break:break-word}
-.detail-val.mono{font-family:'DM Mono',monospace;font-size:13px}
-.detail-actions{display:flex;gap:10px;margin-top:20px}
-.detail-actions .modal-btn{flex:1;padding:13px}
-
-/* TAB BAR v7 — floating pill with Tabler icons */
-.tab-bar-wrapper{position:fixed;bottom:16px;left:16px;right:16px;z-index:1000;
-  -webkit-transform:translate3d(0,0,0);transform:translate3d(0,0,0)}
-.tab-bar{display:flex;align-items:center;height:62px;
-  background:rgba(16,16,22,.97);
-  -webkit-backdrop-filter:blur(40px) saturate(160%);backdrop-filter:blur(40px) saturate(160%);
-  border-radius:22px;border:1px solid rgba(255,255,255,.09);
-  box-shadow:0 4px 32px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.07);
-  padding:0 6px;overflow:hidden}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;height:50px;border-radius:16px;cursor:pointer;position:relative;
-  font-size:8px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;
-  transition:color .18s,background .18s;-webkit-user-select:none;user-select:none}
-.tab-item i{font-size:20px;transition:transform .2s}
-.tab-item.active{color:var(--flame)}
-.tab-item.active::before{content:'';position:absolute;inset:0;
-  background:rgba(255,77,13,.11);border-radius:16px}
-.tab-item.active i{transform:scale(1.1)}
-.tab-item:active:not(.active){background:rgba(255,255,255,.05)}
-.tab-icon-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;z-index:1}
-.tab-badge{position:absolute;top:-5px;right:-9px;background:var(--flame);color:white;
-  font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;
-  display:none;align-items:center;justify-content:center;padding:0 4px;
-  border:2px solid rgba(16,16,22,.98);font-family:'DM Mono',monospace;z-index:2}
-
-/* ANALYTICS */
-.glass-card{border-radius:var(--r3);padding:16px;margin-bottom:12px;background:var(--g2);border:1px solid var(--gb)}
-.card-label{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:14px}
-.chart-wrap{display:flex;align-items:flex-end;gap:6px;height:80px;padding-top:8px;margin-bottom:8px}
-.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
-.bwrap{width:100%;flex:1;display:flex;align-items:flex-end;justify-content:center}
-.bar{width:100%;border-radius:5px 5px 0 0;background:var(--flame);opacity:.3;min-height:3px}
-.bar.today{opacity:1;box-shadow:0 -4px 14px var(--fglow)}.bar.zero{opacity:.08}
-.bval{font-size:10px;font-weight:700;color:var(--t1);font-family:'DM Mono',monospace;min-height:14px}
-.bday{font-size:9px;color:var(--t3);font-weight:600}.bday.today{color:var(--flame);font-weight:800}
-.avg-strip{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gb);padding-top:12px;margin-top:6px}
-.avg-lbl{font-size:12px;color:var(--t2);font-weight:500}
-.avg-val{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:var(--flame);letter-spacing:-.02em}
-.avg-meta{font-size:9px;color:var(--t3);margin-top:2px;text-align:right}
-
-/* HISTORY */
-.hist-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--gb)}
-.hist-row:last-child{border-bottom:none}
-.hist-idx{width:28px;height:28px;border-radius:8px;flex-shrink:0;background:var(--g3);border:1px solid var(--gb);
-  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--t3);font-family:'DM Mono',monospace}
-.hist-info{flex:1;min-width:0}
-.hist-name{font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hist-prod{font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hist-meta{text-align:right;flex-shrink:0}
-.hist-oid{font-size:11px;font-weight:700;color:var(--mint);font-family:'DM Mono',monospace}
-.hist-time{font-size:10px;color:var(--t3);margin-top:2px}
-
-/* SETTINGS */
-.set-group{margin-bottom:22px}
-.set-lbl{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:8px;padding-left:2px}
-.set-list{border-radius:var(--r3);overflow:hidden;background:var(--g2);border:1px solid var(--gb)}
-.set-row{display:flex;align-items:center;padding:14px 16px;gap:14px;border-bottom:1px solid var(--gb);transition:background .15s}
-.set-row:last-child{border-bottom:none}.set-row:active{background:var(--g3)}
-.s-ico{font-size:20px;width:24px;text-align:center;flex-shrink:0}
-.s-ico i{font-size:20px;color:var(--t2)}
-.s-info{flex:1}
-.s-lbl{font-size:14px;font-weight:600;color:var(--t1)}
-.s-desc{font-size:11px;color:var(--t3);margin-top:2px}
-.s-btn{background:var(--flame);color:white;border:none;border-radius:var(--r1);
-  padding:7px 16px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.s-btn.sec{background:var(--g3);color:var(--t2);border:1px solid var(--gb)}
-.ver-tag{text-align:center;padding:20px 0 8px;font-size:10px;color:var(--t4);font-family:'DM Mono',monospace;letter-spacing:.06em}
-
-/* ANIMATIONS */
+/* ── Top bar ─────────────────────────────────────────── */
+.top{display:flex;align-items:center;gap:12px;padding:14px 0 6px}
+.brand{font:700 21px/1 var(--display);letter-spacing:.2px}
+.brand small{display:block;font:500 13px/1.2 var(--font);color:var(--steel);letter-spacing:0;margin-top:3px}
+.runner{margin-left:auto;display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 10px;
+  border-radius:999px;background:var(--surface);border:1px solid var(--hair);font-weight:500;font-size:14px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--steel)}
+.dot.on{background:var(--ok);box-shadow:0 0 0 4px var(--ok-wash)}
+.dot.off{background:var(--stop);box-shadow:0 0 0 4px var(--stop-wash)}
+.icon-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--steel);font-size:20px}
+.icon-btn:active{background:var(--sunk)}
+.spin{animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ── Hero: the status sentence + countdown track ─────── */
+.hero{padding:22px 0 18px}
+.headline{font:700 clamp(30px,8.4vw,40px)/1.04 var(--display);letter-spacing:-.2px;max-width:16ch}
+.headline.attn{color:var(--flame-ink)}
+.headline.bad{color:var(--stop)}
+.sub{margin-top:8px;color:var(--steel);font-size:16px}
+.sub b{color:var(--ink);font-weight:600}
+.track{display:flex;gap:10px;overflow-x:auto;margin:18px -18px 0;padding:2px 18px 6px;scrollbar-width:none}
+.track::-webkit-scrollbar{display:none}
+.tick{flex:0 0 auto;text-align:left;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:999px;
+  background:var(--surface);border:1px solid var(--hair);min-height:52px}
+.ring{--p:0;width:36px;height:36px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  background:conic-gradient(var(--wait) calc(var(--p)*1%),var(--wait-wash) 0)}
+.ring::after{content:"";width:28px;height:28px;border-radius:50%;background:var(--surface);grid-area:1/1}
+.ring span{grid-area:1/1;z-index:1;font:700 11px/1 var(--display)}
+.tick .who{font-weight:600;font-size:15px;line-height:1.15}
+.tick .what{font-size:13px;color:var(--steel)}
+
+/* ── Banners ─────────────────────────────────────────── */
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;margin:4px 0 14px;font-size:15px}
+.banner i{font-size:20px;margin-top:1px}
+.banner.bad{background:var(--stop-wash);color:var(--stop)}
+.banner.warn{background:var(--wait-wash);color:var(--wait)}
+.banner b{font-weight:600}
+.banner button{margin-left:auto;font-weight:600;text-decoration:underline;white-space:nowrap}
+
+/* ── Sections + rows ─────────────────────────────────── */
+.section{margin-top:22px}
+.section h2{font:600 17px/1.2 var(--font);display:flex;align-items:baseline;gap:8px;margin:0 2px 10px}
+.section h2 .count{font:600 15px/1 var(--display);color:var(--steel)}
+.panel{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r-panel);overflow:hidden}
+.row{position:relative;display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:14px 14px 14px 18px;
+  border-top:1px solid var(--hair);min-height:64px}
+.row:first-child{border-top:0}
+.row::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--rule,var(--hair))}
+.row:active{background:var(--sunk)}
+.row .main{flex:1;min-width:0}
+.row .name{font-weight:600;font-size:16px;line-height:1.2;display:flex;gap:8px;align-items:center}
+.row .line2{font-size:14px;color:var(--steel);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .why{font-size:14px;margin-top:5px;color:var(--ink);line-height:1.3}
+.code{font:600 13px/1 var(--display);letter-spacing:.3px;color:var(--steel);padding:3px 6px;border-radius:5px;background:var(--sunk)}
+.t-flame{--rule:var(--flame)} .t-stop{--rule:var(--stop)} .t-manual{--rule:var(--manual)}
+.t-wait{--rule:var(--wait)} .t-ok{--rule:var(--ok)} .t-steel{--rule:var(--hair)}
+.state{font-size:13px;font-weight:600}
+.t-flame .state{color:var(--flame-ink)} .t-stop .state{color:var(--stop)} .t-manual .state{color:var(--manual)}
+.t-wait .state{color:var(--wait)} .t-ok .state{color:var(--ok)} .t-steel .state{color:var(--steel)}
+.chip{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--ok-wash);color:var(--ok)}
+.btn{height:40px;padding:0 14px;border-radius:var(--r-ctl);font-weight:600;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn.primary{background:var(--flame);color:#fff}
+.btn.primary:active{filter:brightness(.92)}
+.btn.quiet{background:var(--sunk);color:var(--ink)}
+.btn.block{width:100%;height:48px;font-size:16px}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.empty{padding:22px 18px;color:var(--steel);font-size:15px}
+.empty b{display:block;color:var(--ink);font-weight:600;font-size:16px;margin-bottom:2px}
+
+/* ── Placed list ─────────────────────────────────────── */
+.search{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-radius:12px;background:var(--surface);border:1px solid var(--hair);margin:18px 0 6px}
+.search i{color:var(--steel);font-size:19px}
+.search input{flex:1;border:0;background:none;outline:none;font-size:16px;min-width:0}
+.day{font:600 15px/1 var(--font);color:var(--steel);margin:20px 2px 8px;display:flex;justify-content:space-between}
+.day span:last-child{font-family:var(--display)}
+.prow{display:flex;gap:12px;padding:13px 14px;border-top:1px solid var(--hair);align-items:center}
+.prow:first-child{border-top:0}
+.prow .main{flex:1;min-width:0}
+.prow .name{font-weight:600;line-height:1.2}
+.prow .line2{font-size:14px;color:var(--steel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .right{text-align:right}
+.oid{font:600 15px/1.2 var(--display);letter-spacing:.2px;padding:2px 0}
+.prow .total{font-size:14px;color:var(--steel)}
+
+/* ── Insights ────────────────────────────────────────── */
+.figures{display:grid;grid-template-columns:repeat(3,1fr);margin-top:20px}
+.fig{padding:4px 12px 4px 0}
+.fig+.fig{border-left:1px solid var(--hair);padding-left:14px}
+.fig .k{font-size:14px;color:var(--steel)}
+.fig .v{font:700 30px/1.05 var(--display);margin-top:4px}
+.fig .m{font-size:14px;color:var(--steel);margin-top:2px}
+.chart{padding:16px 14px 10px}
+.chart svg{display:block;width:100%;height:auto}
+.chart .axis{font:500 11px var(--font);fill:var(--steel)}
+.bars .item{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:11px 14px;border-top:1px solid var(--hair);align-items:center}
+.bars .item:first-child{border-top:0}
+.bars .label{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars .val{font:600 15px/1 var(--display)}
+.bars .bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.bars .bar i{display:block;height:100%;background:var(--steel);border-radius:3px}
+.bars .item:first-child .bar i{background:var(--flame)}
+.note{font-size:13px;color:var(--steel);margin:10px 2px 0}
+
+/* ── Settings ────────────────────────────────────────── */
+.setting{display:flex;gap:12px;align-items:center;padding:14px;border-top:1px solid var(--hair);min-height:60px}
+.setting:first-child{border-top:0}
+.setting .main{flex:1;min-width:0}
+.setting .t{font-weight:600}
+.setting .d{font-size:14px;color:var(--steel);margin-top:1px}
+.field{display:block;padding:12px 14px;border-top:1px solid var(--hair)}
+.field:first-child{border-top:0}
+.field span{display:block;font-size:14px;color:var(--steel);margin-bottom:6px}
+.field input{width:100%;height:44px;border-radius:10px;border:1px solid var(--hair);background:var(--paper);padding:0 12px;font-size:16px}
+.field input:focus{outline:2px solid var(--flame);outline-offset:-1px}
+.switch{position:relative;width:52px;height:32px;flex:0 0 auto}
+.switch input{position:absolute;opacity:0;inset:0;cursor:pointer;z-index:1}
+.switch .tr{position:absolute;inset:0;border-radius:999px;background:var(--sunk);border:1px solid var(--hair);transition:background .2s}
+.switch .tr::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.switch input:checked+.tr{background:var(--ok);border-color:var(--ok)}
+.switch input:checked+.tr::after{transform:translateX(20px)}
+.switch input:focus-visible+.tr{outline:2px solid var(--flame);outline-offset:2px}
+
+/* ── Tab bar ─────────────────────────────────────────── */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--paper) 88%,transparent);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--hair);
+  padding:6px 8px calc(6px + env(safe-area-inset-bottom,0))}
+.tabs nav{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:12px;font-weight:600;color:var(--steel);position:relative}
+.tab i{font-size:24px}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"] i{color:var(--flame)}
+.tab .badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--flame);color:#fff;font:700 11px/18px var(--display);text-align:center}
+
+/* ── Sheet (details) ─────────────────────────────────── */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(10,15,17,.42);opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:640px;margin:0 auto;background:var(--surface);
+  border-radius:22px 22px 0 0;padding:10px 18px calc(20px + env(safe-area-inset-bottom,0));max-height:88vh;overflow-y:auto;
+  transform:translateY(105%);visibility:hidden;transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s linear .26s}
+.sheet.open{transform:none;visibility:visible;transition:transform .26s cubic-bezier(.2,.8,.2,1)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto 14px}
+.sheet h3{font:700 26px/1.1 var(--display);padding-right:44px}
+.sheet .close{position:absolute;top:14px;right:12px}
+.sheet .prod{margin-top:6px;font-size:16px;color:var(--steel)}
+.status-box{margin:16px 0;padding:12px 14px;border-radius:14px;background:var(--sunk)}
+.status-box .state{font-size:14px}
+.status-box p{margin-top:3px;font-size:15px}
+.t-flame.status-box{background:var(--flame-wash)} .t-stop.status-box{background:var(--stop-wash)}
+.t-manual.status-box{background:var(--manual-wash)} .t-wait.status-box{background:var(--wait-wash)} .t-ok.status-box{background:var(--ok-wash)}
+.facts{display:grid;gap:0;border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.fact{display:flex;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--hair);text-decoration:none}
+.fact:first-child{border-top:0}
+.fact i{font-size:20px;color:var(--steel)}
+.fact .k{font-size:13px;color:var(--steel)}
+.fact .v{font-size:16px;word-break:break-word}
+.actions{display:grid;gap:10px;margin-top:16px}
+.warnline{font-size:14px;color:var(--stop);margin-top:-2px}
+
+/* ── Toast + setup ───────────────────────────────────── */
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0));transform:translate(-50%,20px);z-index:60;
+  background:var(--ink);color:var(--paper);padding:11px 16px;border-radius:12px;font-size:15px;font-weight:500;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 36px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.setup{min-height:100vh;display:flex;flex-direction:column;justify-content:center;max-width:440px;margin:0 auto;padding:24px 22px}
+.setup h1{font:700 40px/1.02 var(--display)}
+.setup p{color:var(--steel);margin:10px 0 22px;font-size:16px}
+.setup .err{color:var(--stop);font-size:15px;margin-top:10px;min-height:22px}
+.setup .alt{margin-top:16px;font-size:15px;color:var(--steel);text-align:center}
+.setup .alt a{color:var(--ink);font-weight:600}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (min-width:700px){.wrap{padding-top:10px}.headline{max-width:20ch}}
 </style>
 </head>
 <body>
-
-<!-- HEADER -->
-<header class="header">
-  <div class="app-mark">🤖</div>
-  <div class="header-info">
-    <div class="header-name">Argati</div>
-    <div class="header-sub" id="header-sub">
-      Parts Center
-      <span id="server-dot" title="Server status"></span>
-    </div>
-  </div>
-  <div class="hbtns">
-    <button class="hbtn" id="search-btn" aria-label="Search"><i class="ti ti-search"></i></button>
-    <button class="hbtn" id="reload-btn" aria-label="Sync"><i class="ti ti-refresh"></i></button>
-  </div>
-</header>
-
-<!-- SEARCH -->
-<div id="search-wrap">
-  <div class="search-box">
-    <i class="ti ti-search search-ico"></i>
-    <input class="search-input" id="search-input" type="search"
-      placeholder="Name, city, product, phone…" autocomplete="off">
-    <button id="search-clear" aria-label="Clear">✕</button>
-  </div>
-</div>
-
-<!-- ORDERS PAGE -->
-<div class="page active" id="page-orders">
-  <div id="new-order-banner"></div>
-  <div id="notif-bar">
-    <span>Enable order notifications</span>
-    <button onclick="subscribeNotifications()">Enable</button>
-  </div>
-
-  <!-- Stats pills — rendered by updateStats() -->
-  <div class="stats-scroll" id="stats-scroll">
-    <div class="stat-pill active" id="pill-today">
-      <div>
-        <div class="stat-pill-num" id="stat-today" style="color:var(--mint)">—</div>
-        <div class="stat-pill-lbl">Today</div>
-      </div>
-    </div>
-    <div class="stat-pill" id="pill-pending">
-      <div>
-        <div class="stat-pill-num" id="stat-pending" style="color:var(--flame)">—</div>
-        <div class="stat-pill-lbl">Pending</div>
-      </div>
-    </div>
-    <div class="stat-pill" id="pill-review">
-      <div>
-        <div class="stat-pill-num" id="stat-review" style="color:var(--amber)">—</div>
-        <div class="stat-pill-lbl">Review</div>
-      </div>
-    </div>
-  </div>
-
-  <div id="auto-mode-bar">⚡ Full Auto Mode — clean orders placed automatically</div>
-  <div id="swipe-hint" class="swipe-hint" style="display:none">← Swipe left for actions</div>
-  <div id="order-list">
-    <div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>
-    <div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>
-    <div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w60"></div></div>
-  </div>
-</div>
-
-<!-- ANALYTICS PAGE -->
-<div class="page" id="page-analytics">
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-    <div class="glass-card" style="padding:14px;margin-bottom:0">
-      <div style="font-size:8px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">Total placed</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--mint)" id="an-total">—</div>
-    </div>
-    <div class="glass-card" style="padding:14px;margin-bottom:0">
-      <div style="font-size:8px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">Est. revenue</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--amber)" id="an-revenue">—</div>
-    </div>
-    <div class="glass-card" style="padding:14px;margin-bottom:0">
-      <div style="font-size:8px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">Failed</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--crimson)" id="an-failed">—</div>
-    </div>
-    <div class="glass-card" style="padding:14px;margin-bottom:0">
-      <div style="font-size:8px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:7px">Avg time</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--t1)" id="avg-time-val">--:--</div>
-      <div style="font-size:9px;color:var(--t3);margin-top:2px" id="avg-time-sub">no orders yet</div>
-    </div>
-  </div>
-
-  <div class="glass-card">
-    <p class="card-label">30-day trend</p>
-    <div id="trend-chart" style="display:flex;align-items:flex-end;gap:3px;height:70px;padding-top:8px"></div>
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-    <div class="glass-card" style="margin-bottom:0">
-      <p class="card-label">Top products</p>
-      <div id="an-products"><div style="font-size:11px;color:var(--t3)">—</div></div>
-    </div>
-    <div class="glass-card" style="margin-bottom:0">
-      <p class="card-label">Top cities</p>
-      <div id="an-cities"><div style="font-size:11px;color:var(--t3)">—</div></div>
-    </div>
-  </div>
-
-  <div class="glass-card">
-    <p class="card-label">Peak hours</p>
-    <div id="hours-chart" style="display:flex;align-items:flex-end;gap:2px;height:52px;padding-top:6px"></div>
-    <div style="display:flex;justify-content:space-between;margin-top:4px">
-      <span style="font-size:9px;color:var(--t4)">00:00</span>
-      <span style="font-size:9px;color:var(--t4)">12:00</span>
-      <span style="font-size:9px;color:var(--t4)">23:00</span>
-    </div>
-  </div>
-
-  <p style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px">Today's orders</p>
-  <div class="glass-card">
-    <div id="history-list-a">
-      <div class="empty-state" style="padding:24px 0">
-        <div class="empty-glyph" style="font-size:36px">📋</div>
-        <div class="empty-h" style="font-size:14px">No orders today</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- SETTINGS PAGE -->
-<div class="page" id="page-settings">
-
-  <div class="set-group">
-    <p class="set-lbl">Automation</p>
-    <div class="set-list">
-      <div class="set-row">
-        <span class="s-ico"><i class="ti ti-bolt"></i></span>
-        <div class="s-info">
-          <div class="s-lbl">Full Auto Mode</div>
-          <div class="s-desc" id="auto-mode-desc">Clean orders placed automatically</div>
-        </div>
-        <label class="tsw"><input type="checkbox" id="auto-mode-toggle"><span class="ttrack"></span></label>
-      </div>
-      <div class="set-row">
-        <span class="s-ico"><i class="ti ti-refresh"></i></span>
-        <div class="s-info">
-          <div class="s-lbl">Check approvals</div>
-          <div class="s-desc">Poll for iPhone-approved orders now</div>
-        </div>
-        <button class="s-btn sec" onclick="checkApprovals()">Check</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="set-group">
-    <p class="set-lbl">Notifications</p>
-    <div class="set-list">
-      <div class="set-row">
-        <span class="s-ico"><i class="ti ti-bell"></i></span>
-        <div class="s-info">
-          <div class="s-lbl">Push notifications</div>
-          <div class="s-desc" id="notif-status-text">Not enabled yet</div>
-        </div>
-        <button class="s-btn" id="notif-toggle-btn" onclick="subscribeNotifications()">Enable</button>
-      </div>
-      <div class="set-row">
-        <span class="s-ico"><i class="ti ti-test-pipe"></i></span>
-        <div class="s-info">
-          <div class="s-lbl">Test push</div>
-          <div class="s-desc">Verify notifications are working</div>
-        </div>
-        <button class="s-btn sec" onclick="testNotification()">Send test</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="set-group">
-    <p class="set-lbl">Order recordings &amp; screenshots</p>
-    <div class="glass-card" style="padding:12px">
-      <div id="videos-list" style="font-size:12px;color:var(--t3);text-align:center;padding:8px 0">Every order is recorded as video</div>
-      <button class="s-btn sec" style="width:100%;margin-top:10px" onclick="loadVideos()">📹 Load Videos</button>
-    </div>
-    <div class="glass-card" style="padding:12px;margin-top:8px">
-      <div id="screenshots-list" style="font-size:12px;color:var(--t3);text-align:center;padding:8px 0">Failure screenshots</div>
-      <button class="s-btn sec" style="width:100%;margin-top:10px" onclick="loadScreenshots()">📸 Load Screenshots</button>
-    </div>
-  </div>
-
-  <div class="set-group">
-    <p class="set-lbl">Products</p>
-    <div class="set-list">
-      <div class="set-row">
-        <span class="s-ico"><i class="ti ti-package"></i></span>
-        <div class="s-info">
-          <div class="s-lbl">Manage Products</div>
-          <div class="s-desc">Add or remove products from the system</div>
-        </div>
-        <button class="s-btn sec" onclick="loadProductManager()">Open</button>
-      </div>
-    </div>
-    <div class="glass-card" style="padding:14px;margin-top:8px;display:none" id="product-manager">
-      <div style="display:flex;gap:6px;margin-bottom:14px">
-        <button onclick="showProdTab('singles')" id="tab-singles"
-          style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
-          font-size:12px;font-weight:700;cursor:pointer;background:var(--flame);color:white">Singles</button>
-        <button onclick="showProdTab('bundles')" id="tab-bundles"
-          style="flex:1;padding:7px;border-radius:9px;border:none;font-family:inherit;
-          font-size:12px;font-weight:700;cursor:pointer;background:var(--g3);color:var(--t2)">Bundles</button>
-      </div>
-      <div id="prod-list" style="margin-bottom:12px"></div>
-      <div style="background:var(--g2);border:1px solid var(--gb);border-radius:12px;padding:12px">
-        <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Add Product</div>
-        <input id="new-prod-code" class="field-input" style="margin-bottom:8px" placeholder="Code (e.g. 211 or 207+104)" autocomplete="off">
-        <input id="new-prod-name" class="field-input" style="margin-bottom:8px" placeholder="Name (e.g. Additiv 211)" autocomplete="off">
-        <input id="new-prod-url"  class="field-input" style="margin-bottom:10px" placeholder="https://gjirafamall.com/..." autocomplete="off">
-        <button onclick="addProduct()" style="width:100%;padding:10px;background:var(--mint);color:#002820;
-          border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
-          + Add Product
-        </button>
-      </div>
-      <div id="prod-msg" style="font-size:12px;text-align:center;padding:8px 0;display:none"></div>
-    </div>
-  </div>
-
-  <div class="set-group">
-    <p class="set-lbl">About</p>
-    <div class="set-list">
-      <div class="set-row">
-        <span class="s-ico"><i class="ti ti-robot"></i></span>
-        <div class="s-info">
-          <div class="s-lbl">Argati v7.0</div>
-          <div class="s-desc">Parts Center — Order Automation</div>
-        </div>
-      </div>
-      <div class="set-row">
-        <span class="s-ico"><i class="ti ti-device-desktop"></i></span>
-        <div class="s-info">
-          <div class="s-lbl">Desktop server</div>
-          <div class="s-desc" id="desktop-url-desc">Flask + Playwright — always on</div>
-        </div>
-        <button class="s-btn sec" onclick="promptDesktopUrl()">Set IP</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="ver-tag">ARGATI · v7.0 · PARTS CENTER</div>
-</div>
-
-<!-- TAB BAR v7 -->
-<div class="tab-bar-wrapper">
-  <nav class="tab-bar">
-    <div class="tab-item active" data-page="orders" onclick="switchTab('orders')">
-      <div class="tab-icon-wrap">
-        <i class="ti ti-layout-list"></i>
-        <span class="tab-badge" id="badge-orders"></span>
-      </div>
-      <span>Orders</span>
-    </div>
-    <div class="tab-item" data-page="analytics" onclick="switchTab('analytics')">
-      <div class="tab-icon-wrap"><i class="ti ti-chart-bar"></i></div>
-      <span>Analytics</span>
-    </div>
-    <div class="tab-item" data-page="settings" onclick="switchTab('settings')">
-      <div class="tab-icon-wrap"><i class="ti ti-settings"></i></div>
-      <span>Settings</span>
-    </div>
-  </nav>
-</div>
-
-<!-- FAB -->
-<div id="fab">
-  <div class="fab-shell">
-    <div class="fab-info">
-      <div class="fab-count" id="fab-count">0 selected</div>
-      <div class="fab-hint">Sends to desktop for placement</div>
-    </div>
-    <button class="fab-act" id="fab-btn" onclick="approveSelected()">Place ▶</button>
-  </div>
-  <button class="fab-clear" onclick="clearSelection()">✕ Clear selection</button>
-</div>
-
-<!-- PROGRESS OVERLAY -->
-<div id="progress-overlay">
-  <div class="prog-sheet">
-    <div class="prog-handle"></div>
-    <div class="prog-header">
-      <div>
-        <div class="prog-title-name" id="prog-title">Placing order</div>
-        <div class="prog-title-sub" id="prog-name"></div>
-      </div>
-      <div class="prog-timer" id="prog-timer">00:00</div>
-    </div>
-    <div class="prog-track"><div class="prog-fill" id="prog-bar"></div></div>
-    <div id="prog-steps"></div>
-    <div id="prog-error"></div>
-    <div id="prog-result">
-      <div style="font-size:24px;margin-bottom:6px">✅</div>
-      <div id="prog-oid"></div>
-    </div>
-    <button id="prog-done" onclick="closeProgress()"></button>
-  </div>
-</div>
-
-<!-- NOTIF MODAL -->
-<div class="overlay" id="notif-overlay">
-  <div class="modal-sheet">
-    <div class="sh-handle"></div>
-    <div class="modal-icon" id="notif-icon">✅</div>
-    <div class="modal-title" id="notif-title">Done!</div>
-    <div class="modal-body" id="notif-sub"></div>
-    <button class="modal-btn btn-flame" id="notif-btn" onclick="closeNotif()">Got it</button>
-  </div>
-</div>
-
-<!-- EDIT SHEET -->
-<div class="overlay" id="edit-overlay">
-  <div class="modal-sheet" style="text-align:left">
-    <div class="sh-handle"></div>
-    <div class="edit-sheet-title" id="edit-title">Edit order</div>
-    <div class="field-group">
-      <div class="field-label">Product</div>
-      <select class="field-input" id="edit-produkti">
-        <option value="104">104 — Pastrues Filtrave DPF</option>
-        <option value="105">105 — Pastrues Frenave</option>
-        <option value="106">106 — DPF Additiv</option>
-        <option value="107">107 — Pastrues DPF</option>
-        <option value="201">201 — Super Diesel Additiv</option>
-        <option value="204">204 — Pastrues Injektimit Dizel</option>
-        <option value="206">206 — Perforcues Oktani</option>
-        <option value="207">207 — Additiv Vaj Motorik</option>
-        <option value="209">209 — Super Benzin Additiv</option>
-        <option value="210">210 — Pastrues Injektimit Benzine</option>
-        <option value="201+106">201+106 — Set Diesel+DPF</option>
-        <option value="204+106+201">204+106+201 — Set Diesel 3in1</option>
-        <option value="204+107">204+107 — Set Pastrues Injektor+DPF</option>
-        <option value="204+107+106">204+107+106 — Set Diesel 2+1 Gratis</option>
-        <option value="210+209+206">210+209+206 — Set Benzine 2+1 Gratis</option>
-      </select>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="field-group"><div class="field-label">First name</div><input class="field-input" id="edit-emri" type="text" placeholder="Emri" autocomplete="off"></div>
-      <div class="field-group"><div class="field-label">Last name</div><input class="field-input" id="edit-mbiemri" type="text" placeholder="Mbiemri" autocomplete="off"></div>
-    </div>
-    <div class="field-group"><div class="field-label">Phone</div><input class="field-input" id="edit-telefoni" type="tel" placeholder="04X XXX XXX" autocomplete="off"></div>
-    <div class="field-group">
-      <div class="field-label">City</div>
-      <select class="field-input" id="edit-qyteti">
-        <option value="">Select city</option>
-        <option>Deçan</option><option>Dragash</option><option>Drenas</option><option>Ferizaj</option>
-        <option>Fushë Kosovë</option><option>Gjakovë</option><option>Gjilan</option><option>Graçanicë</option>
-        <option>Hani i Elezit</option><option>Istog</option><option>Junik</option><option>Kaçanik</option>
-        <option>Kamenicë</option><option>Klinë</option><option>Kllokoti</option><option>Leposaviq</option>
-        <option>Lipjan</option><option>Malishevë</option><option>Mamushë</option><option>Mitrovicë</option>
-        <option>Mitrovica Veriore</option><option>Novobërdë</option><option>Obiliq</option><option>Partesh</option>
-        <option>Pejë</option><option>Podujevë</option><option>Prishtinë</option><option>Prizren</option>
-        <option>Rahovec</option><option>Ranillug</option><option>Skënderaj</option><option>Suharekë</option>
-        <option>Shtërpcë</option><option>Shtime</option><option>Viti</option><option>Vushtrri</option>
-        <option>Zubin Potok</option><option>Zveçan</option>
-      </select>
-    </div>
-    <div class="field-group"><div class="field-label">Address</div><input class="field-input" id="edit-adresa" type="text" placeholder="Rruga, Numri…" autocomplete="off"></div>
-    <div class="field-group"><div class="field-label">Comment <span style="color:var(--t4);font-weight:400">(optional)</span></div><input class="field-input" id="edit-comment" type="text" placeholder="Special instructions…" autocomplete="off"></div>
-    <div class="btn-row" style="margin-top:20px">
-      <button class="modal-btn btn-crimson" onclick="closeEditSheet()">Cancel</button>
-      <button class="modal-btn btn-mint" onclick="saveEditedOrder()">Save &amp; place ▶</button>
-    </div>
-    <button class="modal-btn" style="margin-top:10px;background:var(--g3);color:var(--t2);border:1px solid var(--gb)" onclick="saveEditOnly()">Save only</button>
-  </div>
-</div>
-
-<!-- DETAIL SHEET -->
-<div class="overlay" id="detail-overlay">
-  <div class="modal-sheet" style="text-align:left">
-    <div class="sh-handle"></div>
-    <div class="detail-name" id="detail-name"></div>
-    <div id="detail-rows"></div>
-    <div class="detail-actions">
-      <button class="modal-btn btn-flame" onclick="placeFromDetail()">⚡ Place</button>
-      <button class="modal-btn btn-crimson" onclick="cancelFromDetail()">✕ Cancel</button>
-    </div>
-    <button class="modal-btn" style="margin-top:10px;background:var(--g3);color:var(--t2);border:1px solid var(--gb)" onclick="editFromDetail()">✏️ Edit order</button>
-    <button class="modal-btn" style="margin-top:8px;background:transparent;color:var(--t3);border:none;font-size:13px" onclick="closeDetailSheet()">Dismiss</button>
-  </div>
-</div>
+<div id="app"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-
-// Avatar color from name initials
-const AVATAR_COLORS = ['#ff4d0d','#6c5ce7','#0984e3','#00b894','#e17055','#a29bfe','#fd79a8','#55efc4','#fdcb6e','#74b9ff'];
-function avatarColor(name) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-function avatarInitials(emri, mbi) {
-  const a = (emri||'').trim()[0] || '';
-  const b = (mbi||'').trim()[0] || '';
-  return (a + b).toUpperCase();
-}
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
+'use strict';
+// ── Config ─────────────────────────────────────────────────────────────────
+const APP_VERSION = '3.0.0';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 const VAPID_PUBLIC = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
-
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let allOrders      = [];
-let selectedRows   = new Set();
-let currentOrder   = null;
-let orderHistory   = [];
-let sessionTimings = [];
-let weeklyData     = {};
-let lastCount      = -1;
-let isProcessing   = false;
-let autoMode       = false;
-let timerInterval  = null;
-let timerStart     = null;
-
-// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
-const PRODUCTS = {
-  "105":{ name:"Pastrues Frenave 105",         url:"https://gjirafamall.com/pastrues-i-frenave-80100-pcl-005-105" },
-  "106":{ name:"DPF Additiv 106",               url:"https://gjirafamall.com/dpf-additiv-pcl-006-106" },
-  "107":{ name:"Pastrues DPF 107",              url:"https://gjirafamall.com/pastrues-i-dpf-parts-center-pcl007-107-300-ml" },
-  "201":{ name:"Super Diesel Additiv 201",      url:"https://gjirafamall.com/super-diesel-addetiv-pcs-001-201-300-ml" },
-  "204":{ name:"Pastrues Injektimit Dizel 204", url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-dizel-parts-center-204" },
-  "206":{ name:"Perforcues Oktani 206",         url:"https://gjirafamall.com/perforcues-i-oktanit-te-benzines-pcs-006-206" },
-  "207":{ name:"Additiv Vaj Motorik 207",       url:"https://gjirafamall.com/additiv-per-vaj-motorik-pcs-007-207" },
-  "209":{ name:"Super Benzin Additiv 209",      url:"https://gjirafamall.com/super-benzin-addetiv-pcs-009-209" },
-  "210":{ name:"Pastrues Injektimit Benzine 210",url:"https://gjirafamall.com/pastrues-i-sistemit-te-injektimit-benzine-pcs-010-210" },
+const QUIET_MS = 120000, POLL_MS = 10000;
+const DEMO = new URLSearchParams(location.search).has('demo');
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem('argati.v3') || '{}'); } catch (e) { return {}; } },
+  set(v) { try { localStorage.setItem('argati.v3', JSON.stringify(v)); } catch (e) {} }
 };
-function getProduct(raw) {
-  if (!raw) return { name:'—', url:'' };
-  const c = raw.toString().trim();
-  if (c.includes('+')) return { name: c.split('+').map(x => (PRODUCTS[x.trim()]||{name:x.trim()}).name).join(' + '), url:'' };
-  return PRODUCTS[c] || { name:c, url:'' };
+let cfg = Object.assign({ url: DEFAULT_URL, key: '' }, store.get());
+
+const S = { tab: 'queue', status: null, pending: null, recent: [], recentAt: 0, offset: 0, lastOk: 0,
+            error: '', loading: false, approved: {}, open: null, query: '' };
+
+const STATES = {
+  review:      { label: 'Needs approval',      tone: 'flame',  group: 'needs' },
+  unverified:  { label: 'Check back office',   tone: 'stop',   group: 'needs' },
+  manual:      { label: 'Place manually',      tone: 'manual', group: 'needs' },
+  blocked:     { label: 'Fix in the sheet',    tone: 'stop',   group: 'needs' },
+  waiting:     { label: 'Counting down',       tone: 'wait',   group: 'soon' },
+  retry:       { label: 'Retrying',            tone: 'wait',   group: 'soon' },
+  ready:       { label: 'Ready to place',      tone: 'ok',     group: 'soon' },
+  would_place: { label: 'Would place (test mode)', tone: 'ok', group: 'soon' },
+  writing:     { label: 'Writing to the sheet', tone: 'ok',    group: 'soon' },
+  placed:      { label: 'Placed',              tone: 'ok',     group: 'soon' },
+  unknown:     { label: 'Not checked yet',     tone: 'steel',  group: 'soon' },
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const money = n => '€' + (Math.round(n * 100) / 100).toFixed(2);
+const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+const serverNow = () => Date.now() + S.offset;
+const parseMoney = s => { const n = parseFloat(String(s || '').replace(/[^\d.,-]/g, '').replace(',', '.')); return isNaN(n) ? 0 : n; };
+const dayKey = d => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+function ago(sec) {
+  if (sec == null) return 'never';
+  if (sec < 60) return sec + 's ago';
+  if (sec < 3600) return Math.round(sec / 60) + ' min ago';
+  return Math.round(sec / 3600) + ' h ago';
 }
-
-// ─── VALIDATORS ───────────────────────────────────────────────────────────────
-function validatePhone(raw) {
-  if (!raw) return { value:'', warning:'Phone number missing!' };
-  let p = raw.toString().trim().replace(/[\s\-().]/g,'').replace(/^\+3830?/,'0').replace(/^3830?/,'0');
-  if (!/^04\d{7}$/.test(p)) return { value:p, warning:'Phone ' + p + ' looks incorrect' };
-  return { value:p, warning:null };
+function clock(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
-function normalizeAddress(raw) {
-  if (!raw) return { value:'', warning:'Address missing!' };
-  return { value: raw.toString().trim().replace(/\s+/g,' '), warning:null };
-}
+function haptic() { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }
 
-// ─── THEME ────────────────────────────────────────────────────────────────────
-// System-based dark mode — follows iOS/macOS preference automatically
-function applySystemTheme() {
-  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  document.body.classList.toggle('dark',  dark);
-  document.body.classList.toggle('light', !dark);
-}
-applySystemTheme();
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applySystemTheme);
-
-
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-function switchTab(name) {
-  document.querySelectorAll('.tab-item').forEach(t => t.classList.toggle('active', t.dataset.page === name));
-  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
-  if (name === 'analytics') {
-    if (typeof weeklyData !== 'undefined' && weeklyData) renderChart(weeklyData);
-    updateAvgTime();
-    renderHistory();
-    loadAnalytics();
-  }
-}
-
-// ─── RELOAD ───────────────────────────────────────────────────────────────────
-// ─── SEARCH BUTTON ───────────────────────────────────────────────────────────
-document.getElementById('search-btn').addEventListener('click', () => {
-  const wrap = document.getElementById('search-wrap');
-  const inp  = document.getElementById('search-input');
-  const isOpen = wrap && wrap.style.display === 'block';
-  if (isOpen) {
-    wrap.style.display = 'none';
-    inp.value = '';
-    searchQuery = '';
-    const clr = document.getElementById('search-clear');
-    if (clr) clr.style.display = 'none';
-    renderOrderList(allOrders);
-    document.getElementById('search-btn').innerText = '🔍';
-  } else {
-    if (wrap) wrap.style.display = 'block';
-    document.getElementById('search-btn').innerText = '✕';
-    setTimeout(() => { if (inp) inp.focus(); }, 150);
-  }
-});
-
-document.getElementById('reload-btn').addEventListener('click', () => {
-  const btn = document.getElementById('reload-btn');
-  btn.classList.add('spinning');
-  btn.addEventListener('animationend', () => btn.classList.remove('spinning'), { once:true });
-  loadOrders();
-});
-
-// ─── NOTIFICATION ─────────────────────────────────────────────────────────────
-function showNotif(icon, title, sub, btnClass) {
-  document.getElementById('notif-icon').innerText  = icon;
-  document.getElementById('notif-title').innerText = title;
-  document.getElementById('notif-sub').innerText   = sub;
-  document.getElementById('notif-btn').className = 'modal-btn ' + (btnClass==='green'?'btn-mint':btnClass==='red'?'btn-crimson':'btn-flame');
-  document.getElementById('notif-overlay').classList.add('show');
-  if (navigator.vibrate) navigator.vibrate(btnClass === 'red' ? [100,50,100] : [80]);
-}
-function closeNotif() { document.getElementById('notif-overlay').classList.remove('show'); }
-
-// ─── SOUND ────────────────────────────────────────────────────────────────────
-function playSound() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    function tone(f,t,d,v) {
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.connect(g); g.connect(ctx.destination); o.type='sine';
-      o.frequency.setValueAtTime(f,t);
-      g.gain.setValueAtTime(0,t);
-      g.gain.linearRampToValueAtTime(v,t+0.02);
-      g.gain.exponentialRampToValueAtTime(0.001,t+d);
-      o.start(t); o.stop(t+d);
+// ── API ────────────────────────────────────────────────────────────────────
+class ApiError extends Error {}
+async function call(method, action, body) {
+  if (DEMO) return Demo.handle(method, action, body);
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      let res;
+      if (method === 'GET') {
+        const qs = new URLSearchParams(Object.assign({ action, key: cfg.key, t: Date.now() }, body || {}));
+        res = await fetch(cfg.url + '?' + qs, { cache: 'no-store' });
+      } else {
+        res = await fetch(cfg.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                     body: JSON.stringify(Object.assign({ action, key: cfg.key }, body || {})) });
+      }
+      const text = (await res.text()).trim();
+      if (text.startsWith('<')) throw new ApiError('Google returned an error page');
+      const data = JSON.parse(text);
+      if (data.error === 'unauthorized') throw Object.assign(new ApiError('The access key was rejected'), { fatal: true });
+      if (data.ok === false && /^(busy|server)/.test(data.error || '')) throw new ApiError(data.error);
+      if (data.ok === false) throw Object.assign(new ApiError(data.error || 'Request failed'), { fatal: true });
+      return data;
+    } catch (e) {
+      lastErr = e;
+      if (e.fatal) break;
+      await new Promise(r => setTimeout(r, 900 * (attempt + 1)));
     }
-    const t=ctx.currentTime;
-    tone(659.25,t,0.18,0.4); tone(830.61,t+0.2,0.18,0.4); tone(987.77,t+0.4,0.28,0.5);
-  } catch(e) {}
-}
-
-// ─── STATS ────────────────────────────────────────────────────────────────────
-function updateStats(completedToday, pending, reviewCount) {
-  const te=document.getElementById('stat-today'),   pe=document.getElementById('stat-pending'),   re=document.getElementById('stat-review');
-  if (te) { te.innerText=completedToday; }
-  if (pe) { pe.innerText=pending; }
-  if (re) { re.innerText=reviewCount; }
-  // Highlight active pill
-  const pp=document.getElementById('pill-pending');
-  if (pp) pp.classList.toggle('active', pending > 0);
-  // In-app tab badge
-  const badge = document.getElementById('badge-orders');
-  if (badge) { if (pending > 0) { badge.innerText=pending; badge.style.display='flex'; } else badge.style.display='none'; }
-  // Home screen icon badge — the red number on the app icon
-  if ('setAppBadge' in navigator) {
-    if (pending > 0) navigator.setAppBadge(pending).catch(()=>{});
-    else             navigator.clearAppBadge().catch(()=>{});
   }
+  throw lastErr instanceof ApiError ? lastErr : new ApiError("Can't reach the sheet");
 }
+const get = (a, p) => call('GET', a, p);
+const post = (a, b) => call('POST', a, b);
 
-// ─── ANALYTICS ────────────────────────────────────────────────────────────────
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-function buildWeeklyData(orders) {
-  const result = {}; const today = new Date();
-  for (let i=6;i>=0;i--) { const d=new Date(today); d.setDate(d.getDate()-i); result[d.toDateString()]=0; }
-  orders.forEach(o => {
-    const oid = (o.OrderID||'').toString().trim();
-    if (!oid || oid.toLowerCase()==='pending') return;
-    const placed = (o.PlacedDate||'').toString().trim();
-    if (!placed) return;
-    try { const ds=new Date(placed).toDateString(); if (ds in result) result[ds]++; } catch(e) {}
-  });
-  return result;
-}
-function renderChart(data) {
-  const wrap = document.getElementById('perf-chart');
-  if (!wrap) return;
-  const entries = Object.entries(data);
-  const max = Math.max(...entries.map(e=>e[1]), 1);
-  const todayStr = new Date().toDateString();
-  wrap.innerHTML = entries.map(([ds, count]) => {
-    const isToday = ds===todayStr;
-    const barH = Math.max(Math.round((count/max)*100), count>0?8:2);
-    return `<div class="chart-col">
-      <div class="bwrap"><div class="chart-bar${isToday?' today':''}${count===0?' zero':''}" style="height:${barH}%"></div></div>
-      <div class="bval">${count>0?count:''}</div>
-      <div class="chart-day${isToday?' today':''}">${isToday?'Today':DAYS[new Date(ds).getDay()]}</div>
-    </div>`;
-  }).join('');
-}
-function updateAvgTime() {
-  const el=document.getElementById('avg-time-val'), sub=document.getElementById('avg-time-sub');
-  if (!el||!sub) return;
-  const saved = JSON.parse(localStorage.getItem('argatiTimings')||'{}');
-  if (saved.date===new Date().toDateString() && Array.isArray(saved.timings)) sessionTimings=saved.timings;
-  if (!sessionTimings.length) { el.innerText='--:--'; sub.innerText='no orders yet'; return; }
-  const avg=Math.round(sessionTimings.reduce((a,b)=>a+b,0)/sessionTimings.length);
-  const mm=String(Math.floor(avg/60)).padStart(2,'0'), ss=String(avg%60).padStart(2,'0');
-  el.innerText=mm+':'+ss;
-  sub.innerText='based on '+sessionTimings.length+' order'+(sessionTimings.length===1?'':'s');
-}
-function saveTimings() {
-  localStorage.setItem('argatiTimings', JSON.stringify({ date:new Date().toDateString(), timings:sessionTimings }));
-}
-
-// ─── HISTORY ──────────────────────────────────────────────────────────────────
-function addHistory(order, orderId, elapsed) {
-  const time = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
-  const mm=String(Math.floor(elapsed/60)).padStart(2,'0'), ss=String(elapsed%60).padStart(2,'0');
-  orderHistory.unshift({ rowNumber:order.rowNumber, name:(order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), product:getProduct(order.Produkti).name, orderId, time, elapsed:mm+':'+ss });
-  if (orderHistory.length>30) orderHistory.pop();
-  renderHistory();
-}
-function renderHistory() {
-  const c = document.getElementById('history-list-a');
-  if (!c) return;
-  if (!orderHistory.length) {
-    c.innerHTML = '<div class="empty-state" style="padding:28px 0"><div class="empty-glyph">📋</div><div class="empty-h" style="font-size:15px">No orders today</div><div class="empty-p">Completed orders appear here</div></div>';
-    return;
-  }
-  c.innerHTML = orderHistory.map((h, i) => `
-    <div class="hist-row">
-      <div class="hist-idx">${i + 1}</div>
-      <div class="hist-info">
-        <div class="hist-name">${h.name}</div>
-        <div class="hist-prod">${h.product}</div>
-      </div>
-      <div class="hist-meta">
-        <div class="hist-oid">${h.orderId}</div>
-        <div class="hist-time">${h.time}${h.elapsed ? ' · ' + h.elapsed : ''}</div>
-      </div>
-    </div>`).join('');
-}
-
-// Load today's completed orders from sheet into history
-function loadTodayHistory(orders) {
-  const todayStr = new Date().toDateString();
-  const todayOrders = orders.filter(o => {
-    const oid = (o.OrderID||'').toString().trim();
-    if (!oid || oid.toLowerCase()==='pending') return false;
-    const placed = (o.PlacedDate||'').toString().trim();
-    if (!placed) return false;
-    try { return new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
-  });
-
-  // Build entries from sheet
-  const sheetHistory = todayOrders.map(o => {
-    const placed = new Date((o.PlacedDate||'').toString());
-    const time   = placed.toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
-    return {
-      rowNumber: o.rowNumber,
-      name:    ((o.Emri||'').trim()+' '+(o.Mbiemri||'').trim()).trim(),
-      product: getProduct(o.Produkti).name,
-      orderId: (o.OrderID||'').toString().trim(),
-      time,
-      elapsed: null
-    };
-  }); // oldest first — sheet order is already chronological
-
-  // Merge: session entries take priority (have elapsed time)
-  const sessionIds = new Set(orderHistory.map(h => h.orderId));
-  const newFromSheet = sheetHistory.filter(h => !sessionIds.has(h.orderId));
-  const combined = [...orderHistory, ...newFromSheet];
-  combined.sort((a,b) => {
-    function toMin(t) {
-      if (!t) return 0;
-      const m=t.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-      if (!m) return 0;
-      let h=parseInt(m[1]),mn=parseInt(m[2]);
-      const ap=(m[3]||'').toUpperCase();
-      if(ap==='PM'&&h!==12) h+=12;
-      if(ap==='AM'&&h===12) h=0;
-      return h*60+mn;
-    }
-    return toMin(a.time)-toMin(b.time); // oldest first
-  });
-  orderHistory = combined.slice(0, 50);
-  renderHistory();
-}
-
-// ─── LOAD ORDERS ──────────────────────────────────────────────────────────────
-async function loadOrders(silent=false) {
-  const list = document.getElementById('order-list');
-  // Never clear the list while an order is processing
-  if (!silent && !isProcessing) list.innerHTML=`<div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div><div class="skel-line w40"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div><div class="skeleton"><div class="skel-line tall"></div><div class="skel-line w80"></div><div class="skel-line w60"></div></div>`;
+// ── Data ───────────────────────────────────────────────────────────────────
+async function refresh(force) {
+  if (S.loading || (!cfg.key && !DEMO)) return;
+  S.loading = true; render();
   try {
-    const res  = await Promise.race([fetch(SCRIPT_URL+'?t='+Date.now()),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Timed out.')),10000))]);
-    if (!res.ok) throw new Error('Server error ' + res.status);
-    const text = await res.text();
-    if (!text || text.trim()==='') throw new Error('Empty response from server');
-    let orders;
-    try { orders = JSON.parse(text); }
-    catch(pe) { throw new Error('Invalid response — check Apps Script deployment'); }
-
-    const todayStr = new Date().toDateString();
-    const completedToday = orders.filter(o => {
-      const oid=(o.OrderID||'').toString().trim();
-      if (!oid||oid.toLowerCase()==='pending') return false;
-      const placed=(o.PlacedDate||'').toString().trim();
-      try { return placed&&new Date(placed).toDateString()===todayStr; } catch(e) { return false; }
-    }).length;
-
-    allOrders = orders.filter(o => {
-      const oid=(o.OrderID||'').toString().trim();
-      if (oid!==''&&oid.toLowerCase()!=='pending') return false;
-      return (o.Produkti||'').toString().trim()!==''&&
-             (o.Emri    ||'').toString().trim()!==''&&
-             (o.Mbiemri ||'').toString().trim()!==''&&
-             (o.Telefoni||'').toString().trim()!==''&&
-             (o.Qyteti  ||'').toString().trim()!==''&&
-             (o.Adresa  ||'').toString().trim()!=='';
-    });
-
-    const reviewOrders = allOrders.filter(o => {
-      const c=(o['Koment shtese (Nese ka)']||'').toString().trim();
-      const ap=(o.Produkti||'').toString().trim();
-      // Only flag as review if: has comment, OR has + but NOT a known bundle
-      return c!=='' || (ap.includes('+') && !KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(ap)));
-    });
-
-    try { updateStats(completedToday, allOrders.length, reviewOrders.length); } catch(e) { console.warn('updateStats error:', e.message); }
-    try { weeklyData = buildWeeklyData(orders); } catch(e) { console.warn('buildWeeklyData error:', e.message); }
-    try { loadTodayHistory(orders); } catch(e) { console.warn('loadTodayHistory error:', e.message); }
-    // Full Auto Mode: approve and place clean orders automatically
-    try {
-      if (autoMode && !isProcessing && allOrders.length > 0) {
-        const cleanOrder = allOrders.find(o => {
-          const prod    = (o.Produkti||'').toString().trim();
-          const comment = (o['Koment shtese (Nese ka)']||'').toString().trim();
-          const phone   = (o.Telefoni||'').toString().trim().replace(/[\s\-().]/g,'').replace(/^\+3830?/,'0').replace(/^3830?/,'0');
-          const knownProducts = ['104','105','106','107','201','204','206','207','209','210'];
-          return !prod.includes('+') && comment==='' && knownProducts.includes(prod) && /^04\d{7}$/.test(phone);
-        });
-        if (cleanOrder) {
-          console.log('[AutoMode] Auto-approving order #'+cleanOrder.rowNumber);
-          setTimeout(()=>{
-            if (!isProcessing && autoMode) placeOrder(cleanOrder);
-          }, 2000);
-        }
-      }
-    } catch(e) { console.warn('autoMode error:', e.message); }
-    try { selectedRows.forEach(r => { if (!allOrders.find(o=>o.rowNumber==r)) selectedRows.delete(r); }); } catch(e) {}
-
-    // New order detection
-    try {
-      if (lastCount>=0 && allOrders.length>lastCount) {
-        const diff=allOrders.length-lastCount;
-        const banner=document.getElementById('new-order-banner');
-        if (banner) {
-          banner.innerText='🔔 '+diff+' new order'+(diff===1?'':'s')+' arrived!';
-          banner.style.display='block';
-          setTimeout(()=>{banner.style.display='none';}, 6000);
-        }
-        playSound();
-        if (navigator.vibrate) navigator.vibrate([200,80,200]);
-      }
-      lastCount = allOrders.length;
-    } catch(e) { console.warn('banner error:', e.message); }
-
-    // This must always run — shows orders or empty state
-    renderOrderList(allOrders, reviewOrders);
-    if (allOrders.length>0) currentOrder = allOrders[0];
-
-    // Auto-pilot
-    try {
-      if (autoPilot && !isProcessing && currentOrder) {
-        const raw=(currentOrder.Produkti||'').toString().trim();
-        const cm=(currentOrder['Koment shtese (Nese ka)']||'').toString().trim();
-        if (!raw.includes('+')&&cm==='') {
-          setTimeout(()=>{ if (!isProcessing&&currentOrder&&autoPilot) placeOrder(currentOrder); }, 3000);
-        }
-      }
-    } catch(e) { console.warn('autopilot error:', e.message); }
-
-  } catch(e) {
-    const msg='Error: '+(e.message||'unknown');
-    console.error('loadOrders failed:', e.message);
-    if (!silent) list.innerHTML='<div class="loading" style="color:var(--red)">⚠ '+msg+'<br><br><small style="color:var(--muted)">Make sure Apps Script is deployed as Anyone</small><br><br><button onclick="loadOrders()" style="margin-top:14px;background:var(--flame);color:white;border:none;border-radius:10px;padding:10px 24px;font-weight:700;cursor:pointer;font-family:inherit;">↻ Retry</button></div>';
-    throw e; // rethrow so startupLoad can retry
+    const [status, pending] = await Promise.all([get('status'), get('pending')]);
+    S.status = status; S.pending = pending; S.offset = (pending.now || Date.now()) - Date.now();
+    S.lastOk = Date.now(); S.error = '';
+    if (force || S.tab !== 'queue' || Date.now() - S.recentAt > 60000) await refreshRecent();
+    tellWorker();
+  } catch (e) {
+    S.error = e.message || "Can't reach the sheet";
   }
+  S.loading = false; render();
+}
+async function refreshRecent() {
+  try { const r = await get('recent', { limit: 300 }); S.recent = r.orders || []; S.recentAt = Date.now(); } catch (e) {}
 }
 
-// ─── RENDER ORDER LIST ────────────────────────────────────────────────────────
-function renderOrderList(orders, reviewOrders) {
-  if (!orders) orders = allOrders;
-  if (!reviewOrders) reviewOrders = (orders || []).filter(o => {
-    const ac = (o['Koment shtese (Nese ka)']||'').toString().trim();
-    const ap = (o.Produkti||'').toString().trim();
-    return ac !== '' || (ap.includes('+') && !KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(ap)));
-  });
-  const list = document.getElementById('order-list');
-  if (!orders || !orders.length) {
-    list.innerHTML='<div class="empty-state"><div class="empty-glyph">🎉</div><div class="empty-h">All caught up!</div><div class="empty-p">No pending orders right now.</div></div>';
-    return;
-  }
-  // Review orders first, then clean
-  const sorted=[...reviewOrders,...orders.filter(o=>!reviewOrders.includes(o))];
-  const hint=orders.length>1?'<p class="section-eye">Tap to select · Swipe for actions</p>':'<p class="section-eye">Pending order · Swipe for actions</p>';
-  list.innerHTML=hint+sorted.map(o=>buildOrderCard(o)).join('');
-  sorted.forEach(o=>{
-    const card=document.getElementById('card-'+o.rowNumber);
-    if (card) card.addEventListener('click',()=>toggleSelect(o.rowNumber,o));
+function products() {
+  const m = {};
+  ((S.pending && S.pending.products) || []).forEach(p => m[p.code] = p);
+  return m;
+}
+function productLabel(code) {
+  const m = products(); code = String(code || '').trim();
+  if (m[code]) return m[code].name;
+  if (code.includes('+')) return code.split('+').map(c => (m[c.trim()] || {}).name || c.trim()).join(' + ');
+  return code || 'No product';
+}
+function items() {
+  if (!S.pending) return [];
+  const verdicts = {};
+  (((S.status || {}).state || {}).verdicts || []).forEach(v => verdicts[v.row] = v);
+  const now = serverNow();
+  return (S.pending.rows || []).map(r => {
+    const v = verdicts[r.row] || { state: 'unknown', reason: 'The runner hasn’t looked at this row yet.' };
+    let state = v.state, reason = humanReason(v.state, v.reason);
+    const until = r.lastEdit ? r.lastEdit + QUIET_MS : 0;
+    if (until > now && !['manual', 'blocked'].includes(state)) { state = 'waiting'; reason = 'Waiting until edits stop'; }
+    if (state === 'waiting' && until <= now) reason = 'Placing on the next check';
+    return Object.assign({}, r, { state, reason, until, qty: v.qty || 1, productName: v.productName || productLabel(r.product),
+                                  city: v.city || r.city, name: (r.first + ' ' + r.last).trim() || 'No name',
+                                  approved: S.approved[r.row] && Date.now() - S.approved[r.row] < 180000 });
   });
 }
+function todayStats() {
+  const today = dayKey(new Date()); let n = 0, sum = 0;
+  S.recent.forEach(o => { const d = new Date(o.placedAt); if (!isNaN(d) && dayKey(d) === today) { n++; sum += parseMoney(o.total); } });
+  return { n, sum };
+}
 
-function buildOrderCard(o) {
-  const sel   = selectedRows.has(o.rowNumber);
-  const rev   = o._isReview;
-  const proc  = o._processing;
-  const emri  = (o.Emri||'').trim();
-  const mbi   = (o.Mbiemri||'').trim();
-  const prod  = o._productName || o.Produkti || '';
-  const city  = (o.Qyteti||'').trim() || '—';
-  const phone = (o.Telefoni||'').toString().trim() || '—';
-  const comment = (o['Koment shtese (Nese ka)']||'').toString().trim();
-  const initials = avatarInitials(emri, mbi);
-  const color    = avatarColor(emri + mbi);
+function humanReason(state, reason) {
+  const r = String(reason || '');
+  if (state === 'manual') return 'Two products, not a GjirafaMall bundle. Place it on the site, then add the Order ID.';
+  if (/^Older row/.test(r)) return 'Entered before automatic ordering started. Approve to place it.';
+  if (/^Has note:/.test(r)) return 'Has a note the runner can’t act on. Read it, then approve.';
+  if (/^Clean/.test(r)) return 'Everything checks out. Waiting for automatic ordering or your approval.';
+  if (/^Shadow/.test(r)) return 'Test mode is on, so nothing is sent to GjirafaMall.';
+  if (/^Pending for/.test(r)) return 'This row has waited for days. Approve to place it anyway.';
+  if (/^Unverified send/.test(r)) return 'It was sent, but no Order ID came back. Check the back office first.';
+  if (/^Possible duplicate of/.test(r)) return r.replace('Possible duplicate of', 'Same customer and product as').replace(/\)$/, ')') + '. Approve only if they ordered again.';
+  if (/^No price on product page/.test(r)) return 'The product page shows €0.00, so it can’t be ordered right now.';
+  return r;
+}
 
-  let badgeHtml = '';
-  if (proc) badgeHtml = '<span class="oc-badge badge-proc">Placing…</span>';
-  else if (rev) badgeHtml = '<span class="oc-badge badge-review">Review</span>';
-  else badgeHtml = '<span class="oc-badge badge-clean">Clean</span>';
+// ── Render ─────────────────────────────────────────────────────────────────
+function render() {
+  if (!cfg.key && !DEMO) return renderSetup();
+  const list = items();
+  const needs = list.filter(i => STATES[i.state] && STATES[i.state].group === 'needs');
+  const soon = list.filter(i => !STATES[i.state] || STATES[i.state].group === 'soon');
+  const st = S.status, runner = st && st.runner;
+  const online = runner && runner.online;
+  document.title = needs.length ? `(${needs.length}) Argati` : 'Argati';
+  try { if (navigator.setAppBadge) needs.length ? navigator.setAppBadge(needs.length) : navigator.clearAppBadge(); } catch (e) {}
 
-  let commentHtml = '';
-  if (comment) commentHtml = `<div class="oc-meta warn"><i class="ti ti-message-circle"></i>${comment.slice(0,28)}${comment.length>28?'…':''}</div>`;
+  let body = '';
+  if (S.tab === 'queue') body = viewQueue(needs, soon);
+  if (S.tab === 'placed') body = viewPlaced();
+  if (S.tab === 'insights') body = viewInsights();
+  if (S.tab === 'settings') body = viewSettings();
 
-  let stepHtml = '';
-  if (proc && o._step) {
-    const stepNames = ['','Opening','Clicking','Shipping','Name','City','Address','Payment','Submitting','Confirming','Writing ID'];
-    stepHtml = `<div class="oc-meta" style="color:var(--mint)"><i class="ti ti-loader"></i>Step ${o._step}: ${stepNames[o._step]||'…'}</div>`;
-  }
-
-  return `<div class="order-card${rev?' review':''}${sel?' selected':''}${proc?' processing':''}" id="card-${o.rowNumber}" onclick="handleCardTap(${o.rowNumber},event)">
-    <div class="oc-indicator"></div>
-    <div class="oc-top">
-      <div class="oc-avatar" style="background:${color}">${initials}</div>
-      <div class="oc-info">
-        <div class="oc-name">${emri} ${mbi}</div>
-        <div class="oc-prod">${prod}</div>
-      </div>
-      ${badgeHtml}
+  const runnerTxt = !st ? 'Connecting' : online ? (st.state && st.state.mode === 'shadow' ? 'Test mode' : 'Running')
+                  : runner && runner.seenAgoSec != null ? 'Offline' : 'No runner';
+  $('#app').innerHTML = `
+    <div class="wrap">
+      <header class="top">
+        <div class="brand">Argati<small>Parts Center orders</small></div>
+        <button class="runner" data-act="tab" data-tab="settings" aria-label="Runner status: ${esc(runnerTxt)}">
+          <span class="dot ${online ? 'on' : st ? 'off' : ''}"></span>${esc(runnerTxt)}</button>
+        <button class="icon-btn" data-act="refresh" aria-label="Refresh"><i class="ti ti-refresh ${S.loading ? 'spin' : ''}"></i></button>
+      </header>
+      ${S.error ? `<div class="banner bad" role="alert"><i class="ti ti-cloud-off"></i><div><b>${esc(S.error)}.</b>
+        ${S.lastOk ? 'Showing data from ' + ago(Math.round((Date.now() - S.lastOk) / 1000)) + '.' : ''}</div>
+        <button data-act="refresh">Try again</button></div>` : ''}
+      ${body}
     </div>
-    <div class="oc-footer">
-      <div class="oc-meta"><i class="ti ti-map-pin"></i>${city}</div>
-      <div class="oc-meta"><i class="ti ti-phone"></i>${phone}</div>
-      ${commentHtml}${stepHtml}
-      <div class="oc-rownum">#${o.rowNumber}</div>
+    <div class="tabs"><nav aria-label="Sections">
+      ${tabBtn('queue', 'ti-list-check', 'Queue', needs.length)}
+      ${tabBtn('placed', 'ti-receipt', 'Placed')}
+      ${tabBtn('insights', 'ti-chart-bar', 'Insights')}
+      ${tabBtn('settings', 'ti-adjustments-horizontal', 'Settings')}
+    </nav></div>`;
+  tickCountdowns();
+  if (S.open != null) renderSheet();
+}
+function tabBtn(id, icon, label, badge) {
+  return `<button class="tab" data-act="tab" data-tab="${id}" ${S.tab === id ? 'aria-current="page"' : ''}>
+    <i class="ti ${icon}"></i>${label}${badge ? `<span class="badge">${badge}</span>` : ''}</button>`;
+}
+
+function headline(needs, soon) {
+  const st = S.status;
+  if (!st) return { text: 'Connecting to the sheet…', cls: '' };
+  const r = st.runner || {};
+  if (!r.online) return { text: r.seenAgoSec != null ? 'The runner is offline. Orders aren’t being placed.' : 'No runner has connected yet.', cls: 'bad' };
+  if (!st.autoMode) return { text: 'Automatic ordering is paused.', cls: 'attn' };
+  if (needs.length) return { text: plural(needs.length, 'order needs you.', 'orders need you.'), cls: 'attn' };
+  const waiting = soon.filter(i => i.state === 'waiting').length;
+  if (waiting) return { text: `Placing ${plural(waiting, 'order', 'orders')} shortly.`, cls: '' };
+  return { text: 'All clear.', cls: '' };
+}
+
+function viewQueue(needs, soon) {
+  const h = headline(needs, soon), t = todayStats(), st = S.status;
+  const waiting = soon.filter(i => i.state === 'waiting').sort((a, b) => a.until - b.until);
+  let sub = '';
+  if (st && st.runner && !st.runner.online && st.runner.seenAgoSec != null) sub = `Last seen ${ago(st.runner.seenAgoSec)}. Check that the office Mac is awake and online.`;
+  else if (st && !st.autoMode) sub = 'Clean orders wait for you. Turn it back on in Settings.';
+  else sub = `<b class="num">${t.n}</b> placed today${t.sum ? `, <b class="num">${money(t.sum)}</b>` : ''}.`;
+  return `
+    <section class="hero" aria-live="polite">
+      <h1 class="headline ${h.cls}">${esc(h.text)}</h1>
+      <p class="sub">${sub}</p>
+      ${waiting.length ? `<div class="track" aria-label="Orders counting down">${waiting.map(i => `
+        <button class="tick" data-act="open" data-row="${i.row}" aria-label="${esc(i.name)}, places in a moment">
+          <span class="ring" data-until="${i.until}"><span class="num">--</span></span>
+          <span><span class="who">${esc(i.first || i.name)}</span><br><span class="what">${esc(i.product)}${i.qty > 1 ? ' ×' + i.qty : ''}</span></span>
+        </button>`).join('')}</div>` : ''}
+    </section>
+    ${section('Needs you', needs, needs.length ? '' : `<div class="empty"><b>Nothing waiting for you.</b>Review items, combinations and problems show up here.</div>`)}
+    ${soon.length ? section('Coming up', soon) : ''}
+    ${!needs.length && !soon.length && S.pending ? '' : ''}`;
+}
+function section(title, list, empty) {
+  return `<section class="section"><h2>${title}<span class="count num">${list.length || ''}</span></h2>
+    <div class="panel">${list.length ? list.map(rowHtml).join('') : empty || ''}</div></section>`;
+}
+function rowHtml(i) {
+  const s = STATES[i.state] || STATES.unknown;
+  let action = '';
+  if (i.approved && ['review', 'unverified', 'ready'].includes(i.state)) action = `<span class="chip">Approved</span>`;
+  else if (i.state === 'review') action = `<span class="btn primary" data-act="approve" data-row="${i.row}">Approve</span>`;
+  else if (i.state === 'manual') action = `<span class="btn quiet" data-act="open" data-row="${i.row}">Add ID</span>`;
+  else if (i.state === 'waiting') action = `<span class="ring" data-until="${i.until}"><span class="num">--</span></span>`;
+  return `<button class="row t-${s.tone}" data-act="open" data-row="${i.row}">
+    <div class="main">
+      <div class="name">${esc(i.name)} <span class="code">${esc(i.product)}</span></div>
+      <div class="line2">${esc(i.productName)}${i.qty > 1 ? ' ×' + i.qty : ''}, ${esc(i.city || 'no city')}</div>
+      <div class="why"><span class="state">${esc(s.label)}.</span> ${esc(i.reason || '')}</div>
+    </div>${action}</button>`;
+}
+
+function viewPlaced() {
+  const q = S.query.trim().toLowerCase();
+  const list = S.recent.filter(o => !q || [o.name, o.orderId, o.city, o.product, o.productName].join(' ').toLowerCase().includes(q));
+  const groups = [];
+  list.forEach(o => {
+    const d = new Date(o.placedAt), k = isNaN(d) ? 'unknown' : dayKey(d);
+    let g = groups[groups.length - 1];
+    if (!g || g.k !== k) groups.push(g = { k, d, items: [], sum: 0 });
+    g.items.push(o); g.sum += parseMoney(o.total);
+  });
+  const label = g => {
+    if (g.k === 'unknown') return 'Earlier';
+    const today = new Date(), y = new Date(Date.now() - 86400000);
+    if (g.k === dayKey(today)) return 'Today';
+    if (g.k === dayKey(y)) return 'Yesterday';
+    return g.d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+  return `
+    <label class="search"><i class="ti ti-search"></i>
+      <input type="search" id="q" placeholder="Search name, Order ID or city" value="${esc(S.query)}" autocomplete="off" enterkeyhint="search"></label>
+    ${!S.recentAt ? `<div class="empty">Loading placed orders…</div>` :
+      !groups.length ? `<div class="empty"><b>No matches.</b>Try a surname or an Order ID like 1277076.</div>` :
+      groups.map(g => `<div class="day"><span>${label(g)}</span><span class="num">${plural(g.items.length, 'order', 'orders')}${g.sum ? ', ' + money(g.sum) : ''}</span></div>
+        <div class="panel">${g.items.map(o => {
+          const d = new Date(o.placedAt);
+          return `<div class="prow"><div class="main"><div class="name">${esc(o.name)}</div>
+            <div class="line2">${isNaN(d) ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ', '}${esc(o.productName)}, ${esc(o.city)}</div></div>
+            <div class="right"><button class="oid num" data-act="copy" data-text="${esc(o.orderId)}" aria-label="Copy ${esc(o.orderId)}">${esc(o.orderId)}</button>
+            <div class="total num">${o.total ? money(parseMoney(o.total)) : ''}</div></div></div>`;
+        }).join('')}</div>`).join('')}`;
+}
+
+function viewInsights() {
+  const orders = S.recent.map(o => Object.assign({}, o, { d: new Date(o.placedAt), v: parseMoney(o.total) })).filter(o => !isNaN(o.d));
+  if (!orders.length) return `<div class="empty" style="margin-top:20px"><b>No data yet.</b>Insights appear once orders are placed.</div>`;
+  const now = new Date(), start = d => { const x = new Date(now); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - d); return x; };
+  const sumIn = from => orders.filter(o => o.d >= from).reduce((a, o) => ({ n: a.n + 1, v: a.v + o.v }), { n: 0, v: 0 });
+  const t = sumIn(start(0)), w = sumIn(start(6)), m = sumIn(start(29));
+  const days = [...Array(14)].map((_, i) => { const d = start(13 - i), k = dayKey(d);
+    const os = orders.filter(o => dayKey(o.d) === k); return { d, n: os.length, v: os.reduce((a, o) => a + o.v, 0) }; });
+  const max = Math.max(1, ...days.map(d => d.n)), W = 600, H = 150, bw = W / 14;
+  const svg = `<svg viewBox="0 0 ${W} ${H + 22}" role="img" aria-label="Orders per day, last 14 days">${days.map((d, i) => {
+      const h = Math.max(d.n ? 4 : 1, (d.n / max) * H), x = i * bw + 5, isToday = i === 13;
+      return `<rect x="${x}" y="${H - h}" width="${bw - 10}" height="${h}" rx="4" fill="${isToday ? 'var(--flame)' : 'var(--steel)'}" opacity="${isToday ? 1 : .55}"><title>${d.d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: ${d.n} orders</title></rect>
+        ${d.n ? `<text x="${x + (bw - 10) / 2}" y="${H - h - 5}" text-anchor="middle" class="axis num">${d.n}</text>` : ''}
+        ${i % 2 === 1 || isToday ? `<text x="${x + (bw - 10) / 2}" y="${H + 16}" text-anchor="middle" class="axis">${isToday ? 'Today' : d.d.getDate()}</text>` : ''}`;
+    }).join('')}</svg>`;
+  const top = key => { const c = {}; orders.filter(o => o.d >= start(29)).forEach(o => { const k = o[key] || '—'; c[k] = (c[k] || 0) + 1; });
+    return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 6); };
+  const bars = rows => { const mx = Math.max(1, ...rows.map(r => r[1]));
+    return `<div class="panel bars">${rows.map(([k, n]) => `<div class="item"><span class="label">${esc(k)}</span><span class="val num">${n}</span>
+      <span class="bar"><i style="width:${(n / mx) * 100}%"></i></span></div>`).join('')}</div>`; };
+  return `
+    <div class="figures">
+      <div class="fig"><div class="k">Today</div><div class="v num">${t.n}</div><div class="m num">${money(t.v)}</div></div>
+      <div class="fig"><div class="k">7 days</div><div class="v num">${w.n}</div><div class="m num">${money(w.v)}</div></div>
+      <div class="fig"><div class="k">30 days</div><div class="v num">${m.n}</div><div class="m num">${money(m.v)}</div></div>
     </div>
-  </div>`;
-}
-function toggleSelect(rowNumber, order) {
-  haptic('light');
-  if (selectedRows.has(rowNumber)) selectedRows.delete(rowNumber);
-  else selectedRows.add(rowNumber);
-  const card=document.getElementById('card-'+rowNumber);
-  if (card) {
-    card.classList.toggle('selected', selectedRows.has(rowNumber));
-    const check=card.querySelector('.card-check');
-    if (check) check.innerText=selectedRows.has(rowNumber)?'✓':'';
-  }
-  // Set as current order too
-  if (order&&selectedRows.has(rowNumber)) currentOrder=order;
-  updateFAB();
-}
-function clearSelection() {
-  selectedRows.forEach(r=>{
-    const card=document.getElementById('card-'+r);
-    if (card) { card.classList.remove('selected'); const c=card.querySelector('.card-check'); if (c) c.innerText=''; }
-  });
-  selectedRows.clear(); updateFAB();
-}
-function updateFAB() {
-  const fab = document.getElementById('fab');
-  const n   = selectedRows.size;
-  // Don't show FAB while an order is being placed
-  fab.style.display = (n > 0 && !isProcessing) ? 'block' : 'none';
-  document.getElementById('fab-count').innerText = n + (n === 1 ? ' order selected' : ' orders selected');
+    <section class="section"><h2>Orders per day</h2><div class="panel chart">${svg}</div></section>
+    <section class="section"><h2>Top products, 30 days</h2>${bars(top('productName'))}</section>
+    <section class="section"><h2>Top cities, 30 days</h2>${bars(top('city'))}</section>
+    <p class="note">Based on the latest ${plural(orders.length, 'order', 'orders')} in the sheet.</p>`;
 }
 
-// renderPlacePage removed
-
-// ─── TIMER ────────────────────────────────────────────────────────────────────
-function startTimer() {
-  timerStart = Date.now();
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    const e   = Math.floor((Date.now() - timerStart) / 1000);
-    const str = String(Math.floor(e / 60)).padStart(2,'0') + ':' + String(e % 60).padStart(2,'0');
-    const el  = document.getElementById('prog-timer');
-    if (el) el.innerText = str;
-  }, 1000);
-}
-function stopTimer() {
-  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-  const elapsed = timerStart ? Math.floor((Date.now() - timerStart) / 1000) : 0;
-  timerStart = null;
-  return elapsed;
-}
-
-// ─── PLACE ORDER ──────────────────────────────────────────────────────────────
-// On iPhone: approve flag → desktop extension picks up within 1 min → places order
-// Desktop result comes back via poll → push notification
-// ─── PROGRESS UI ──────────────────────────────────────────────────────────────
-const PLACE_STEPS = [
-  'Sending to desktop…',
-  'Opening product page',
-  'Clicking buy button',
-  'Selecting shipping',
-  'Filling name & phone',
-  'Selecting city',
-  'Filling address',
-  'Payment method',
-  'Submitting order',
-  'Waiting for confirmation',
-  'Writing Order ID ✅',
-];
-
-function openProgress(order) {
-  const overlay = document.getElementById('progress-overlay');
-  overlay.style.display = 'flex';
-  document.getElementById('prog-title').innerText = 'Placing Order #' + order.rowNumber;
-  document.getElementById('prog-name').innerText = (order.Emri||'').trim() + ' ' + (order.Mbiemri||'').trim() + ' — ' + getProduct(order.Produkti).name;
-  document.getElementById('prog-bar').style.width = '5%';
-  document.getElementById('prog-error').style.display  = 'none';
-  document.getElementById('prog-result').style.display = 'none';
-  document.getElementById('prog-done').style.display   = 'none';
-  renderProgSteps(0);
-  startTimer();
+function viewSettings() {
+  const st = S.status || {}, r = st.runner || {}, rs = st.state || {};
+  const push = pushState();
+  return `
+    <section class="section"><h2>Ordering</h2><div class="panel">
+      <div class="setting"><div class="main"><div class="t">Automatic ordering</div>
+        <div class="d">${st.autoMode ? 'Clean orders are placed 2 minutes after the last edit.' : 'Paused. Clean orders wait for your approval.'}</div></div>
+        <label class="switch" aria-label="Automatic ordering"><input type="checkbox" data-act="auto" ${st.autoMode ? 'checked' : ''} ${S.status ? '' : 'disabled'}><span class="tr"></span></label></div>
+      <div class="setting"><div class="main"><div class="t">Runner</div>
+        <div class="d">${r.id ? esc(r.id.replace(/\.local$/, '')) + ', ' : ''}${r.online ? 'online' : 'offline'}, checked in ${ago(r.seenAgoSec)}${rs.mode ? ', ' + (rs.mode === 'live' ? 'live' : 'test mode') : ''}</div></div>
+        <span class="dot ${r.online ? 'on' : 'off'}"></span></div>
+      ${rs.stats ? `<div class="setting"><div class="main"><div class="t">Placed by the runner today</div>
+        <div class="d">Running for ${rs.stats.uptimeMin >= 60 ? Math.floor(rs.stats.uptimeMin / 60) + ' h ' + (rs.stats.uptimeMin % 60) + ' min' : rs.stats.uptimeMin + ' min'}</div></div>
+        <span class="oid num">${rs.stats.placedToday}</span></div>` : ''}
+    </div></section>
+    <section class="section"><h2>Notifications</h2><div class="panel">
+      <div class="setting"><div class="main"><div class="t">Notifications on this device</div><div class="d">${esc(push.text)}</div></div>
+        ${push.can ? `<button class="btn ${push.on ? 'quiet' : 'primary'}" data-act="push">${push.on ? 'Re-enable' : 'Turn on'}</button>` : ''}</div>
+      <div class="setting"><div class="main"><div class="t">Send a test</div><div class="d">Goes to every device with notifications on.</div></div>
+        <button class="btn quiet" data-act="testpush">Send test</button></div>
+    </div></section>
+    <section class="section"><h2>Connection</h2><div class="panel">
+      <label class="field"><span>Access key</span><input id="key" type="password" value="${esc(cfg.key)}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label class="field"><span>Apps Script URL</span><input id="url" type="url" value="${esc(cfg.url)}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <div class="field"><button class="btn quiet block" data-act="saveconn">Save and test connection</button></div>
+    </div>
+    ${st.sheetUrl ? `<p class="note"><a href="${esc(st.sheetUrl)}" target="_blank" rel="noopener">Open the orders sheet</a></p>` : ''}
+    <p class="note">Argati ${APP_VERSION}${st.version ? ', server ' + esc(st.version) : ''}${DEMO ? ', demo data' : ''}.
+      ${DEMO ? '<a href="./">Leave the demo</a>' : '<a href="?demo">Open a demo with sample data</a>'}</p></section>`;
 }
 
-function renderProgSteps(activeStep) {
-  const container = document.getElementById('prog-steps');
-  if (!container) return;
-  // Show steps 0..10, highlight current
-  container.innerHTML = PLACE_STEPS.map((label, i) => {
-    const done   = i < activeStep;
-    const active = i === activeStep;
-    const col    = done ? 'var(--mint)' : active ? 'var(--flame)' : 'var(--t4)';
-    const dot    = done ? '✓' : active ? '◉' : '○';
-    const weight = active ? '700' : done ? '600' : '400';
-    return `<div style="display:flex;align-items:center;gap:10px;font-size:12px;
-      color:${col};font-weight:${weight};transition:all .3s">
-      <span style="font-size:10px;width:12px;text-align:center;flex-shrink:0">${dot}</span>
-      <span>${label}</span>
-    </div>`;
-  }).join('');
-  // Progress bar
-  const pct = Math.round((activeStep / (PLACE_STEPS.length - 1)) * 100);
-  const bar = document.getElementById('prog-bar');
-  if (bar) bar.style.width = Math.max(5, pct) + '%';
-}
-
-function updateProgStep(step) {
-  renderProgSteps(step);
-}
-
-function closeProgress() {
-  document.getElementById('progress-overlay').style.display = 'none';
-  stopTimer();
-}
-
-async function placeOrder(order) {
-  if (isProcessing) return;
-  const phone = validatePhone(order.Telefoni);
-  if (phone.warning) { showNotif('⚠️', 'Invalid Phone', phone.warning, 'red'); return; }
-
-  isProcessing = true;
-  openProgress(order);
-  // Hide FAB while processing
-  document.getElementById('fab').style.display = 'none';
-
-  try {
-    const res = await fetch(SCRIPT_URL + '?action=approve&row=' + order.rowNumber + '&t=' + Date.now());
-    let success = false;
-    try { const d = JSON.parse(await res.text()); success = d.success === true; }
-    catch(e) { success = res.status >= 200 && res.status < 400; }
-
-    if (success) {
-      updateProgStep(1);
-      pollForResult(order.rowNumber, order, 0);
-    } else {
-      finishOrder(false, order, null, 'Approval failed — check connection and retry.');
-    }
-  } catch(e) {
-    finishOrder(false, order, null, e.message || 'Connection error');
-  }
-}
-
-function pollForResult(rowNumber, order, attempts) {
-  const MAX = 36; // 36×5s = 3min
-  setTimeout(async () => {
-    try {
-      const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
-      const orders = await res.json();
-      const row    = orders.find(o => o.rowNumber == rowNumber);
-      if (row) {
-        const oid = (row.OrderID || '').toString().trim();
-        if (oid && oid.toLowerCase() !== 'pending') {
-          updateProgStep(10);
-          finishOrder(true, order, oid, null);
-          return;
-        }
-      }
-      // Simulate realistic step progression based on elapsed time
-      const elapsed = attempts * 5;
-      if      (elapsed < 5)  updateProgStep(1);
-      else if (elapsed < 10) updateProgStep(2);
-      else if (elapsed < 15) updateProgStep(4);
-      else if (elapsed < 20) updateProgStep(6);
-      else if (elapsed < 30) updateProgStep(8);
-      else                   updateProgStep(9);
-
-      if (attempts < MAX) pollForResult(rowNumber, order, attempts + 1);
-      else finishOrder(false, order, null, 'Timed out after 3 minutes.\nMake sure your PC is on and server is running.');
-    } catch(e) {
-      if (attempts < MAX) pollForResult(rowNumber, order, attempts + 1);
-      else finishOrder(false, order, null, 'Connection lost. Check server.');
-    }
-  }, 5000);
-}
-
-function finishOrder(success, order, orderId, errorMsg) {
-  const elapsed = stopTimer();
-  isProcessing  = false;
-
-  if (success) {
-    updateProgStep(10);
-    sessionTimings.push(elapsed); saveTimings();
-    addHistory(order, orderId, elapsed);
-    haptic('success');
-    playSound();
-    // Show success in overlay
-    document.getElementById('prog-result').style.display = 'block';
-    document.getElementById('prog-oid').innerText = 'Order ID: ' + orderId;
-    document.getElementById('prog-done').style.display = 'block';
-    document.getElementById('prog-done').style.background = 'linear-gradient(135deg,var(--mint),#00c48a)';
-    document.getElementById('prog-done').style.color = '#003d2a';
-    document.getElementById('prog-title').innerText = '✅ Order Placed!';
-    // Auto-close after 4s
-    setTimeout(() => {
-      closeProgress();
-      loadOrders(true);
-    }, 4000);
-  } else {
-    haptic('heavy');
-    document.getElementById('prog-error').style.display = 'block';
-    document.getElementById('prog-error').innerText = errorMsg;
-    document.getElementById('prog-done').style.display = 'block';
-    document.getElementById('prog-done').style.background = 'linear-gradient(135deg,#ef4444,#f87171)';
-    document.getElementById('prog-done').style.color = 'white';
-    document.getElementById('prog-title').innerText = '❌ Order Failed';
-  }
-  // Restore FAB
-  updateFAB();
-}
-
-// ─── APPROVE SELECTED (multi-select from Orders tab) ─────────────────────────
-async function approveSelected() {
-  if (selectedRows.size===0) return;
-  haptic('medium');
-  const btn=document.getElementById('fab-btn');
-  btn.disabled=true; btn.innerText='⏳ Sending...';
-  const toProcess=allOrders.filter(o=>selectedRows.has(o.rowNumber));
-  const n=toProcess.length;
-
-  try {
-    // 1. Approve all rows in Apps Script in parallel
-    const approvalResults = await Promise.all(
-      toProcess.map(async order => {
-        try {
-          const res = await fetch(SCRIPT_URL+'?action=approve&row='+order.rowNumber+'&t='+Date.now());
-          const d   = await res.json().catch(()=>({}));
-          return { order, ok: d.success===true };
-        } catch(e) {
-          return { order, ok: false };
-        }
-      })
-    );
-
-    const approved = approvalResults.filter(r=>r.ok).map(r=>r.order);
-    const failed   = approvalResults.filter(r=>!r.ok).length;
-
-    if (approved.length === 0) {
-      showNotif('⚠️','All failed','Could not approve orders. Check connection.','red');
-      btn.disabled=false; btn.innerText='Place ▶'; return;
-    }
-
-    // 2. Send ALL approved orders to watcher in one batch call
-    // This ensures server queues them all at once instead of receiving
-    // separate notify calls that could race
-    try {
-      const watcherUrl = SCRIPT_URL.replace('script.google.com/macros/s/', '')
-        .replace('/exec', ''); // not used directly — go via Apps Script
-      // Use a dedicated batch endpoint in Apps Script
-      await fetch(SCRIPT_URL+'?action=approveAll&rows='+approved.map(o=>o.rowNumber).join(',')+'&t='+Date.now());
-    } catch(e) { /* fallback: individual notifies already sent above */ }
-
-    clearSelection();
-    btn.disabled=false; btn.innerText='Place ▶';
-
-    if (failed===0) {
-      showNotif('📤', n===1?'1 order sent!':n+' orders sent!',
-        'Desktop is placing them in sequence.\nYou\'ll be notified as each completes.','green');
-    } else {
-      showNotif('⚠️','Mostly sent',
-        (n-failed)+' of '+n+' sent. '+failed+' failed — retry those.','green');
-    }
-
-    // Show progress for first order; others tracked silently
-    if (approved.length === 1) {
-      isProcessing = true;
-      openProgress(approved[0]);
-      updateProgStep(1);
-      pollForResult(approved[0].rowNumber, approved[0], 0);
-    } else {
-      // Multi-order: just reload when done, no individual progress overlay
-      const checkDone = (idx) => {
-        if (idx >= approved.length) { setTimeout(() => loadOrders(true), 1000); return; }
-        pollForResult(approved[idx].rowNumber, approved[idx], 0);
-        setTimeout(() => checkDone(idx + 1), 500);
-      };
-      checkDone(0);
-    }
-
-  } catch(e) {
-    btn.disabled=false; btn.innerText='Place ▶';
-    showNotif('❌','Error',e.message,'red');
-  }
-}
-
-// ─── PLACE ORDER BUTTON ───────────────────────────────────────────────────────
-// place-order-btn removed from HTML — orders placed via FAB
-// const _pob=document.getElementById('place-order-btn');
-// if(_pob) _pob.addEventListener('click',()=>{ if(currentOrder&&!isProcessing) placeOrder(currentOrder); });
-
-
-// ─── WEB PUSH NOTIFICATIONS ───────────────────────────────────────────────────
-function urlBase64ToUint8Array(b64) {
-  const pad='='.repeat((4-b64.length%4)%4);
-  const raw=atob((b64+pad).replace(/-/g,'+').replace(/_/g,'/'));
-  return Uint8Array.from({length:raw.length},(_,i)=>raw.charCodeAt(i));
-}
-
-function checkNotifBar() {
-  const bar=document.getElementById('notif-bar');
-  const statusText=document.getElementById('notif-status-text');
-  const toggleBtn=document.getElementById('notif-toggle-btn');
-  if (!('Notification' in window)||!('serviceWorker' in navigator)) {
-    if (bar) bar.style.display='none';
-    if (statusText) statusText.innerText='Not supported on this browser';
-    return;
-  }
-  const perm=Notification.permission;
-  if (perm==='granted') {
-    if (bar) bar.style.display='none';
-    if (statusText) statusText.innerText='Enabled ✅';
-    if (toggleBtn) toggleBtn.style.display='none';
-  } else if (perm==='denied') {
-    if (bar) bar.style.display='none';
-    if (statusText) statusText.innerText='Blocked — enable in iOS Settings';
-    if (toggleBtn) toggleBtn.style.display='none';
-  } else {
-    if (bar) bar.style.display='flex';
-    if (statusText) statusText.innerText='Not enabled yet';
-  }
-}
-
-async function subscribeNotifications() {
-  if (!('Notification' in window)) {
-    alert('Open this app from your Home Screen icon (not Safari browser) for notifications to work.');
-    return;
-  }
-  const perm=await Notification.requestPermission();
-  checkNotifBar();
-  if (perm!=='granted') return;
-
-  try {
-    const reg=await navigator.serviceWorker.ready;
-    let sub=await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC) });
-    }
-    // Save subscription to Apps Script
-    let saved = false;
-    const subJson = JSON.stringify(sub.toJSON());
-    
-    // Try 1: POST with JSON body
-    try {
-      const r = await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: subJson
-      });
-      if (r.ok) {
-        const d = await r.json();
-        if (d.saved) { saved = true; console.log('Subscription saved via POST'); }
-      }
-    } catch(e1) { console.warn('POST save failed:', e1.message); }
-    
-    // Try 2: POST with no-cors (if CORS fails)
-    if (!saved) {
-      try {
-        await fetch(SCRIPT_URL+'?action=saveSub&t='+Date.now(), {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {'Content-Type': 'text/plain'},
-          body: subJson
-        });
-        saved = true; console.log('Subscription saved via no-cors POST');
-      } catch(e2) { console.warn('no-cors POST failed:', e2.message); }
-    }
-    
-    if (!saved) console.warn('Could not confirm subscription save — will retry on next open');
-    reg.showNotification('Argati',{ body:'Notifications enabled! You\'ll be alerted for new orders.', icon:'icon.png', tag:'argati-setup' });
-    checkNotifBar();
-  } catch(err) {
-    alert('Setup failed: '+err.message+'\nMake sure you opened from the Home Screen icon.');
-  }
-}
-
-async function testNotification() {
-  if (Notification.permission!=='granted') { alert('Please enable notifications first.'); return; }
-  try {
-    const reg=await navigator.serviceWorker.ready;
-    reg.showNotification('Argati Test',{ body:'Push notifications are working! 🎉', icon:'icon.png', tag:'argati-test' });
-  } catch(e) { alert('Test failed: '+e.message); }
-}
-
-// ─── AUTO-DETECT NEW ORDERS ───────────────────────────────────────────────────
-setInterval(()=>loadOrders(true), 60000);
-
-// ─── PULL TO REFRESH ─────────────────────────────────────────────────────────
-(function() {
-  let ptStart = 0, pulling = false;
-  document.addEventListener('touchstart', e => {
-    if (window.scrollY === 0) { ptStart = e.touches[0].clientY; pulling = true; }
-  }, {passive: true});
-  document.addEventListener('touchend', e => {
-    if (!pulling) return;
-    const dy = e.changedTouches[0].clientY - ptStart;
-    pulling = false;
-    if (dy > 80 && document.getElementById('page-orders').classList.contains('active') && !document.querySelector('.overlay.show')) {
-      const btn = document.getElementById('reload-btn');
-      btn.classList.add('spinning');
-      loadOrders(true).finally(() => setTimeout(() => btn.classList.remove('spinning'), 500));
-    }
-  }, {passive: true});
-})();
-
-// ─── STARTUP ──────────────────────────────────────────────────────────────────
-// Probe badge API — iOS activates it on first call
-if ('setAppBadge' in navigator) {
-  navigator.clearAppBadge().catch(()=>{});
-}
-try {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js?v=5').then(async reg => {
-      // Periodic Background Sync — updates badge every 5 minutes even when closed
-      // Supported on Android Chrome; iOS uses push for wakeup instead
-      if ('periodicSync' in reg) {
-        try {
-          await reg.periodicSync.register('badge-refresh', { minInterval: 5 * 60 * 1000 });
-        } catch(e) {}
-      }
-    }).catch(()=>{});
-
-    // Listen for messages from service worker
-    navigator.serviceWorker.addEventListener('message', e => {
-      if (e.data.type === 'NEW_ORDER') {
-        // New order push received — reload orders immediately
-        loadOrders(true);
-        // Flash the orders tab
-        const tab = document.querySelector('.tab-item[data-page="orders"]');
-        if (tab) { tab.style.transition = 'background 0.1s'; tab.style.background = 'rgba(255,92,26,0.2)'; setTimeout(()=>{ tab.style.background=''; }, 400); }
-      }
-      if (e.data.type === 'BADGE_UPDATE') {
-        // SW fetched exact count — update stats bar directly
-        const pe = document.getElementById('stat-pending');
-        if (pe && typeof e.data.pending === 'number') {
-          pe.innerText = e.data.pending;
-          const badge = document.getElementById('badge-orders');
-          if (badge) { if (e.data.pending > 0) { badge.innerText = e.data.pending; badge.style.display = 'flex'; } else badge.style.display = 'none'; }
-        }
-      }
-    });
-  }
-} catch(e) {}
-try { const s=JSON.parse(localStorage.getItem('argatiTimings')||'{}'); if (s.date===new Date().toDateString()&&Array.isArray(s.timings)) sessionTimings=s.timings; } catch(e) {}
-try { checkNotifBar(); } catch(e) {}
-try { updateFAB(); } catch(e) {}
-
-// Simple startup — wait for DOM then load
-window.addEventListener('load', function() {
-  loadOrders();
-});
-
-// ─── FULL AUTO MODE ────────────────────────────────────────────────────────────
-function applyAutoMode(on) {
-  autoMode = on;
-  const t=document.getElementById('auto-mode-toggle');
-  const d=document.getElementById('auto-mode-desc');
-  const b=document.getElementById('auto-mode-bar');
-  if(t) t.checked=on;
-  if(d) d.innerText=on?'⚡ Active — clean orders placed automatically':'Clean orders placed instantly — no approval needed';
-  if(b) b.style.display=on?'block':'none';
-  localStorage.setItem('argatiAutoMode',on?'1':'');
-  fetch(SCRIPT_URL+'?action=setAutoMode&value='+on+'&t='+Date.now()).catch(()=>{});
-}
-async function loadAutoModeState() {
-  try {
-    const r=await fetch(SCRIPT_URL+'?action=getAutoMode&t='+Date.now());
-    const d=await r.json();
-    applyAutoMode(!!d.autoMode);
-  } catch(e) {
-    if(localStorage.getItem('argatiAutoMode')) applyAutoMode(true);
-  }
-}
-const _amt=document.getElementById('auto-mode-toggle');
-if(_amt) _amt.addEventListener('change',e=>applyAutoMode(e.target.checked));
-loadAutoModeState();
-
-// ─── KNOWN BUNDLES ────────────────────────────────────────────────────────────
-const KNOWN_BUNDLES = ["201+106","204+106+201","204+107","204+107+106","210+209+206"];
-function isKnownBundle(s) { return KNOWN_BUNDLES.some(k=>normBundle(k)===normBundle(s)); }
-function normBundle(s) { return s.split('+').map(p=>p.trim()).sort().join('+'); }
-
-// ─── SEARCH ───────────────────────────────────────────────────────────────────
-let searchQuery = '';
-const searchWrap  = document.getElementById('search-wrap');
-const searchInput = document.getElementById('search-input');
-const searchClear = document.getElementById('search-clear');
-
-// Search bar hidden by default — only opens via 🔍 button
-function showSearchBar(show) {
-  // Only hide (when switching tabs), never auto-show
-  if (!show && searchWrap) {
-    searchWrap.style.display = 'none';
-    if (searchInput) { searchInput.value = ''; searchQuery = ''; }
-    const clr = document.getElementById('search-clear');
-    if (clr) clr.style.display = 'none';
-    document.getElementById('search-btn').innerText = '🔍';
-  }
-}
-
-searchInput.addEventListener('input', e => {
-  searchQuery = e.target.value.toLowerCase().trim();
-  if (searchClear) searchClear.style.display = searchQuery ? 'block' : 'none';
-  if (!allOrders || !allOrders.length) return;
-  if (!searchQuery) {
-    renderOrderList(allOrders);
-    return;
-  }
-  const q = searchQuery;
-  const filtered = allOrders.filter(o => {
-    const name    = ((o.Emri||'')+' '+(o.Mbiemri||'')).toLowerCase();
-    const city    = (o.Qyteti||'').toLowerCase();
-    const prod    = (o._productName||o.Produkti||'').toLowerCase();
-    const phone   = (o.Telefoni||'').toString();
-    const comment = (o['Koment shtese (Nese ka)']||'').toLowerCase();
-    const row     = String(o.rowNumber);
-    return name.includes(q)||city.includes(q)||prod.includes(q)||
-           phone.includes(q)||comment.includes(q)||row===q;
-  });
-  renderOrderList(filtered);
-});
-searchClear.addEventListener('click', () => {
-  searchInput.value = ''; searchQuery = '';
-  searchClear.style.display = 'none';
-  renderOrderList();
-});
-
-// ─── SWIPE TO REVEAL ACTIONS ──────────────────────────────────────────────────
-let swipeStartX = 0, swipeStartY = 0, swipeEl = null, swipeRow = null;
-let activeSwipeRow = null;
-
-function initSwipe(el, row) {
-  el.addEventListener('touchstart', e => {
-    swipeStartX = e.touches[0].clientX;
-    swipeStartY = e.touches[0].clientY;
-    swipeEl = el; swipeRow = row;
-  }, { passive: true });
-
-  el.addEventListener('touchmove', e => {
-    if (!swipeEl) return;
-    const dx = e.touches[0].clientX - swipeStartX;
-    const dy = e.touches[0].clientY - swipeStartY;
-    if (Math.abs(dy) > Math.abs(dx)) return; // vertical scroll
-
-    const actions = document.getElementById('actions-' + swipeRow);
-    if (!actions) return;
-    const maxSlide = actions.offsetWidth;
-
-    if (dx < -10) {
-      // Swiping left — reveal actions
-      const slide = Math.min(-dx, maxSlide);
-      el.style.transform = `translateX(-${slide}px)`;
-      actions.style.transform = `translateX(${100 - (slide/maxSlide)*100}%)`;
-    } else if (dx > 0 && activeSwipeRow === swipeRow) {
-      // Swiping right — close
-      const slide = Math.max(0, maxSlide - dx);
-      el.style.transform = `translateX(-${slide}px)`;
-      actions.style.transform = `translateX(${100 - (slide/maxSlide)*100}%)`;
-    }
-  }, { passive: true });
-
-  el.addEventListener('touchend', e => {
-    if (!swipeEl || swipeRow === null) return;
-    const dx = swipeStartX - e.changedTouches[0].clientX;
-    const actions = document.getElementById('actions-' + swipeRow);
-    if (!actions) { swipeEl=null; swipeRow=null; return; }
-    const maxSlide = actions.offsetWidth;
-
-    if (dx > maxSlide * 0.35) {
-      // Snap open
-      el.style.transform = `translateX(-${maxSlide}px)`;
-      el.style.transition = 'transform .25s ease';
-      actions.style.transform = 'translateX(0%)';
-      actions.style.transition = 'transform .25s ease';
-      if (activeSwipeRow !== null && activeSwipeRow !== swipeRow) closeSwipe(activeSwipeRow);
-      activeSwipeRow = swipeRow;
-    } else {
-      // Snap closed
-      closeSwipeEl(el, actions);
-      if (activeSwipeRow === swipeRow) activeSwipeRow = null;
-    }
-    setTimeout(() => { el.style.transition = ''; actions.style.transition = ''; }, 300);
-    swipeEl=null; swipeRow=null;
-  }, { passive: true });
-}
-
-function closeSwipe(row) {
-  const card = document.getElementById('card-' + row);
-  const actions = document.getElementById('actions-' + row);
-  if (card && actions) { closeSwipeEl(card, actions); }
-  if (activeSwipeRow === row) activeSwipeRow = null;
-}
-function closeSwipeEl(el, actions) {
-  el.style.transition = 'transform .25s ease';
-  el.style.transform  = '';
-  actions.style.transition = 'transform .25s ease';
-  actions.style.transform  = 'translateX(100%)';
-  setTimeout(() => { el.style.transition=''; actions.style.transition=''; }, 300);
-}
-function closeAllSwipes() {
-  if (activeSwipeRow !== null) { closeSwipe(activeSwipeRow); activeSwipeRow = null; }
-}
-
-// Close swipe on background tap
-document.addEventListener('touchstart', e => {
-  if (activeSwipeRow !== null) {
-    const wrap = document.getElementById('wrap-' + activeSwipeRow);
-    if (wrap && !wrap.contains(e.target)) closeAllSwipes();
-  }
-}, { passive: true });
-
-// ─── HANDLE CARD TAP (select or close swipe) ──────────────────────────────────
-function handleCardTap(row, e) {
-  if (activeSwipeRow !== null) { closeAllSwipes(); return; }
-  toggleSelect(row);
-}
-
-// ─── LONG PRESS → DETAIL SHEET ───────────────────────────────────────────────
-let longPressTimer = null;
-function initLongPress(el, row) {
-  el.addEventListener('touchstart', e => {
-    longPressTimer = setTimeout(() => {
-      openDetailSheet(row, e);
-      longPressTimer = null;
-    }, 500);
-  }, { passive: true });
-  el.addEventListener('touchend',   () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } });
-  el.addEventListener('touchmove',  () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } });
-}
-
-// ─── INIT CARDS after render ──────────────────────────────────────────────────
-function initCardInteractions() {
-  allOrders.forEach(o => {
-    const card = document.getElementById('card-' + o.rowNumber);
-    if (!card) return;
-    initSwipe(card, o.rowNumber);
-    initLongPress(card, o.rowNumber);
+function tickCountdowns() {
+  const now = serverNow();
+  document.querySelectorAll('.ring[data-until]').forEach(el => {
+    const left = Number(el.dataset.until) - now;
+    el.style.setProperty('--p', Math.max(0, Math.min(100, 100 - (left / QUIET_MS) * 100)).toFixed(1));
+    el.querySelector('span').textContent = left > 0 ? clock(left) : 'now';
   });
 }
 
-// ─── QUICK PLACE (swipe action) ───────────────────────────────────────────────
-async function quickPlace(row, e) {
-  haptic('medium');
-  e.stopPropagation();
-  closeSwipe(row);
-  const order = allOrders.find(o => o.rowNumber === row);
-  if (!order) return;
+// ── Detail sheet ───────────────────────────────────────────────────────────
+function openSheet(row) { S.open = row; renderSheet(); $('#scrim').classList.add('open'); $('#sheet').classList.add('open');
+  setTimeout(() => { const c = $('#sheet .close'); c && c.focus(); }, 60); }
+function closeSheet() { S.open = null; $('#scrim').classList.remove('open'); $('#sheet').classList.remove('open'); }
+function renderSheet() {
+  const i = items().find(x => x.row === S.open);
+  if (!i) { closeSheet(); return; }
+  const s = STATES[i.state] || STATES.unknown, st = S.status || {};
+  const sheetRow = st.sheetUrl ? st.sheetUrl + '&range=A' + i.row : '';
+  const prods = products();
+  const parts = String(i.product || '').split('+').map(c => c.trim()).filter(Boolean);
+  const whole = prods[String(i.product).trim()];
+  const links = whole ? [whole] : parts.map(c => prods[c]).filter(Boolean);
+  let actions = '';
+  if (i.state === 'review' || i.state === 'ready') {
+    const dup = /duplicate/i.test(i.reason || '');
+    actions = `${dup ? `<p class="warnline">Looks like a duplicate. Approve only if this customer really ordered again.</p>` : ''}
+      <button class="btn primary block" data-act="approve" data-row="${i.row}" ${i.approved ? 'disabled' : ''}>${i.approved ? 'Approved, placing soon' : 'Approve and place'}</button>`;
+  } else if (i.state === 'unverified') {
+    actions = `<p class="warnline">The order was sent but no answer came back. Check the back office first. If it is there, add its Order ID instead.</p>
+      <button class="btn primary block" data-act="approve" data-row="${i.row}" data-confirm="1" ${i.approved ? 'disabled' : ''}>Not in the back office, place it</button>
+      ${idForm(i)}`;
+  } else if (i.state === 'manual') {
+    actions = `${links.map(p => `<a class="btn quiet block" href="${esc(p.url)}" target="_blank" rel="noopener"><i class="ti ti-external-link"></i>Open ${esc(p.code)} on GjirafaMall</a>`).join('')}
+      ${idForm(i)}`;
+  } else if (i.state === 'blocked') {
+    actions = sheetRow ? `<a class="btn primary block" href="${esc(sheetRow)}" target="_blank" rel="noopener"><i class="ti ti-table"></i>Fix it in the sheet</a>` : '';
+  }
+  const fact = (icon, k, v, href) => v ? `<${href ? `a href="${esc(href)}"` : 'div'} class="fact"><i class="ti ${icon}"></i><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></${href ? 'a' : 'div'}>` : '';
+  $('#sheet').innerHTML = `
+    <div class="grab"></div>
+    <button class="icon-btn close" data-act="close" aria-label="Close"><i class="ti ti-x"></i></button>
+    <h3 id="sheet-title">${esc(i.name)}</h3>
+    <p class="prod">${esc(i.productName)}${i.qty > 1 ? ' ×' + i.qty : ''}, ${esc(i.city || 'no city')}</p>
+    <div class="status-box t-${s.tone}"><div class="state">${esc(s.label)}</div>
+      <p>${esc(i.reason || '')}</p></div>
+    <div class="facts">
+      ${fact('ti-phone', 'Phone', i.phone, i.phone ? 'tel:' + i.phone.replace(/[^\d+]/g, '') : '')}
+      ${fact('ti-map-pin', 'Address', i.address)}
+      ${fact('ti-message', 'Comment', i.comment)}
+      ${fact('ti-package', 'Product code', i.product)}
+      ${sheetRow ? fact('ti-table', 'Sheet', 'Row ' + i.row, sheetRow) : fact('ti-table', 'Sheet', 'Row ' + i.row)}
+    </div>
+    <div class="actions">${actions}</div>`;
+}
+function idForm(i) {
+  return `<label class="field" style="padding:4px 0 0;border:0"><span>Order ID from GjirafaMall</span>
+    <input id="oid" inputmode="numeric" placeholder="e.g. 1277076" autocomplete="off"></label>
+    <button class="btn quiet block" data-act="saveid" data-row="${i.row}">Save Order ID</button>`;
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+async function approve(row, strong) {
+  const i = items().find(x => x.row === row); if (!i) return;
+  if (strong && !confirm(`Place ${i.name}'s order again?\n\nOnly do this if it is NOT in the GjirafaMall back office.`)) return;
+  haptic(); S.approved[row] = Date.now(); render();
+  try { await post('approve', { row: i.row, product: i.product, phone: i.phone }); toast('Approved. It will be placed within a minute.'); }
+  catch (e) { delete S.approved[row]; render(); toast('Approval didn’t go through: ' + e.message); }
+}
+async function saveOrderId(row) {
+  const i = items().find(x => x.row === row); const v = (($('#oid') || {}).value || '').replace(/\D/g, '');
+  if (!i) return;
+  if (v.length < 5) { toast('Enter the Order ID number, e.g. 1277076'); return; }
+  haptic();
   try {
-    const res = await fetch(SCRIPT_URL+'?action=approve&row='+row+'&t='+Date.now());
-    const d   = await res.json().catch(()=>({}));
-    if (d.success) {
-      showNotif('📤','Order Sent!',`#${row} — ${order.Emri||''} ${order.Mbiemri||''}
-Desktop will place it shortly.`,'green');
-      pollForResult(row, (order.Emri||'').trim()+' '+(order.Mbiemri||'').trim(), getProduct(order.Produkti).name, order, 0);
-    } else {
-      showNotif('⚠️','Failed','Could not approve order #'+row,'red');
-    }
-  } catch(err) {
-    showNotif('⚠️','Error',err.message,'red');
+    await post('setOrderId', { row: i.row, product: i.product, phone: i.phone, first: i.first, last: i.last, orderId: v });
+    toast(`Saved #${v} to row ${i.row}.`); closeSheet(); refresh(true);
+  } catch (e) { toast('Couldn’t save: ' + e.message); }
+}
+async function setAuto(on, input) {
+  if (on && !confirm('Turn on automatic ordering?\n\nClean orders will be placed 2 minutes after the last edit.')) { input.checked = false; return; }
+  try { await post('setAuto', { on }); S.status.autoMode = on; toast(on ? 'Automatic ordering is on.' : 'Automatic ordering is paused.'); render(); }
+  catch (e) { input.checked = !on; toast('Couldn’t change it: ' + e.message); }
+}
+async function saveConnection() {
+  const key = ($('#key').value || '').trim(), url = ($('#url').value || '').trim() || DEFAULT_URL;
+  const prev = cfg; cfg = { key, url };
+  try { await get('status'); store.set(cfg); toast('Connected.'); refresh(true); }
+  catch (e) { cfg = prev; toast(e.message); }
+}
+
+// ── Notifications + service worker ─────────────────────────────────────────
+function pushState() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return { can: false, text: isIOS && !standalone ? 'On iPhone, add Argati to the Home Screen first (Share, Add to Home Screen).' : 'This browser can’t receive notifications.' };
   }
+  const p = Notification.permission;
+  if (p === 'denied') return { can: false, text: 'Blocked. Allow notifications for Argati in the device settings.' };
+  return { can: true, on: p === 'granted', text: p === 'granted' ? 'On. Orders, problems and runner alerts arrive here.' : 'Off. Turn on to get order and runner alerts.' };
 }
-
-// ─── CANCEL ORDER ─────────────────────────────────────────────────────────────
-async function cancelOrder(row, e) {
-  haptic('heavy');
-  if (e) e.stopPropagation();
-  closeSwipe(row);
-  const order = allOrders.find(o => o.rowNumber === row);
-  const name  = order ? `${order.Emri||''} ${order.Mbiemri||''}`.trim() : `#${row}`;
-
-  // Confirm
-  showNotif('🗑️', 'Cancel Order?',
-    `Cancel order for ${name}?
-This will mark it as ANULUAR in the sheet.`, 'red');
-  document.getElementById('notif-btn').innerText = 'Yes, Cancel';
-  document.getElementById('notif-btn').onclick = async () => {
-    closeNotif();
-    try {
-      const res = await fetch(SCRIPT_URL+'?action=cancelOrder&row='+row+'&t='+Date.now());
-      const d   = await res.json().catch(()=>({}));
-      // Animate card out
-      const wrap = document.getElementById('wrap-' + row);
-      if (wrap) { wrap.classList.add('card-cancelling'); setTimeout(()=>loadOrders(true), 350); }
-      else loadOrders(true);
-      showNotif('✅','Cancelled',`Order #${row} marked as ANULUAR.`,'green');
-    } catch(err) {
-      showNotif('⚠️','Error',err.message,'red');
-    }
-    document.getElementById('notif-btn').onclick = closeNotif;
-    document.getElementById('notif-btn').innerText = 'Got it';
-  };
-}
-
-// ─── EDIT SHEET ───────────────────────────────────────────────────────────────
-let editingRow = null;
-function openEditSheet(row, e) {
-  if (e) e.stopPropagation();
-  haptic('light');
-  closeSwipe(row);
-  const order = allOrders.find(o => o.rowNumber === row);
-  if (!order) return;
-  editingRow = row;
-
-  document.getElementById('edit-title').innerText = `Edit Order #${row}`;
-  document.getElementById('edit-emri').value    = order.Emri     || '';
-  document.getElementById('edit-mbiemri').value = order.Mbiemri  || '';
-  document.getElementById('edit-telefoni').value= order.Telefoni || '';
-  document.getElementById('edit-adresa').value  = order.Adresa   || '';
-  document.getElementById('edit-comment').value = order['Koment shtese (Nese ka)'] || '';
-
-  // Set city
-  const cityEl = document.getElementById('edit-qyteti');
-  const cityVal = order.Qyteti || '';
-  let matched = false;
-  for (let opt of cityEl.options) {
-    if (opt.value.toLowerCase() === cityVal.toLowerCase()) { opt.selected=true; matched=true; break; }
-  }
-  if (!matched && cityVal) {
-    const opt = document.createElement('option');
-    opt.value = cityVal; opt.text = cityVal; opt.selected = true;
-    cityEl.appendChild(opt);
-  }
-
-  // Set product
-  const prodEl = document.getElementById('edit-produkti');
-  prodEl.value = order.Produkti || '';
-
-  document.getElementById('edit-overlay').classList.add('show');
-}
-function closeEditSheet() {
-  document.getElementById('edit-overlay').classList.remove('show');
-  editingRow = null;
-}
-
-async function saveEditedOrder() {
-  if (!editingRow) return;
-  const order = allOrders.find(o => o.rowNumber === editingRow);
-  if (!order) return;
-
-  // Build updated order
-  const updated = Object.assign({}, order, {
-    Emri:     document.getElementById('edit-emri').value.trim(),
-    Mbiemri:  document.getElementById('edit-mbiemri').value.trim(),
-    Telefoni: document.getElementById('edit-telefoni').value.trim(),
-    Qyteti:   document.getElementById('edit-qyteti').value,
-    Adresa:   document.getElementById('edit-adresa').value.trim(),
-    Produkti: document.getElementById('edit-produkti').value,
-    'Koment shtese (Nese ka)': document.getElementById('edit-comment').value.trim(),
-  });
-
-  closeEditSheet();
-
-  // Save to sheet then approve
+function b64ToBytes(b64) { const pad = '='.repeat((4 - b64.length % 4) % 4), raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0))); }
+async function enablePush() {
+  if (DEMO) { toast('Notifications are off in the demo.'); return; }
   try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        action: 'updateRow',
-        row:     editingRow,
-        Emri:    updated.Emri,
-        Mbiemri: updated.Mbiemri,
-        Telefoni:updated.Telefoni,
-        Qyteti:  updated.Qyteti,
-        Adresa:  updated.Adresa,
-        Produkti:updated.Produkti,
-        comment: updated['Koment shtese (Nese ka)'],
-      })
-    });
-  } catch(e) { /* sheet update failed — still proceed with local data */ }
-
-  // Approve with updated data
-  const res = await fetch(SCRIPT_URL+'?action=approve&row='+editingRow+'&t='+Date.now()).catch(()=>null);
-  showNotif('📤','Updated & Sent!',
-    `#${editingRow} — ${updated.Emri} ${updated.Mbiemri}
-Desktop will place it shortly.`,'green');
-  // Update local allOrders
-  const idx = allOrders.findIndex(o => o.rowNumber === editingRow);
-  if (idx >= 0) allOrders[idx] = updated;
-  pollForResult(editingRow, `${updated.Emri} ${updated.Mbiemri}`, getProduct(updated.Produkti).name, updated, 0);
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Notifications weren’t allowed.'); render(); return; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
+    await post('subscribe', { subscription: sub.toJSON() });
+    toast('Notifications are on for this device.'); render();
+  } catch (e) { toast('Couldn’t turn on notifications: ' + e.message); }
+}
+function tellWorker() {
+  if (DEMO || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({ type: 'config', url: cfg.url, key: cfg.key });
 }
 
-// ─── DETAIL SHEET ─────────────────────────────────────────────────────────────
-let detailRow = null;
-function openDetailSheet(row, e) {
-  if (e) { e.preventDefault(); e.stopPropagation(); }
-  closeSwipe(row);
-  const o = allOrders.find(o => o.rowNumber === row);
-  if (!o) return;
-  detailRow = row;
-
-  document.getElementById('detail-name').innerText =
-    `${(o.Emri||'').trim()} ${(o.Mbiemri||'').trim()}`;
-
-  const prod = getProduct(o.Produkti||'');
-  const rows = [
-    ['📦','Product',     prod.name],
-    ['📍','City',        o.Qyteti||'—'],
-    ['📞','Phone',       (o.Telefoni||'').toString().trim()||'—'],
-    ['🏠','Address',     (o.Adresa||'').toString().trim()||'—'],
-    ['✉️','Email',       (o['Email(Opsionale)']||'').toString().trim()||'—'],
-    ['💬','Comment',     (o['Koment shtese (Nese ka)']||'').toString().trim()||'—'],
-    ['🔢','Row',         `#${row}`],
-  ];
-  document.getElementById('detail-rows').innerHTML = rows
-    .filter(([,, v]) => v !== '—' && v !== '')
-    .map(([ico, key, val]) =>
-      `<div class="detail-row">
-        <span class="detail-ico">${ico}</span>
-        <div class="detail-info">
-          <div class="detail-lbl">${key}</div>
-          <div class="detail-val">${val}</div>
-        </div>
-      </div>`).join('');
-
-  document.getElementById('detail-overlay').classList.add('show');
-}
-function closeDetailSheet() {
-  document.getElementById('detail-overlay').classList.remove('show');
-  detailRow = null;
-}
-function placeFromDetail() {
-  if (!detailRow) return;
-  quickPlace(detailRow, { stopPropagation: ()=>{} });
-  closeDetailSheet();
-}
-function cancelFromDetail() {
-  if (!detailRow) return;
-  const r = detailRow;
-  closeDetailSheet();
-  cancelOrder(r, { stopPropagation: ()=>{} });
-}
-
-// ─── PULL TO REFRESH ──────────────────────────────────────────────────────────
-let ptrStartY = 0, ptrActive = false;
-const ptrEl = document.getElementById('ptr-indicator');
-
-document.addEventListener('touchstart', e => {
-  if (window.scrollY === 0) ptrStartY = e.touches[0].clientY;
-}, { passive: true });
-
-document.addEventListener('touchmove', e => {
-  if (window.scrollY > 0 || ptrStartY === 0) return;
-  const dy = e.touches[0].clientY - ptrStartY;
-  if (dy > 60 && !ptrActive) {
-    ptrActive = true;
-    ptrEl.classList.add('show');
-  }
-}, { passive: true });
-
-document.addEventListener('touchend', () => {
-  if (ptrActive) {
-    ptrActive = false;
-    ptrEl.classList.remove('show');
-    loadOrders(true);
-  }
-  ptrStartY = 0;
-}, { passive: true });
-
-// ─── OVERRIDE switchTab to show/hide search ───────────────────────────────────
-const _origSwitchTab = switchTab;
-// (switchTab is already defined in original JS — patch it below)
-
-// ─── OVERRIDE renderOrderList to init swipes + search filter ─────────────────
-const _origRenderOrderList = renderOrderList;
-
-// Patch renderOrderList after it renders
-const _patchRender = () => {
-  const list = document.getElementById('order-list');
-  if (!list) return;
-  const observer = new MutationObserver(() => {
-    initCardInteractions();
-  });
-  observer.observe(list, { childList: true, subtree: false });
-};
-_patchRender();
-
-// ─── SEARCH FILTER in renderOrderList ────────────────────────────────────────
-// Override to apply search filtering
-window.addEventListener('load', () => {
-  const origRender = window.renderOrderList;
-  if (!origRender) return;
-});
-
-// ─── CANCEL ORDER endpoint ────────────────────────────────────────────────────
-// Note: Apps Script needs 'cancelOrder' and 'updateRow' actions
-// cancelOrder: sets OrderID = 'ANULUAR' for that row
-// updateRow: updates Emri/Mbiemri/Telefoni/Qyteti/Adresa/Produkti for that row
-
-// ─── PATCH switchTab to show/hide search ─────────────────────────────────────
-const _stOrig = switchTab;
-window.switchTab = function(name) {
-  _stOrig(name);
-  if (name !== 'orders') showSearchBar(false); // only close, never auto-open
-  if (name !== 'orders') {
-    searchInput.value=''; searchQuery='';
-    const wrap=document.getElementById('search-wrap');
-    if (wrap) wrap.style.display='none';
-    document.getElementById('search-btn').innerText='🔍';
-  }
-};
-
-// ─── PATCH loadOrders to filter by search ────────────────────────────────────
-const _loadOrig = window.loadOrders;
-window.loadOrders = async function(silent) {
-  await _loadOrig(silent);
-  if (searchQuery) renderOrderList();
-};
-
-// ─── PATCH renderOrderList to filter + init swipes ───────────────────────────
-const _renderOrig = window.renderOrderList;
-window.renderOrderList = function() {
-  _renderOrig();
-  // Apply search filter
-  if (searchQuery) {
-    const cards = document.querySelectorAll('.card-swipe-wrap');
-    cards.forEach(wrap => {
-      const text = wrap.innerText.toLowerCase();
-      wrap.style.display = text.includes(searchQuery) ? '' : 'none';
-    });
-  }
-  // Init swipes on all cards
-  initCardInteractions();
-  // Show search bar
-  // search bar state managed by button only
-};
-
-async function saveEditOnly() {
-  if (!editingRow) return;
-  const updated = {
-    action:  'updateRow',
-    row:      editingRow,
-    Emri:     document.getElementById('edit-emri').value.trim(),
-    Mbiemri:  document.getElementById('edit-mbiemri').value.trim(),
-    Telefoni: document.getElementById('edit-telefoni').value.trim(),
-    Qyteti:   document.getElementById('edit-qyteti').value,
-    Adresa:   document.getElementById('edit-adresa').value.trim(),
-    Produkti: document.getElementById('edit-produkti').value,
-    comment:  document.getElementById('edit-comment').value.trim(),
-  };
-  closeEditSheet();
-  try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(updated)
-    });
-    // Update local data
-    const idx = allOrders.findIndex(o => o.rowNumber === editingRow);
-    if (idx >= 0) {
-      allOrders[idx].Emri     = updated.Emri;
-      allOrders[idx].Mbiemri  = updated.Mbiemri;
-      allOrders[idx].Telefoni = updated.Telefoni;
-      allOrders[idx].Qyteti   = updated.Qyteti;
-      allOrders[idx].Adresa   = updated.Adresa;
-      allOrders[idx].Produkti = updated.Produkti;
-      allOrders[idx]['Koment shtese (Nese ka)'] = updated.comment;
-    }
-    renderOrderList(allOrders);
-    showNotif('✅','Saved!','Order updated in sheet.','green');
-  } catch(e) {
-    showNotif('⚠️','Error',e.message,'red');
-  }
-}
-
-function editFromDetail() {
-  const row = detailRow;
-  closeDetailSheet();
-  setTimeout(() => openEditSheet(row, null), 200);
-}
-
-
-// ─── HAPTIC FEEDBACK ─────────────────────────────────────────────────────────
-function haptic(style='light') {
-  if (window.navigator?.vibrate) {
-    const patterns = { light: [10], medium: [20], heavy: [30,10,30], success: [10,20,10] };
-    window.navigator.vibrate(patterns[style] || [10]);
-  }
-}
-
-// ─── DISMISS KEYBOARD ON SCROLL ───────────────────────────────────────────────
-document.addEventListener('touchmove', () => {
-  if (document.activeElement &&
-      ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
-    document.activeElement.blur();
-  }
-}, { passive: true });
-
-// ─── CLOSE OVERLAYS ON BACKDROP TAP ──────────────────────────────────────────
-['edit-overlay','detail-overlay','notif-overlay'].forEach(id => {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('click', e => {
-    if (e.target === el) {
-      el.classList.remove('show');
-      if (id === 'edit-overlay')   editingRow = null;
-      if (id === 'detail-overlay') detailRow  = null;
-    }
-  });
-});
-
-// ─── SWIPE HINT (shown once) ──────────────────────────────────────────────────
-(function() {
-  if (localStorage.getItem('swipeHintShown')) return;
-  setTimeout(() => {
-    const hint = document.getElementById('swipe-hint');
-    if (hint) {
-      hint.style.display = 'flex';
-      setTimeout(() => {
-        hint.style.opacity = '0';
-        hint.style.transition = 'opacity 0.5s';
-        setTimeout(() => hint.style.display = 'none', 500);
-        localStorage.setItem('swipeHintShown', '1');
-      }, 3000);
-    }
-  }, 1500);
-})();
-
-
-// ─── SERVER STATUS INDICATOR ──────────────────────────────────────────────────
-// The dot in the header shows if argati_server.py is reachable via watcher
-const WATCHER_CHECK_URL = null; // set to 'http://YOUR_PC_IP:5051/health' if desired
-let serverOnline = null;
-
-async function checkServerStatus() {
-  const dot = document.getElementById('server-dot');
-  if (!dot) return;
-  // Heuristic: if loadOrders succeeded, server/Apps Script is reachable
-  // Real watcher check would need CORS-enabled endpoint
-  // We use the last loadOrders result as proxy
-  try {
-    const r = await fetch(SCRIPT_URL + '?action=count&t=' + Date.now(), { signal: AbortSignal.timeout(5000) });
-    if (r.ok) {
-      serverOnline = true;
-      dot.style.background = 'var(--mint)';
-      dot.style.boxShadow  = '0 0 6px var(--mint)';
-      dot.title = 'Connected';
-    } else throw new Error('not ok');
-  } catch(e) {
-    serverOnline = false;
-    dot.style.background = 'var(--crimson)';
-    dot.style.boxShadow  = '0 0 6px var(--crimson)';
-    dot.title = 'Offline';
-  }
-}
-
-checkServerStatus();
-setInterval(checkServerStatus, 30000);
-
-
-// ─── TAB BAR SAFE AREA POSITIONING ───────────────────────────────────────────
-// iOS Safari resolves env(safe-area-inset-bottom) asynchronously.
-// We set the bottom position via JS after the value is available.
-(function positionTabBar() {
-  function getSAB() {
-    // Create a test element to read the computed safe area
-    const el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
-    document.body.appendChild(el);
-    const h = el.getBoundingClientRect().height || 0;
-    document.body.removeChild(el);
-    return h;
-  }
-
-  function apply() {
-    const sab    = getSAB();
-    const bottom = sab + 12; // 12px gap above home indicator
-    const wrapper = document.querySelector('.tab-bar-wrapper');
-    if (wrapper) wrapper.style.bottom = bottom + 'px';
-    // FAB sits above tab bar
-    const fab = document.getElementById('fab');
-    if (fab) fab.style.bottom = (bottom + 70) + 'px';
-  }
-
-  // Apply immediately
-  apply();
-  // Apply again after short delay (safe area sometimes resolves late)
-  setTimeout(apply, 100);
-  setTimeout(apply, 500);
-  // Re-apply on orientation change
-  window.addEventListener('resize', apply);
-  window.addEventListener('orientationchange', () => setTimeout(apply, 300));
-})();
-
-
-// ─── RICH ANALYTICS ───────────────────────────────────────────────────────────
-async function loadAnalytics() {
-  const apiBase = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL) ? DESKTOP_URL : '';
-  try {
-    const r    = await fetch(apiBase + '/api/analytics');
-    const data = await r.json();
-    if (!data || data.error) return;
-
-    // ── KPIs ──────────────────────────────────────────────────────────────
-    const setEl = (id, val) => { const e=document.getElementById(id); if(e) e.innerText=val; };
-    setEl('an-total',   data.placed  || 0);
-    setEl('an-failed',  data.failed  || 0);
-    setEl('an-revenue', '€' + ((data.revenue||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})));
-
-    // ── 30-day trend ──────────────────────────────────────────────────────
-    const trendEl = document.getElementById('trend-chart');
-    if (trendEl && data.trend && data.trend.length) {
-      const max      = Math.max(...data.trend.map(d=>d.count), 1);
-      const todayStr = new Date().toISOString().slice(0,10);
-      trendEl.innerHTML = data.trend.map(d => {
-        const pct   = Math.max(3, Math.round((d.count/max)*100));
-        const isToday = d.date === todayStr;
-        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px">
-          <div style="font-size:9px;color:${d.count>0?(isToday?'var(--flame)':'var(--t2)'):'var(--t4)'};
-            font-family:'DM Mono',monospace;font-weight:700">${d.count>0?d.count:''}</div>
-          <div title="${d.date}: ${d.count} orders" style="width:100%;border-radius:4px 4px 0 0;
-            background:${isToday?'var(--flame)':'rgba(255,77,13,.3)'};
-            height:${pct}%;min-height:3px;transition:height .3s"></div>
-        </div>`;
-      }).join('');
-    }
-
-    // ── Top products ──────────────────────────────────────────────────────
-    const prodsEl = document.getElementById('an-products');
-    if (prodsEl && data.top_products && data.top_products.length) {
-      const maxP = data.top_products[0][1] || 1;
-      prodsEl.innerHTML = data.top_products.slice(0,8).map(([name,cnt]) => {
-        const pct   = Math.round((cnt/maxP)*100);
-        const short = name.split('—')[0].trim()
-          .replace('Pastrues Injektimit Dizel ','')
-          .replace('Pastrues Filtrave DPF ','DPF ')
-          .replace('Additiv Vaj Motorik ','')
-          .replace('Super Diesel Additiv ','')
-          .replace('Set ','');
-        return `<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
-            <span style="color:var(--t1);font-weight:600;overflow:hidden;text-overflow:ellipsis;
-              white-space:nowrap;max-width:72%">${short}</span>
-            <span style="color:var(--flame);font-family:'DM Mono',monospace;
-              font-weight:700;flex-shrink:0">${cnt}</span>
-          </div>
-          <div style="height:5px;background:var(--g3);border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:var(--flame);
-              border-radius:3px;transition:width .4s ease"></div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    // ── Top cities ────────────────────────────────────────────────────────
-    const citiesEl = document.getElementById('an-cities');
-    if (citiesEl && data.top_cities && data.top_cities.length) {
-      const maxC = data.top_cities[0][1] || 1;
-      citiesEl.innerHTML = data.top_cities.slice(0,8).map(([city,cnt]) => {
-        const pct = Math.round((cnt/maxC)*100);
-        return `<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
-            <span style="color:var(--t1);font-weight:600">${city}</span>
-            <span style="color:var(--mint);font-family:'DM Mono',monospace;font-weight:700">${cnt}</span>
-          </div>
-          <div style="height:5px;background:var(--g3);border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:var(--mint);
-              border-radius:3px;transition:width .4s ease"></div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    // ── Peak hours ────────────────────────────────────────────────────────
-    const hoursEl = document.getElementById('hours-chart');
-    if (hoursEl && data.hours) {
-      const vals = Array.from({length:24}, (_,i) => data.hours[String(i)] || 0);
-      const maxH = Math.max(...vals, 1);
-      const now  = new Date().getHours();
-      hoursEl.innerHTML = vals.map((v,h) => {
-        const pct   = Math.max(3, Math.round((v/maxH)*100));
-        const isNow = h === now;
-        return `<div style="flex:1;display:flex;align-items:flex-end;height:100%">
-          <div title="${h}:00 — ${v} orders" style="width:100%;border-radius:2px 2px 0 0;
-            background:${isNow?'var(--flame)':(h>=8&&h<=20?'rgba(255,77,13,.35)':'rgba(255,77,13,.12)')};
-            height:${pct}%;min-height:2px"></div>
-        </div>`;
-      }).join('');
-    }
-
-    // ── Revenue breakdown in KPI ───────────────────────────────────────────
-    const avgEl = document.getElementById('avg-time-val');
-    const avgSub = document.getElementById('avg-time-sub');
-    if (data.placed > 0 && data.revenue > 0) {
-      const avgOrder = (data.revenue / data.placed).toFixed(2);
-      if (avgEl)  avgEl.innerText  = '€' + avgOrder;
-      if (avgSub) avgSub.innerText = 'avg order value';
-    }
-
-  } catch(e) { /* silent */ }
-}
-
-
-// ─── FAILURE SCREENSHOTS ──────────────────────────────────────────────────────
-async function loadScreenshots() {
-  const el = document.getElementById('screenshots-list');
-  if (!el) return;
-  el.innerText = 'Loading…';
-  try {
-    const r    = await fetch('/api/screenshots');
-    const data = await r.json();
-    if (!data.screenshots || !data.screenshots.length) {
-      el.innerText = 'No failure screenshots yet ✅';
-      return;
-    }
-    el.innerHTML = data.screenshots.map(f => {
-      const ts = f.replace('fail_row','').replace('.png','').replace(/_/g,' ');
-      return `<div style="display:flex;align-items:center;justify-content:space-between;
-        padding:7px 0;border-bottom:1px solid var(--gb);gap:8px">
-        <div>
-          <div style="font-size:11px;font-weight:600;color:var(--crimson)">📸 ${ts}</div>
-        </div>
-        <a href="/api/screenshot/${f}" target="_blank"
-          style="background:var(--flame);color:white;border:none;border-radius:7px;
-          padding:5px 12px;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer">
-          View
-        </a>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerText = 'Server not reachable — open desktop app first';
-  }
-}
-
-// ─── TAB BAR SAFE AREA ───────────────────────────────────────────────────────
-(function positionTabBar() {
-  function getSAB() {
-    var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
-    document.body.appendChild(el);
-    var h = el.getBoundingClientRect().height || 0;
-    document.body.removeChild(el);
-    return h;
-  }
-  function apply() {
-    var sab     = getSAB();
-    var bottom  = Math.max(sab + 12, 16);
-    var wrapper = document.querySelector('.tab-bar-wrapper');
-    if (wrapper) wrapper.style.bottom = bottom + 'px';
-    var fab = document.getElementById('fab');
-    if (fab) fab.style.bottom = (bottom + 72) + 'px';
-  }
-  apply();
-  setTimeout(apply, 100);
-  setTimeout(apply, 500);
-  window.addEventListener('resize', apply);
-  window.addEventListener('orientationchange', function(){ setTimeout(apply, 300); });
-})();
-
-// ─── TAB BAR SAFE AREA ───────────────────────────────────────────────────────
-(function positionTabBar2() {
-  function getSAB2() {
-    var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:0;left:0;width:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden';
-    document.body.appendChild(el);
-    var h = el.getBoundingClientRect().height || 0;
-    document.body.removeChild(el);
-    return h;
-  }
-  function applyPos() {
-    var sab     = getSAB2();
-    var bottom  = Math.max(sab + 12, 16);
-    var wrapper = document.querySelector('.tab-bar-wrapper');
-    if (wrapper) wrapper.style.bottom = bottom + 'px';
-    var fab = document.getElementById('fab');
-    if (fab) fab.style.bottom = (bottom + 72) + 'px';
-  }
-  applyPos();
-  setTimeout(applyPos, 100);
-  setTimeout(applyPos, 500);
-  window.addEventListener('resize', applyPos);
-  window.addEventListener('orientationchange', function(){ setTimeout(applyPos, 300); });
-})();
-
-// ─── BACKDROP DISMISS ─────────────────────────────────────────────────────────
-['edit-overlay','detail-overlay','notif-overlay'].forEach(function(id) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('click', function(e) {
-    if (e.target === el) {
-      el.classList.remove('show');
-      if (id === 'edit-overlay')   editingRow = null;
-      if (id === 'detail-overlay') detailRow  = null;
-    }
-  });
-});
-
-// ─── PULL TO REFRESH ──────────────────────────────────────────────────────────
-(function() {
-  var ptStart = 0, pulling = false;
-  document.addEventListener('touchstart', function(e) {
-    if (window.scrollY === 0) { ptStart = e.touches[0].clientY; pulling = true; }
-  }, {passive:true});
-  document.addEventListener('touchend', function(e) {
-    if (!pulling) return;
-    var dy = e.changedTouches[0].clientY - ptStart;
-    pulling = false;
-    if (dy > 80 && document.getElementById('page-orders').classList.contains('active') && !document.querySelector('.overlay.show')) {
-      var btn = document.getElementById('reload-btn');
-      btn.classList.add('spinning');
-      loadOrders(true).finally(function(){ setTimeout(function(){ btn.classList.remove('spinning'); }, 500); });
-    }
-  }, {passive:true});
-})();
-
-// ─── KEYBOARD DISMISS ─────────────────────────────────────────────────────────
-document.addEventListener('touchmove', function() {
-  if (document.activeElement && ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))
-    document.activeElement.blur();
-}, {passive:true});
-
-// ─── SWIPE HINT ───────────────────────────────────────────────────────────────
-(function() {
-  if (localStorage.getItem('swipeHintShown')) return;
-  setTimeout(function() {
-    var hint = document.getElementById('swipe-hint');
-    if (hint) {
-      hint.style.display = 'flex';
-      setTimeout(function() {
-        hint.style.opacity = '0'; hint.style.transition = 'opacity 0.5s';
-        setTimeout(function() { hint.style.display = 'none'; }, 500);
-        localStorage.setItem('swipeHintShown','1');
-      }, 3000);
-    }
-  }, 2000);
-})();
-
-// Desktop server URL — set this to your PC's local IP
-// e.g. 'http://192.168.1.50:5052' — find it with ipconfig on your PC
-const DESKTOP_URL = localStorage.getItem('argati_desktop_url') || 'https://10.10.10.17:5052';
-
-async function loadVideos() {
-  const el = document.getElementById('videos-list');
-  if (!el) return;
-
-  if (!DESKTOP_URL) {
-    el.innerHTML = `<div style="font-size:12px;color:var(--t2);padding:8px 0">
-      Set your PC IP to load videos.<br>
-      <button onclick="promptDesktopUrl()" style="margin-top:8px;background:var(--flame);
-        color:white;border:none;border-radius:8px;padding:7px 14px;font-family:inherit;
-        font-size:12px;font-weight:700;cursor:pointer">Set PC IP</button>
-    </div>`;
-    return;
-  }
-
-  el.innerText = 'Loading…';
-  try {
-    const r    = await fetch(DESKTOP_URL + '/api/videos');
-    const data = await r.json();
-    if (!data.videos || !data.videos.length) {
-      el.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0">No recordings yet</div>';
-      return;
-    }
-    el.innerHTML = data.videos.map(f => {
-      const label  = f.replace('order_','Order #').replace('fail_row','Failed Row ').replace('.webm','');
-      const failed = f.startsWith('fail');
-      return `<div style="display:flex;align-items:center;justify-content:space-between;
-        padding:8px 0;border-bottom:1px solid var(--gb);gap:8px">
-        <div style="font-size:12px;font-weight:600;color:${failed?'var(--crimson)':'var(--t1)'}">
-          ${failed?'❌':'✅'} ${label}
-        </div>
-        <a href="${DESKTOP_URL}/api/video/${f}" target="_blank"
-          style="background:var(--flame);color:white;border:none;border-radius:7px;
-          padding:5px 12px;font-size:11px;font-weight:700;text-decoration:none;flex-shrink:0">
-          ▶ Play
-        </a>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = `<div style="font-size:12px;color:var(--t2);padding:8px 0">
-      Can't reach server at ${DESKTOP_URL}<br>
-      <button onclick="promptDesktopUrl()" style="margin-top:8px;background:var(--g3);
-        color:var(--t2);border:1px solid var(--gb);border-radius:8px;padding:6px 12px;
-        font-family:inherit;font-size:11px;font-weight:600;cursor:pointer">Change IP</button>
-    </div>`;
-  }
-}
-
-function promptDesktopUrl() {
-  const current = localStorage.getItem('argati_desktop_url') || 'https://10.10.10.17:5052';
-  const url = prompt('Enter your PC\'s local IP address:\n(e.g. http://192.168.1.50:5052)', current);
-  if (url && url.startsWith('http')) {
-    localStorage.setItem('argati_desktop_url', url.replace(/\/$/, ''));
-    location.reload();
-  }
-}
-
-
-// Show current desktop URL in settings
-(function() {
-  const url = localStorage.getItem('argati_desktop_url');
-  const el  = document.getElementById('desktop-url-desc');
-  if (el && url) el.innerText = url;
-})();
-
-
-// ─── PRODUCT MANAGER ─────────────────────────────────────────────────────────
-let prodData   = {singles:[], bundles:[]};
-let prodTabNow = 'singles';
-
-async function loadProductManager() {
-  const pm = document.getElementById('product-manager');
-  if (!pm) return;
-  if (pm.style.display === 'block') { pm.style.display = 'none'; return; }
-  pm.style.display = 'block';
-  try {
-    const apiBase = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL) ? DESKTOP_URL : '';
-    const r = await fetch(apiBase + '/api/products');
-    prodData = await r.json();
-    renderProdList();
-  } catch(e) {
-    showProdMsg('Cannot reach server — make sure desktop app is running and IP is set in Settings', 'var(--crimson)');
-  }
-}
-
-function showProdTab(tab) {
-  prodTabNow = tab;
-  document.getElementById('tab-singles').style.background = tab==='singles' ? 'var(--flame)' : 'var(--g3)';
-  document.getElementById('tab-singles').style.color      = tab==='singles' ? 'white'        : 'var(--t2)';
-  document.getElementById('tab-bundles').style.background = tab==='bundles' ? 'var(--flame)' : 'var(--g3)';
-  document.getElementById('tab-bundles').style.color      = tab==='bundles' ? 'white'        : 'var(--t2)';
-  renderProdList();
-}
-
-function renderProdList() {
-  const list  = document.getElementById('prod-list');
-  const items = prodData[prodTabNow] || [];
-  if (!items.length) { list.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0;text-align:center">No products yet</div>'; return; }
-  list.innerHTML = items.map((p,i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--gb)">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:700;color:var(--t1)">${p.code} — ${p.name}</div>
-        <div style="font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.url}</div>
+// ── Setup screen ───────────────────────────────────────────────────────────
+function renderSetup() {
+  $('#app').innerHTML = `
+    <main class="setup">
+      <h1>Connect Argati</h1>
+      <p>Paste the access key from the Apps Script setup log. You only do this once per device.</p>
+      <div class="panel">
+        <label class="field"><span>Access key</span><input id="key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="32 letters and numbers"></label>
+        <div class="field"><button class="btn primary block" data-act="connect">Connect</button></div>
       </div>
-      <button onclick="removeProduct('${prodTabNow}',${i})"
-        style="background:var(--cdim);color:var(--crimson);border:1px solid rgba(255,51,88,.2);
-        border-radius:7px;padding:4px 10px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">
-        Remove
-      </button>
-    </div>`).join('');
+      <div class="err" id="err" role="alert"></div>
+      <p class="alt">Just looking? <a href="?demo">Open the demo with sample data</a></p>
+    </main>`;
+  setTimeout(() => { const k = $('#key'); k && k.focus(); }, 50);
+}
+async function connect() {
+  const key = ($('#key').value || '').trim(); const err = $('#err');
+  if (!key) { err.textContent = 'Paste the access key first.'; return; }
+  err.textContent = 'Checking…'; cfg = { key, url: cfg.url || DEFAULT_URL };
+  try { await get('status'); store.set(cfg); S.error = ''; render(); refresh(true); }
+  catch (e) { cfg.key = ''; err.textContent = e.message === 'The access key was rejected' ? 'That key was rejected. Copy it again from the setup log.' : e.message + '. Check your connection and try again.'; }
 }
 
-async function addProduct() {
-  const code = document.getElementById('new-prod-code').value.trim();
-  const name = document.getElementById('new-prod-name').value.trim();
-  const url  = document.getElementById('new-prod-url').value.trim();
-  if (!code || !name || !url) { showProdMsg('Fill all three fields', 'var(--amber)'); return; }
-  if (!url.startsWith('https://gjirafamall.com/')) { showProdMsg('URL must start with https://gjirafamall.com/', 'var(--amber)'); return; }
-  if (prodData.singles.find(p=>p.code===code) || prodData.bundles.find(p=>p.code===code)) {
-    showProdMsg('Code already exists', 'var(--amber)'); return;
+// ── Events ─────────────────────────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, row = Number(el.dataset.row);
+  if (act === 'tab') { S.tab = el.dataset.tab; render(); window.scrollTo(0, 0); if (S.tab !== 'queue' && Date.now() - S.recentAt > 30000) refreshRecent().then(render); }
+  else if (act === 'refresh') refresh(true);
+  else if (act === 'open') { e.preventDefault(); openSheet(row); }
+  else if (act === 'approve') { e.stopPropagation(); approve(row, el.dataset.confirm === '1'); }
+  else if (act === 'saveid') saveOrderId(row);
+  else if (act === 'close') closeSheet();
+  else if (act === 'copy') { navigator.clipboard && navigator.clipboard.writeText(el.dataset.text).then(() => toast('Copied ' + el.dataset.text)); }
+  else if (act === 'push') enablePush();
+  else if (act === 'testpush') post('alert', { title: '🔔 Argati test', body: 'Notifications work on this device.' }).then(() => toast('Test sent.'), err => toast(err.message));
+  else if (act === 'saveconn') saveConnection();
+  else if (act === 'connect') connect();
+});
+document.addEventListener('change', e => { if (e.target.matches('[data-act="auto"]')) setAuto(e.target.checked, e.target); });
+document.addEventListener('input', e => { if (e.target.id === 'q') { S.query = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.open != null) closeSheet();
+  if (e.key === 'Enter' && e.target.id === 'key' && !cfg.key) connect(); });
+$('#scrim').addEventListener('click', closeSheet);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
+setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, POLL_MS);
+setInterval(tickCountdowns, 1000);
+if ('serviceWorker' in navigator && !DEMO) {
+  navigator.serviceWorker.register('sw.js').then(() => tellWorker()).catch(() => {});
+  navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'refresh') refresh(true); });
+}
+
+// ── Demo data (?demo) ──────────────────────────────────────────────────────
+const Demo = {
+  auto: true,
+  products: [['104','Pastrues Filtrave DPF 104'],['106','DPF Additiv 106'],['107','Pastrues DPF 107'],['201','Super Diesel Additiv 201'],
+    ['204','Pastrues Injektimit Dizel 204'],['207','Additiv Vaj Motorik 207'],['210','Pastrues Injektimit Benzine 210'],
+    ['204+107+106','Set Diesel 2+1 Gratis'],['210+209+206','Set Benzine 2+1 Gratis']].map(([code, name]) => ({ code, name, url: 'https://gjirafamall.com/', active: true })),
+  build() {
+    if (this.data) return this.data;
+    const now = Date.now(), r = (row, first, last, product, city, extra) => Object.assign({ row, first, last, product, city,
+      phone: '044' + String(100000 + row * 7919).slice(-6), address: 'Rr. Agim Ramadani ' + (row % 40 + 1), comment: '', lastEdit: now - 600000 }, extra || {});
+    const rows = [
+      r(701, 'Blerim', 'Gashi', '204', 'Prishtinë', { lastEdit: now - 38000 }),
+      r(702, 'Arta', 'Hoxha', '204+107+106', 'Pejë', { lastEdit: now - 85000 }),
+      r(703, 'Fatmir', 'Krasniqi', '207', 'Ferizaj', { comment: 'Thirrni pas orës 17' }),
+      r(704, 'Driton', 'Berisha', '204+207', 'Gjakovë'),
+      r(705, 'Valon', 'Morina', '210', 'Prizren', { phone: '04512' }),
+      r(706, 'Shpresa', 'Kelmendi', '204', 'Mitrovicë', { lastEdit: 0 }),
+    ];
+    const verdicts = [
+      { row: 703, state: 'review', reason: 'Has note: Thirrni pas orës 17', qty: 1, city: 'Ferizaj', productName: 'Additiv Vaj Motorik 207' },
+      { row: 704, state: 'manual', reason: 'Place manually on GjirafaMall (combination, not a bundle)', qty: 1, city: 'Gjakovë' },
+      { row: 705, state: 'blocked', reason: "Invalid phone '04512'", qty: 1, city: 'Prizren' },
+      { row: 706, state: 'review', reason: 'Older row (no edit stamp) — approve or re-edit to place', qty: 1, city: 'Mitrovicë' },
+    ];
+    const names = [['Genc','Pacarizi','Malishevë'],['Shaban','Abdyli','Prishtinë'],['Besnik','Sadiku','Shtime'],['Nevzat','Goga','Pejë'],
+      ['Artan','Rizanaj','Prizren'],['Shef','Xeni','Ferizaj'],['Nysret','Sertolli','Malishevë'],['Bardh','Bardhi','Kamenicë'],['Enis','Berisha','Prishtinë'],['Arsim','Kurteshi','Ferizaj']];
+    const prods = [['204+107+106','Set Diesel 2+1 Gratis',21.9],['207','Additiv Vaj Motorik 207',11.9],['204','Pastrues Injektimit Dizel 204',11.9],
+      ['210','Pastrues Injektimit Benzine 210',12.95],['210+209+206','Set Benzine 2+1 Gratis',21.9]];
+    const recent = [];
+    let id = 1277076;
+    for (let d = 0; d < 20; d++) {
+      const count = d === 0 ? 9 : 4 + ((d * 7) % 9);
+      for (let k = 0; k < count; k++) {
+        const n = names[(d * 3 + k) % names.length], p = prods[(d + k * 2) % prods.length];
+        const t = new Date(now - d * 86400000); t.setHours(9 + (k % 9), (k * 17) % 60);
+        if (t > now) t.setTime(now - k * 600000);
+        recent.push({ row: 690 - recent.length, orderId: '#' + (id--), product: p[0], productName: p[1], name: n[0] + ' ' + n[1], city: n[2], total: String(p[2]), placedAt: t.toISOString() });
+      }
+    }
+    recent.sort((a, b) => b.placedAt.localeCompare(a.placedAt));
+    return this.data = { rows, verdicts, recent };
+  },
+  handle(method, action, body) {
+    const d = this.build(), now = Date.now();
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    if (action === 'status') return wait(150).then(() => ({ ok: true, now, version: '2.1.0', autoMode: this.auto, sheetUrl: '',
+      runner: { id: 'Office-Mac.local', online: true, seenAgoSec: 14 },
+      state: { mode: 'live', stats: { placedToday: 9, uptimeMin: 312 }, verdicts: d.verdicts } }));
+    if (action === 'pending') return wait(150).then(() => ({ ok: true, now, autoMode: this.auto, approvals: [], products: this.products, rows: d.rows }));
+    if (action === 'recent') return wait(100).then(() => ({ ok: true, orders: d.recent }));
+    if (action === 'setAuto') { this.auto = !!body.on; return wait(250).then(() => ({ ok: true })); }
+    if (action === 'approve' || action === 'alert' || action === 'subscribe') return wait(300).then(() => ({ ok: true }));
+    if (action === 'setOrderId') { d.rows = d.rows.filter(r => r.row !== body.row); return wait(300).then(() => ({ ok: true })); }
+    return Promise.resolve({ ok: true });
   }
-  const isBundle = code.includes('+');
-  prodData[isBundle ? 'bundles' : 'singles'].push({code, name, url});
-  const ok = await saveProdData();
-  if (ok) {
-    document.getElementById('new-prod-code').value = '';
-    document.getElementById('new-prod-name').value = '';
-    document.getElementById('new-prod-url').value  = '';
-    showProdTab(isBundle ? 'bundles' : 'singles');
-    showProdMsg('✅ Product added! Restart server to apply.', 'var(--mint)');
-  }
-}
+};
 
-function removeProduct(type, idx) {
-  const p = prodData[type][idx];
-  if (!confirm('Remove ' + p.code + ' — ' + p.name + '?')) return;
-  prodData[type].splice(idx, 1);
-  saveProdData().then(ok => {
-    if (ok) { renderProdList(); showProdMsg('✅ Removed. Restart server to apply.', 'var(--mint)'); }
-  });
-}
-
-async function saveProdData() {
-  try {
-    const apiBase2 = (typeof DESKTOP_URL !== 'undefined' && DESKTOP_URL) ? DESKTOP_URL : '';
-    const r = await fetch(apiBase2 + '/api/products', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(prodData)
-    });
-    const d = await r.json();
-    if (d.error) { showProdMsg('Error: ' + d.error, 'var(--crimson)'); return false; }
-    return true;
-  } catch(e) {
-    showProdMsg('Cannot reach server', 'var(--crimson)');
-    return false;
-  }
-}
-
-function showProdMsg(msg, color) {
-  const el = document.getElementById('prod-msg');
-  if (!el) return;
-  el.style.display = 'block';
-  el.style.color   = color || 'var(--t2)';
-  el.innerText     = msg;
-  setTimeout(() => { el.style.display = 'none'; }, 4000);
-}
-
+render();
+refresh(true);
 </script>
 </body>
 </html>
