@@ -1,121 +1,67 @@
-// Argati Service Worker v4
-const CACHE_NAME   = 'argati-v6.9.9.8';
-const SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
+// Argati PWA service worker — v3
+const CACHE = 'argati-v3.0.0';
+const SHELL = ['./', 'index.html', 'manifest.json', 'icon.png'];
+const NEEDS_YOU = ['review', 'unverified', 'manual', 'blocked'];
 
-self.addEventListener('install',  e => { self.skipWaiting(); });
-self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL).catch(() => {})).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys()
+    .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    .then(() => self.clients.claim()));
+});
 
-// Refresh badge whenever SW wakes up (push, focus, etc.)
-async function refreshBadgeOnly() {
+// App shell: network first, cache as fallback. Apps Script calls are never cached.
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+  if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  e.respondWith(fetch(e.request)
+    .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return res; })
+    .catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
+});
+
+// The page sends the Apps Script URL + key so the badge can be updated after a push.
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'config') {
+    caches.open(CACHE + '-config').then(c => c.put('config', new Response(JSON.stringify(e.data))));
+  }
+});
+async function readConfig() {
+  try { const r = await (await caches.open(CACHE + '-config')).match('config'); return r ? r.json() : null; }
+  catch (e) { return null; }
+}
+async function updateBadge() {
+  const cfg = await readConfig();
+  if (!cfg || !cfg.key || !self.navigator.setAppBadge) return;
   try {
-    const res     = await fetch(SCRIPT_URL + '?action=count&t=' + Date.now());
-    const text    = await res.text();
-    const pending = parseInt(text.trim()) || 0;
-    if ('setAppBadge' in self) {
-      if (pending > 0) self.navigator.setAppBadge(pending).catch(() => {});
-      else             self.navigator.clearAppBadge().catch(() => {});
-    }
-    // Update open windows
-    const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-    list.forEach(c => c.postMessage({ type: 'BADGE_UPDATE', pending }));
-  } catch(e) {}
+    const res = await fetch(cfg.url + '?action=status&key=' + encodeURIComponent(cfg.key) + '&t=' + Date.now());
+    const data = await res.json();
+    const n = (((data.state || {}).verdicts) || []).filter(v => NEEDS_YOU.includes(v.state)).length;
+    n ? await self.navigator.setAppBadge(n) : await self.navigator.clearAppBadge();
+  } catch (e) {}
 }
 
-// ── PUSH — fires even when PWA is closed ──────────────────────────────────────
 self.addEventListener('push', e => {
-  let title = 'Argati';
-  let body  = 'New order arrived!';
-
+  let title = 'Argati', body = '';
   if (e.data) {
-    try   { const d = e.data.json(); title = d.title || title; body = d.body || body; }
-    catch { body = e.data.text() || body; }
+    try { const d = e.data.json(); title = d.title || title; body = d.body || d.message || ''; }
+    catch (err) { body = e.data.text(); }
   }
-
-  // Set badge immediately (before fetch) so it appears instantly
-  if ('setAppBadge' in self) self.setAppBadge().catch(()=>{});
-
+  const tag = /offline|online/i.test(title) ? 'argati-runner' : 'argati-' + Date.now();
   e.waitUntil(Promise.all([
-    // 1. Show notification
-    self.registration.showNotification(title, {
-      body, icon: 'icon.png', badge: 'icon.png',
-      tag: 'argati-order', renotify: true,
-      vibrate: [200, 80, 200],
-      requireInteraction: false,
-      data: { url: self.location.origin }
-    }),
-
-    // 2. Fetch exact pending count and update badge with real number
-    fetchAndUpdateBadge(),
-
-    // 3. Tell any open PWA window to refresh immediately
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      list.forEach(c => c.postMessage({ type: 'NEW_ORDER' }));
-    })
+    self.registration.showNotification(title, { body, icon: 'icon.png', badge: 'icon.png', tag, renotify: true, data: { url: './' } }),
+    updateBadge(),
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(list => list.forEach(c => c.postMessage({ type: 'refresh' })))
   ]));
 });
 
-// ── Fetch pending count + set home screen badge ───────────────────────────────
-async function fetchAndUpdateBadge() {
-  try {
-    const res    = await fetch(SCRIPT_URL + '?t=' + Date.now());
-    const orders = await res.json();
-    const pending = Array.isArray(orders) ? orders.filter(o => {
-      const oid = (o.OrderID || '').toString().trim();
-      if (oid !== '' && oid.toLowerCase() !== 'pending') return false;
-      return (o.Produkti  || '').toString().trim() !== '' &&
-             (o.Emri      || '').toString().trim() !== '' &&
-             (o.Mbiemri   || '').toString().trim() !== '' &&
-             (o.Telefoni  || '').toString().trim() !== '' &&
-             (o.Qyteti    || '').toString().trim() !== '' &&
-             (o.Adresa    || '').toString().trim() !== '';
-    }).length : 0;
-
-    // Update home screen badge
-    if ('setAppBadge' in self) {
-      if (pending > 0) self.navigator.setAppBadge(pending).catch(() => {});
-      else             self.navigator.clearAppBadge().catch(() => {});
-    }
-
-    // Tell open windows the exact count so they update immediately
-    const list = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-    list.forEach(c => c.postMessage({ type: 'BADGE_UPDATE', pending }));
-
-    return pending;
-  } catch(e) {
-    // Badge increment without exact count if fetch fails
-    if ('setAppBadge' in navigator) navigator.setAppBadge().catch(() => {});
-  }
-}
-
-// ── NOTIFICATION CLICK — open/focus app ──────────────────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  e.waitUntil(
-    Promise.all([
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-        if (list.length > 0) return list[0].focus();
-        return clients.openWindow('./');
-      }),
-      // Don't clear badge on click — let the app do it when orders are loaded
-    ])
-  );
-});
-
-// ── PERIODIC BACKGROUND SYNC — refreshes badge every 5 min ─────────────────
-self.addEventListener('periodicsync', e => {
-  if (e.tag === 'badge-refresh') {
-    e.waitUntil(refreshBadgeOnly());
-  }
-});
-
-// ── PUSH SUBSCRIPTION CHANGED — auto re-subscribe ────────────────────────────
-self.addEventListener('pushsubscriptionchange', e => {
-  e.waitUntil(
-    self.registration.pushManager.subscribe(e.oldSubscription.options)
-      .then(sub => fetch(SCRIPT_URL + '?action=saveSub&t=' + Date.now(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sub.toJSON())
-      }))
-  );
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const open = list.find(c => 'focus' in c);
+    if (open) { open.postMessage({ type: 'refresh' }); return open.focus(); }
+    return self.clients.openWindow('./');
+  }));
 });
