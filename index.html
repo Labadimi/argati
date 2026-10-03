@@ -127,6 +127,12 @@ a{color:inherit}
 .day span:last-child{font-family:var(--display)}
 .prow{display:flex;gap:12px;padding:13px 14px;border-top:1px solid var(--hair);align-items:center}
 .prow:first-child{border-top:0}
+.prow{cursor:pointer}
+.prow:active{background:var(--sunk)}
+.seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--sunk);margin-top:10px}
+.seg button{flex:1;height:36px;border-radius:8px;font-weight:600;font-size:15px;color:var(--steel)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.setting.stack{display:block}
 .prow .main{flex:1;min-width:0}
 .prow .name{font-weight:600;line-height:1.2}
 .prow .line2{font-size:14px;color:var(--steel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -232,10 +238,11 @@ a{color:inherit}
 <script>
 'use strict';
 // ── Config ─────────────────────────────────────────────────────────────────
-const APP_VERSION = '3.0.1';
+const APP_VERSION = '3.1.0';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 const VAPID_PUBLIC = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
-const QUIET_MS = 120000, POLL_MS = 10000;
+const POLL_MS = 15000;
+const quietMs = () => 1000 * Number(((S.pending || {}).settings || {}).quietSeconds || 120);
 const DEMO = new URLSearchParams(location.search).has('demo');
 const store = {
   get() { try { return JSON.parse(localStorage.getItem('argati.v3') || '{}'); } catch (e) { return {}; } },
@@ -257,6 +264,7 @@ const STATES = {
   would_place: { label: 'Would place (test mode)', tone: 'ok', group: 'soon' },
   writing:     { label: 'Writing to the sheet', tone: 'ok',    group: 'soon' },
   placed:      { label: 'Placed',              tone: 'ok',     group: 'soon' },
+  out_of_stock:{ label: 'Waiting for stock',   tone: 'wait',   group: 'soon' },
   unknown:     { label: 'Not checked yet',     tone: 'steel',  group: 'soon' },
 };
 
@@ -270,6 +278,7 @@ const parseMoney = s => { const n = parseFloat(String(s || '').replace(/[^\d.,-]
 const dayKey = d => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
 function ago(sec) {
   if (sec == null) return 'never';
+  if (sec >= 86400) return Math.round(sec / 86400) + ' d ago';
   if (sec < 60) return sec + 's ago';
   if (sec < 3600) return Math.round(sec / 60) + ' min ago';
   return Math.round(sec / 3600) + ' h ago';
@@ -319,7 +328,14 @@ async function refresh(force) {
   if (S.loading || (!cfg.key && !DEMO)) return;
   S.loading = true; render();
   try {
-    const [status, pending] = await Promise.all([get('status'), get('pending')]);
+    let status, pending;
+    try {
+      const d = await get('dash');
+      status = d.status; pending = d.pending; S.today = d.today || null;
+    } catch (e) {
+      if (!/unknown action/.test(e.message)) throw e;
+      [status, pending] = await Promise.all([get('status'), get('pending')]); S.today = null;
+    }
     S.status = status; S.pending = pending; S.offset = (pending.now || Date.now()) - Date.now();
     S.lastOk = Date.now(); S.error = '';
     if (force || S.tab !== 'queue' || Date.now() - S.recentAt > 60000) await refreshRecent();
@@ -352,7 +368,7 @@ function items() {
   return (S.pending.rows || []).map(r => {
     const v = verdicts[r.row] || { state: 'unknown', reason: 'The runner hasn’t looked at this row yet.' };
     let state = v.state, reason = humanReason(v.state, v.reason);
-    const until = r.lastEdit ? r.lastEdit + QUIET_MS : 0;
+    const until = r.lastEdit ? r.lastEdit + quietMs() : 0;
     if (until > now && !['manual', 'blocked'].includes(state)) { state = 'waiting'; reason = 'Waiting until edits stop'; }
     if (state === 'waiting' && until <= now) reason = 'Placing on the next check';
     return Object.assign({}, r, { state, reason, until, qty: v.qty || 1, productName: v.productName || productLabel(r.product),
@@ -361,9 +377,10 @@ function items() {
   });
 }
 function todayStats() {
+  if (S.today) return { n: S.today.count, sum: S.today.revenue, last: S.today.last };
   const today = dayKey(new Date()); let n = 0, sum = 0;
   S.recent.forEach(o => { const d = new Date(o.placedAt); if (!isNaN(d) && dayKey(d) === today) { n++; sum += parseMoney(o.total); } });
-  return { n, sum };
+  return { n, sum, last: S.recent[0] || null };
 }
 
 function humanReason(state, reason) {
@@ -445,7 +462,11 @@ function viewQueue(needs, soon) {
   let sub = '';
   if (st && st.runner && !st.runner.online && st.runner.seenAgoSec != null) sub = `Last seen ${ago(st.runner.seenAgoSec)}. Check that the office Mac is awake and online.`;
   else if (st && !st.autoMode) sub = 'Clean orders wait for you. Turn it back on in Settings.';
-  else sub = `<b class="num">${t.n}</b> placed today${t.sum ? `, <b class="num">${money(t.sum)}</b>` : ''}.`;
+  else {
+    sub = `<b class="num">${t.n}</b> placed today${t.sum ? `, <b class="num">${money(t.sum)}</b>` : ''}.`;
+    const last = t.last, d = last && new Date(last.placedAt);
+    if (last && !isNaN(d)) sub += ` Last: ${esc(last.name)}, ${ago(Math.max(0, Math.round((Date.now() - d) / 1000)))}.`;
+  }
   return `
     <section class="hero" aria-live="polite">
       <h1 class="headline ${h.cls}">${esc(h.text)}</h1>
@@ -504,7 +525,7 @@ function viewPlaced() {
       groups.map(g => `<div class="day"><span>${label(g)}</span><span class="num">${plural(g.items.length, 'order', 'orders')}${g.sum ? ', ' + money(g.sum) : ''}</span></div>
         <div class="panel">${g.items.map(o => {
           const d = new Date(o.placedAt);
-          return `<div class="prow"><div class="main"><div class="name">${esc(o.name)}</div>
+          return `<div class="prow" data-act="openplaced" data-id="${esc(o.orderId)}" role="button" tabindex="0"><div class="main"><div class="name">${esc(o.name)}</div>
             <div class="line2">${isNaN(d) ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ', '}${esc(o.productName)}, ${esc(o.city)}</div></div>
             <div class="right"><button class="oid num" data-act="copy" data-text="${esc(o.orderId)}" aria-label="Copy ${esc(o.orderId)}">${esc(o.orderId)}</button>
             <div class="total num">${o.total ? money(parseMoney(o.total)) : ''}</div></div></div>`;
@@ -545,11 +566,13 @@ function viewInsights() {
 
 function viewSettings() {
   const st = S.status || {}, r = st.runner || {}, rs = st.state || {};
-  const push = pushState();
+  const push = pushState(), set = st.settings || ((S.pending || {}).settings) || { quietSeconds: 120, oosRetryMin: 15 };
+  const seg = (key, opts, fmt) => `<div class="seg" role="group">${opts.map(v =>
+    `<button data-act="setting" data-key="${key}" data-val="${v}" aria-pressed="${Number(set[key]) === v}">${fmt(v)}</button>`).join('')}</div>`;
   return `
     <section class="section"><h2>Ordering</h2><div class="panel">
       <div class="setting"><div class="main"><div class="t">Automatic ordering</div>
-        <div class="d">${st.autoMode ? 'Clean orders are placed 2 minutes after the last edit.' : 'Paused. Clean orders wait for your approval.'}</div></div>
+        <div class="d">${st.autoMode ? `Clean orders are placed ${fmtWait(set.quietSeconds)} after the last edit.` : 'Paused. Clean orders wait for your approval.'}</div></div>
         <label class="switch" aria-label="Automatic ordering"><input type="checkbox" data-act="auto" ${st.autoMode ? 'checked' : ''} ${S.status ? '' : 'disabled'}><span class="tr"></span></label></div>
       <div class="setting"><div class="main"><div class="t">Runner</div>
         <div class="d">${r.id ? esc(r.id.replace(/\.local$/, '')) + ', ' : ''}${r.online ? 'online' : 'offline'}, checked in ${ago(r.seenAgoSec)}${rs.mode ? ', ' + (rs.mode === 'live' ? 'live' : 'test mode') : ''}</div></div>
@@ -557,11 +580,17 @@ function viewSettings() {
       ${rs.stats ? `<div class="setting"><div class="main"><div class="t">Placed by the runner today</div>
         <div class="d">Running for ${rs.stats.uptimeMin >= 60 ? Math.floor(rs.stats.uptimeMin / 60) + ' h ' + (rs.stats.uptimeMin % 60) + ' min' : rs.stats.uptimeMin + ' min'}</div></div>
         <span class="oid num">${rs.stats.placedToday}</span></div>` : ''}
+      <div class="setting stack"><div class="t">Wait after the last edit</div>
+        <div class="d">Gives the team time to finish typing before an order is placed.</div>
+        ${seg('quietSeconds', [60, 120, 180, 300], v => v / 60 + ' min')}</div>
+      <div class="setting stack"><div class="t">When a product is out of stock</div>
+        <div class="d">Argati checks again at this interval for up to ${set.oosMaxHours || 24} hours.</div>
+        ${seg('oosRetryMin', [10, 15, 30, 60], v => 'every ' + v)}</div>
     </div></section>
     <section class="section"><h2>Notifications</h2><div class="panel">
       <div class="setting"><div class="main"><div class="t">Notifications on this device</div><div class="d">${esc(push.text)}</div></div>
-        ${push.can ? `<button class="btn ${push.on ? 'quiet' : 'primary'}" data-act="push">${push.on ? 'Re-enable' : 'Turn on'}</button>` : ''}</div>
-      <div class="setting"><div class="main"><div class="t">Send a test</div><div class="d">Goes to every device with notifications on.</div></div>
+        ${push.can ? (push.on ? `<button class="btn quiet" data-act="pushoff">Turn off</button>` : `<button class="btn primary" data-act="push">Turn on</button>`) : ''}</div>
+      <div class="setting"><div class="main"><div class="t">Send a test</div><div class="d">${st.devices != null ? `Goes to ${plural(st.devices, 'device', 'devices')} with notifications on.` : 'Goes to every device with notifications on.'}</div></div>
         <button class="btn quiet" data-act="testpush">Send test</button></div>
     </div></section>
     <section class="section"><h2>Connection</h2><div class="panel">
@@ -578,7 +607,7 @@ function tickCountdowns() {
   const now = serverNow();
   document.querySelectorAll('.ring[data-until]').forEach(el => {
     const left = Number(el.dataset.until) - now;
-    el.style.setProperty('--p', Math.max(0, Math.min(100, 100 - (left / QUIET_MS) * 100)).toFixed(1));
+    el.style.setProperty('--p', Math.max(0, Math.min(100, 100 - (left / quietMs()) * 100)).toFixed(1));
     el.querySelector('span').textContent = left > 0 ? clock(left) : 'now';
   });
 }
@@ -628,6 +657,27 @@ function renderSheet() {
     </div>
     <div class="actions">${actions}</div>`;
 }
+function openPlaced(id) {
+  const o = S.recent.find(x => x.orderId === id); if (!o) return;
+  const st = S.status || {}, d = new Date(o.placedAt);
+  const fact = (icon, k, v, href) => v ? `<${href ? `a href="${esc(href)}" target="_blank" rel="noopener"` : 'div'} class="fact"><i class="ti ${icon}"></i><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></${href ? 'a' : 'div'}>` : '';
+  S.open = null;
+  $('#sheet').innerHTML = `
+    <div class="grab"></div>
+    <button class="icon-btn close" data-act="close" aria-label="Close"><i class="ti ti-x"></i></button>
+    <h3 id="sheet-title">${esc(o.name)}</h3>
+    <p class="prod">${esc(o.productName)}, ${esc(o.city)}</p>
+    <div class="status-box t-ok"><div class="state">Placed${isNaN(d) ? '' : ' ' + d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+      <p>Order ${esc(o.orderId)}${o.total ? ', ' + money(parseMoney(o.total)) + ' with transport' : ''}.</p></div>
+    <div class="facts">
+      ${fact('ti-hash', 'Order ID', o.orderId)}
+      ${fact('ti-package', 'Product code', o.product)}
+      ${st.sheetUrl ? fact('ti-table', 'Sheet', 'Row ' + o.row, st.sheetUrl + '&range=A' + o.row) : ''}
+    </div>
+    <div class="actions"><button class="btn primary block" data-act="copy" data-text="${esc(o.orderId)}"><i class="ti ti-copy"></i>Copy Order ID</button></div>`;
+  $('#scrim').classList.add('open'); $('#sheet').classList.add('open');
+  setTimeout(() => { const c = $('#sheet .close'); c && c.focus(); }, 60);
+}
 function idForm(i) {
   return `<label class="field" style="padding:4px 0 0;border:0"><span>Order ID from GjirafaMall</span>
     <input id="oid" inputmode="numeric" placeholder="e.g. 1277076" autocomplete="off"></label>
@@ -665,6 +715,23 @@ async function saveConnection() {
 }
 
 // ── Notifications + service worker ─────────────────────────────────────────
+function fmtWait(sec) { sec = Number(sec) || 120; return sec % 60 ? sec + ' seconds' : plural(sec / 60, 'minute', 'minutes'); }
+async function saveSetting(key, val) {
+  const prev = Object.assign({}, (S.status || {}).settings);
+  if (S.status) S.status.settings = Object.assign({}, prev, { [key]: val });
+  if (S.pending) S.pending.settings = Object.assign({}, S.pending.settings, { [key]: val });
+  haptic(); render();
+  try { await post('setSettings', { [key]: val }); toast('Saved. The runner uses it on its next check.'); }
+  catch (e) { if (S.status) S.status.settings = prev; render(); toast('Couldn’t save: ' + e.message); }
+}
+async function disablePush() {
+  try {
+    const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription();
+    if (sub) { await post('unsubscribe', { endpoint: sub.endpoint }); await sub.unsubscribe(); }
+    pushOff = true; toast('Notifications are off on this device.'); refresh(true);
+  } catch (e) { toast('Couldn’t turn them off: ' + e.message); }
+}
+let pushOff = false;
 function pushState() {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
@@ -673,7 +740,8 @@ function pushState() {
   }
   const p = Notification.permission;
   if (p === 'denied') return { can: false, text: 'Blocked. Allow notifications for Argati in the device settings.' };
-  return { can: true, on: p === 'granted', text: p === 'granted' ? 'On. Orders, problems and runner alerts arrive here.' : 'Off. Turn on to get order and runner alerts.' };
+  const on = p === 'granted' && !pushOff;
+  return { can: true, on, text: on ? 'On. Orders, problems and runner alerts arrive here.' : 'Off. Turn on to get order and runner alerts.' };
 }
 function b64ToBytes(b64) { const pad = '='.repeat((4 - b64.length % 4) % 4), raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0))); }
@@ -685,7 +753,7 @@ async function enablePush() {
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
-    await post('subscribe', { subscription: sub.toJSON() });
+    await post('subscribe', { subscription: sub.toJSON() }); pushOff = false;
     toast('Notifications are on for this device.'); render();
   } catch (e) { toast('Couldn’t turn on notifications: ' + e.message); }
 }
@@ -730,13 +798,17 @@ document.addEventListener('click', e => {
   else if (act === 'close') closeSheet();
   else if (act === 'copy') { navigator.clipboard && navigator.clipboard.writeText(el.dataset.text).then(() => toast('Copied ' + el.dataset.text)); }
   else if (act === 'push') enablePush();
+  else if (act === 'pushoff') disablePush();
+  else if (act === 'setting') saveSetting(el.dataset.key, Number(el.dataset.val));
+  else if (act === 'openplaced') openPlaced(el.dataset.id);
   else if (act === 'testpush') post('alert', { title: '🔔 Argati test', body: 'Notifications work on this device.' }).then(() => toast('Test sent.'), err => toast(err.message));
   else if (act === 'saveconn') saveConnection();
   else if (act === 'connect') connect();
 });
 document.addEventListener('change', e => { if (e.target.matches('[data-act="auto"]')) setAuto(e.target.checked, e.target); });
 document.addEventListener('input', e => { if (e.target.id === 'q') { S.query = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.open != null) closeSheet();
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#sheet').classList.contains('open')) closeSheet();
+  if (e.key === 'Enter' && e.target.matches('.prow')) openPlaced(e.target.dataset.id);
   if (e.key === 'Enter' && e.target.id === 'key' && !cfg.key) connect(); });
 $('#scrim').addEventListener('click', closeSheet);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
@@ -750,6 +822,7 @@ if ('serviceWorker' in navigator && !DEMO) {
 // ── Demo data (?demo) ──────────────────────────────────────────────────────
 const Demo = {
   auto: true,
+  settings: { quietSeconds: 120, oosRetryMin: 15, oosMaxHours: 24 },
   products: [['104','Pastrues Filtrave DPF 104'],['106','DPF Additiv 106'],['107','Pastrues DPF 107'],['201','Super Diesel Additiv 201'],
     ['204','Pastrues Injektimit Dizel 204'],['207','Additiv Vaj Motorik 207'],['210','Pastrues Injektimit Benzine 210'],
     ['204+107+106','Set Diesel 2+1 Gratis'],['210+209+206','Set Benzine 2+1 Gratis']].map(([code, name]) => ({ code, name, url: 'https://gjirafamall.com/', active: true })),
@@ -764,11 +837,13 @@ const Demo = {
       r(704, 'Driton', 'Berisha', '204+207', 'Gjakovë'),
       r(705, 'Valon', 'Morina', '210', 'Prizren', { phone: '04512' }),
       r(706, 'Shpresa', 'Kelmendi', '204', 'Mitrovicë', { lastEdit: 0 }),
+      r(707, 'Hajdin', 'Podvorica', '204+107+106', 'Podujevë'),
     ];
     const verdicts = [
       { row: 703, state: 'review', reason: 'Has note: Thirrni pas orës 17', qty: 1, city: 'Ferizaj', productName: 'Additiv Vaj Motorik 207' },
       { row: 704, state: 'manual', reason: 'Place manually on GjirafaMall (combination, not a bundle)', qty: 1, city: 'Gjakovë' },
       { row: 705, state: 'blocked', reason: "Invalid phone '04512'", qty: 1, city: 'Prizren' },
+      { row: 707, state: 'out_of_stock', reason: 'Out of stock on GjirafaMall. Next try in 12 min', qty: 1, city: 'Podujevë', productName: 'Set Diesel 2+1 Gratis' },
       { row: 706, state: 'review', reason: 'Older row (no edit stamp) — approve or re-edit to place', qty: 1, city: 'Mitrovicë' },
     ];
     const names = [['Genc','Pacarizi','Malishevë'],['Shaban','Abdyli','Prishtinë'],['Besnik','Sadiku','Shtime'],['Nevzat','Goga','Pejë'],
@@ -792,12 +867,17 @@ const Demo = {
   handle(method, action, body) {
     const d = this.build(), now = Date.now();
     const wait = ms => new Promise(r => setTimeout(r, ms));
-    if (action === 'status') return wait(150).then(() => ({ ok: true, now, version: '2.1.0', autoMode: this.auto, sheetUrl: '',
+    if (action === 'status') return wait(150).then(() => ({ ok: true, now, version: '2.2.0', autoMode: this.auto, sheetUrl: '', devices: 2, settings: this.settings,
       runner: { id: 'Office-Mac.local', online: true, seenAgoSec: 14 },
       state: { mode: 'live', stats: { placedToday: 9, uptimeMin: 312 }, verdicts: d.verdicts } }));
-    if (action === 'pending') return wait(150).then(() => ({ ok: true, now, autoMode: this.auto, approvals: [], products: this.products, rows: d.rows }));
+    if (action === 'pending') return wait(150).then(() => ({ ok: true, now, autoMode: this.auto, settings: this.settings, approvals: [], products: this.products, rows: d.rows }));
     if (action === 'recent') return wait(100).then(() => ({ ok: true, orders: d.recent }));
     if (action === 'setAuto') { this.auto = !!body.on; return wait(250).then(() => ({ ok: true })); }
+    if (action === 'setSettings') { Object.assign(this.settings, body); delete this.settings.key; delete this.settings.action; return wait(250).then(() => ({ ok: true })); }
+    if (action === 'dash') return Promise.all([this.handle('GET', 'status'), this.handle('GET', 'pending'), this.handle('GET', 'recent')])
+      .then(([status, pending, recent]) => { const start = new Date(); start.setHours(0, 0, 0, 0);
+        const today = recent.orders.filter(o => new Date(o.placedAt) >= start);
+        return { ok: true, now, status, pending, today: { count: today.length, revenue: today.reduce((a, o) => a + Number(o.total), 0), last: recent.orders[0] } }; });
     if (action === 'approve' || action === 'alert' || action === 'subscribe') return wait(300).then(() => ({ ok: true }));
     if (action === 'setOrderId') { d.rows = d.rows.filter(r => r.row !== body.row); return wait(300).then(() => ({ ok: true })); }
     return Promise.resolve({ ok: true });
