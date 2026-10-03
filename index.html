@@ -53,7 +53,9 @@
 /* ═══ 2. iOS standalone reset ═══════════════════════════════════════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#000}
+html,body{height:100vh;height:100lvh;overflow:hidden;overscroll-behavior:none;background:var(--bg)}
+body{position:relative}
+body.sheet-open{background:#000}
 body{font:400 17px/1.29 var(--font);letter-spacing:-.41px;color:var(--label);-webkit-font-smoothing:antialiased}
 button,a,label,[role="button"],.no-select,nav,header{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter-spacing:inherit}
@@ -78,7 +80,7 @@ img,svg{display:block}
 .hit::after{content:"";position:absolute;inset:-6px}          /* grows any control to ≥44pt */
 
 /* ═══ 4. App frame (scales back when a sheet opens, like iOS card presentation) */
-#frame{position:fixed;inset:0;background:var(--bg);overflow:hidden;transform-origin:50% 0;
+#frame{position:absolute;inset:0;background:var(--bg);overflow:hidden;transform-origin:50% 0;
   transition:transform .42s var(--spring),border-radius .42s var(--spring),filter .42s}
 body.sheet-open #frame{transform:translateY(calc(var(--sat) * .5 + 6px)) scale(.93);border-radius:14px;filter:brightness(.82)}
 
@@ -231,9 +233,9 @@ button.cell:active,a.cell:active,.cell[role="button"]:active{background:var(--ce
   font:600 12px/18px var(--font);text-align:center}
 
 /* ═══ 10. Bottom sheet ══════════════════════════════════════════════════════ */
-#scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .35s}
+#scrim{position:absolute;inset:0;z-index:50;background:rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .35s}
 body.sheet-open #scrim{opacity:1;pointer-events:auto}
-#sheet{position:fixed;z-index:51;left:0;right:0;bottom:0;max-width:680px;margin:0 auto;display:flex;flex-direction:column;
+#sheet{position:absolute;z-index:51;left:0;right:0;bottom:0;max-width:680px;margin:0 auto;display:flex;flex-direction:column;
   max-height:calc(100% - var(--sat) - 10px);background:var(--bg);border-radius:28px 28px 0 0;
   transform:translateY(105%);visibility:hidden;transition:transform .45s var(--spring),visibility 0s linear .45s;touch-action:pan-y}
 body.sheet-open #sheet{transform:translateY(var(--drag,0px));visibility:visible;transition:transform .45s var(--spring)}
@@ -254,7 +256,7 @@ body.sheet-open #sheet{transform:translateY(var(--drag,0px));visibility:visible;
 .cell a.link,.cell .link{color:var(--blue-text)}
 
 /* Toast (above the dock, inside the thumb zone) */
-#toast{position:fixed;z-index:60;left:0;right:0;margin:0 auto;width:fit-content;bottom:calc(var(--sab) + var(--dock-h) + var(--dock-gap) + 14px);transform:translateY(16px) scale(.96);
+#toast{position:absolute;z-index:60;left:0;right:0;margin:0 auto;width:fit-content;bottom:calc(var(--sab) + var(--dock-h) + var(--dock-gap) + 14px);transform:translateY(16px) scale(.96);
   max-width:calc(100% - 40px);text-align:center;padding:12px 18px;border-radius:22px;font:500 15px/20px var(--font);letter-spacing:-.24px;color:var(--label);
   box-shadow:0 8px 24px rgba(0,0,0,.18);border:.5px solid var(--stroke);opacity:0;pointer-events:none;transition:opacity .25s,transform .4s var(--spring)}
 #toast.show{opacity:1;transform:none}
@@ -304,7 +306,7 @@ body.sheet-open #toast.show{transform:none}
 <div id="toast" class="glass-strong" role="status" aria-live="polite"></div>
 <script>
 'use strict';
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '4.0.1';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 const VAPID_PUBLIC = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
 const POLL_MS = 15000;
