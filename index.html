@@ -5,240 +5,306 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Argati">
-<meta name="theme-color" content="#EEF1EF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0F1517" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <title>Argati</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
+/* ═══ 1. Tokens ══════════════════════════════════════════════════════════════
+   Safe areas live in variables so every component uses the same source of truth
+   (iPhone 15 Pro standalone: top 59pt under the Dynamic Island, bottom 34pt). */
 :root{
-  --paper:#EEF1EF; --surface:#FFFFFF; --sunk:#E3E8E6; --ink:#1B2226; --steel:#5C6A70; --hair:#D3DAD8;
-  --flame:#FF4D0D; --flame-ink:#C53A07; --flame-wash:#FFE9E0;
-  --ok:#16794C; --ok-wash:#E1F2E9; --wait:#996100; --wait-wash:#FBEFD9;
-  --manual:#2F55A4; --manual-wash:#E4EBF8; --stop:#B3261E; --stop-wash:#F8E3E1;
-  --font:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --display:"Barlow Semi Condensed","Barlow",system-ui,-apple-system,sans-serif;
-  --r-panel:18px; --r-ctl:11px;
-  color-scheme: light dark;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  --nav-h:44px; --dock-h:64px; --dock-gap:8px; --gutter:16px;
+
+  /* iOS light: grouped background, white cells */
+  --bg:#F2F2F7; --cell:#FFFFFF; --cell-2:#F2F2F7; --fill:rgba(120,120,128,.12); --fill-strong:rgba(120,120,128,.2);
+  --label:#000000; --label-2:rgba(60,60,67,.62); --label-3:rgba(60,60,67,.32);
+  --sep:rgba(60,60,67,.18); --stroke:rgba(0,0,0,.06);
+  --material:rgba(249,249,251,.72); --material-strong:rgba(249,249,251,.88);
+  --accent:#FF4D0D; --accent-text:#D23C02; --on-accent:#FFFFFF;
+  --green:#34C759; --green-text:#1F7A37; --amber:#FF9F0A; --amber-text:#995C00;
+  --blue:#007AFF;  --blue-text:#0062CC; --red:#FF3B30; --red-text:#D70015; --gray:#8E8E93;
+  --shadow-dock:0 10px 30px rgba(0,0,0,.12),0 1px 0 rgba(255,255,255,.6) inset;
+  --spring:cubic-bezier(.2,.8,.2,1);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",system-ui,sans-serif;
+  color-scheme:light dark;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --paper:#0F1517; --surface:#172024; --sunk:#1F2A2F; --ink:#E6ECEA; --steel:#93A2A8; --hair:#28343A;
-    --flame:#FF6A33; --flame-ink:#FF8A5C; --flame-wash:#3A1D12;
-    --ok:#4CC28A; --ok-wash:#123124; --wait:#E3A23B; --wait-wash:#33260F;
-    --manual:#7FA2EC; --manual-wash:#18243F; --stop:#F2766D; --stop-wash:#3A1715;
+    /* True black for the OLED panel; elevation via the iOS dark tiers */
+    --bg:#000000; --cell:#1C1C1E; --cell-2:#2C2C2E; --fill:rgba(118,118,128,.24); --fill-strong:rgba(118,118,128,.36);
+    --label:#FFFFFF; --label-2:rgba(235,235,245,.62); --label-3:rgba(235,235,245,.3);
+    --sep:rgba(84,84,88,.6); --stroke:rgba(255,255,255,.1);
+    --material:rgba(22,22,24,.68); --material-strong:rgba(28,28,30,.86);
+    --accent:#FF6A33; --accent-text:#FF8A5C; --on-accent:#FFFFFF;
+    --green:#30D158; --green-text:#30D158; --amber:#FFB340; --amber-text:#FFB340;
+    --blue:#0A84FF; --blue-text:#409CFF; --red:#FF453A; --red-text:#FF6961; --gray:#8E8E93;
+    --shadow-dock:0 10px 30px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.06) inset;
   }
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html{height:100%;-webkit-text-size-adjust:100%}
-html,body{overflow:hidden;overscroll-behavior:none}
-body{height:100%;display:flex;flex-direction:column;background:var(--paper);color:var(--ink);font:400 16px/1.45 var(--font);
-  -webkit-font-smoothing:antialiased;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) 0 env(safe-area-inset-left,0)}
-button,input{font:inherit;color:inherit}
-button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
-a{color:inherit}
-:focus-visible{outline:2px solid var(--flame);outline-offset:2px;border-radius:6px}
+
+/* ═══ 2. iOS standalone reset ═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#000}
+body{font:400 17px/1.29 var(--font);letter-spacing:-.41px;color:var(--label);-webkit-font-smoothing:antialiased}
+button,a,label,[role="button"],.no-select,nav,header{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;letter-spacing:inherit}
+input{font:inherit;color:inherit;letter-spacing:inherit}
+a{color:inherit;text-decoration:none}
+img,svg{display:block}
+.selectable,.selectable *{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:8px}
 .num{font-variant-numeric:tabular-nums}
-#app{flex:1;min-height:0;display:flex;flex-direction:column}
-#view{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
-.wrap{max-width:640px;margin:0 auto;padding:6px 18px 28px}
-
-/* ── Top bar ─────────────────────────────────────────── */
-.top{display:flex;align-items:center;gap:12px;padding:14px 0 6px}
-.brand{font:700 21px/1 var(--display);letter-spacing:.2px}
-.brand small{display:block;font:500 13px/1.2 var(--font);color:var(--steel);letter-spacing:0;margin-top:3px}
-.runner{margin-left:auto;display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 10px;
-  border-radius:999px;background:var(--surface);border:1px solid var(--hair);font-weight:500;font-size:14px}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--steel)}
-.dot.on{background:var(--ok);box-shadow:0 0 0 4px var(--ok-wash)}
-.dot.off{background:var(--stop);box-shadow:0 0 0 4px var(--stop-wash)}
-.icon-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--steel);font-size:20px}
-.icon-btn:active{background:var(--sunk)}
-.spin{animation:spin .9s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── Hero: the status sentence + countdown track ─────── */
-.hero{padding:22px 0 18px}
-.headline{font:700 clamp(30px,8.4vw,40px)/1.04 var(--display);letter-spacing:-.2px;max-width:16ch}
-.headline.attn{color:var(--flame-ink)}
-.headline.bad{color:var(--stop)}
-.sub{margin-top:8px;color:var(--steel);font-size:16px}
-.sub b{color:var(--ink);font-weight:600}
-.track{display:flex;gap:10px;overflow-x:auto;margin:18px -18px 0;padding:2px 18px 6px;scrollbar-width:none}
-.track::-webkit-scrollbar{display:none}
-.tick{flex:0 0 auto;text-align:left;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:999px;
-  background:var(--surface);border:1px solid var(--hair);min-height:52px}
-.ring{--p:0;width:36px;height:36px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
-  background:conic-gradient(var(--wait) calc(var(--p)*1%),var(--wait-wash) 0)}
-.ring::after{content:"";width:28px;height:28px;border-radius:50%;background:var(--surface);grid-area:1/1}
-.ring span{grid-area:1/1;z-index:1;font:700 11px/1 var(--display)}
-.tick .who{font-weight:600;font-size:15px;line-height:1.15}
-.tick .what{font-size:13px;color:var(--steel)}
-
-/* ── Banners ─────────────────────────────────────────── */
-.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;margin:4px 0 14px;font-size:15px}
-.banner i{font-size:20px;margin-top:1px}
-.banner.bad{background:var(--stop-wash);color:var(--stop)}
-.banner.warn{background:var(--wait-wash);color:var(--wait)}
-.banner b{font-weight:600}
-.banner button{margin-left:auto;font-weight:600;text-decoration:underline;white-space:nowrap}
-
-/* ── Sections + rows ─────────────────────────────────── */
-.section{margin-top:22px}
-.section h2{font:600 17px/1.2 var(--font);display:flex;align-items:baseline;gap:8px;margin:0 2px 10px}
-.section h2 .count{font:600 15px/1 var(--display);color:var(--steel)}
-.panel{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r-panel);overflow:hidden}
-.row{position:relative;display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:14px 14px 14px 18px;
-  border-top:1px solid var(--hair);min-height:64px}
-.row:first-child{border-top:0}
-.row::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--rule,var(--hair))}
-.row:active{background:var(--sunk)}
-.row .main{flex:1;min-width:0}
-.row .name{font-weight:600;font-size:16px;line-height:1.2;display:flex;gap:8px;align-items:center}
-.row .line2{font-size:14px;color:var(--steel);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row .why{font-size:14px;margin-top:5px;color:var(--ink);line-height:1.3}
-.code{font:600 13px/1 var(--display);letter-spacing:.3px;color:var(--steel);padding:3px 6px;border-radius:5px;background:var(--sunk)}
-.t-flame{--rule:var(--flame)} .t-stop{--rule:var(--stop)} .t-manual{--rule:var(--manual)}
-.t-wait{--rule:var(--wait)} .t-ok{--rule:var(--ok)} .t-steel{--rule:var(--hair)}
-.state{font-size:13px;font-weight:600}
-.t-flame .state{color:var(--flame-ink)} .t-stop .state{color:var(--stop)} .t-manual .state{color:var(--manual)}
-.t-wait .state{color:var(--wait)} .t-ok .state{color:var(--ok)} .t-steel .state{color:var(--steel)}
-.chip{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--ok-wash);color:var(--ok)}
-.btn{height:40px;padding:0 14px;border-radius:var(--r-ctl);font-weight:600;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
-.btn.primary{background:var(--flame);color:#fff}
-.btn.primary:active{filter:brightness(.92)}
-.btn.quiet{background:var(--sunk);color:var(--ink)}
-.btn.block{width:100%;height:48px;font-size:16px}
-.btn[disabled]{opacity:.5;pointer-events:none}
-.empty{padding:22px 18px;color:var(--steel);font-size:15px}
-.empty b{display:block;color:var(--ink);font-weight:600;font-size:16px;margin-bottom:2px}
-
-/* ── Placed list ─────────────────────────────────────── */
-.search{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border-radius:12px;background:var(--surface);border:1px solid var(--hair);margin:18px 0 6px}
-.search i{color:var(--steel);font-size:19px}
-.search input{flex:1;border:0;background:none;outline:none;font-size:16px;min-width:0}
-.day{font:600 15px/1 var(--font);color:var(--steel);margin:20px 2px 8px;display:flex;justify-content:space-between}
-.day span:last-child{font-family:var(--display)}
-.prow{display:flex;gap:12px;padding:13px 14px;border-top:1px solid var(--hair);align-items:center}
-.prow:first-child{border-top:0}
-.prow{cursor:pointer}
-.prow:active{background:var(--sunk)}
-.seg{display:flex;gap:3px;padding:3px;border-radius:11px;background:var(--sunk);margin-top:10px}
-.seg button{flex:1;height:36px;border-radius:8px;font-weight:600;font-size:15px;color:var(--steel)}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.14)}
-.setting.stack{display:block}
-.prow .main{flex:1;min-width:0}
-.prow .name{font-weight:600;line-height:1.2}
-.prow .line2{font-size:14px;color:var(--steel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prow .right{text-align:right}
-.oid{font:600 15px/1.2 var(--display);letter-spacing:.2px;padding:2px 0}
-.prow .total{font-size:14px;color:var(--steel)}
-
-/* ── Insights ────────────────────────────────────────── */
-.figures{display:grid;grid-template-columns:repeat(3,1fr);margin-top:20px}
-.fig{padding:4px 12px 4px 0}
-.fig+.fig{border-left:1px solid var(--hair);padding-left:14px}
-.fig .k{font-size:14px;color:var(--steel)}
-.fig .v{font:700 30px/1.05 var(--display);margin-top:4px}
-.fig .m{font-size:14px;color:var(--steel);margin-top:2px}
-.chart{padding:16px 14px 10px}
-.chart svg{display:block;width:100%;height:auto}
-.chart .axis{font:500 11px var(--font);fill:var(--steel)}
-.bars .item{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:11px 14px;border-top:1px solid var(--hair);align-items:center}
-.bars .item:first-child{border-top:0}
-.bars .label{font-size:15px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bars .val{font:600 15px/1 var(--display)}
-.bars .bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
-.bars .bar i{display:block;height:100%;background:var(--steel);border-radius:3px}
-.bars .item:first-child .bar i{background:var(--flame)}
-.note{font-size:13px;color:var(--steel);margin:10px 2px 0}
-
-/* ── Settings ────────────────────────────────────────── */
-.setting{display:flex;gap:12px;align-items:center;padding:14px;border-top:1px solid var(--hair);min-height:60px}
-.setting:first-child{border-top:0}
-.setting .main{flex:1;min-width:0}
-.setting .t{font-weight:600}
-.setting .d{font-size:14px;color:var(--steel);margin-top:1px}
-.field{display:block;padding:12px 14px;border-top:1px solid var(--hair)}
-.field:first-child{border-top:0}
-.field span{display:block;font-size:14px;color:var(--steel);margin-bottom:6px}
-.field input{width:100%;height:44px;border-radius:10px;border:1px solid var(--hair);background:var(--paper);padding:0 12px;font-size:16px}
-.field input:focus{outline:2px solid var(--flame);outline-offset:-1px}
-.switch{position:relative;width:52px;height:32px;flex:0 0 auto}
-.switch input{position:absolute;opacity:0;inset:0;cursor:pointer;z-index:1}
-.switch .tr{position:absolute;inset:0;border-radius:999px;background:var(--sunk);border:1px solid var(--hair);transition:background .2s}
-.switch .tr::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
-.switch input:checked+.tr{background:var(--ok);border-color:var(--ok)}
-.switch input:checked+.tr::after{transform:translateX(20px)}
-.switch input:focus-visible+.tr{outline:2px solid var(--flame);outline-offset:2px}
-
-/* ── Tab bar ─────────────────────────────────────────── */
-.tabs{flex:0 0 auto;position:relative;z-index:20;background:var(--paper);border-top:1px solid var(--hair);
-  padding:6px 8px calc(6px + env(safe-area-inset-bottom,0))}
-.tabs nav{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
-.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:12px;font-weight:600;color:var(--steel);position:relative}
-.tab i{font-size:24px}
-.tab[aria-current="page"]{color:var(--ink)}
-.tab[aria-current="page"] i{color:var(--flame)}
-.tab .badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--flame);color:#fff;font:700 11px/18px var(--display);text-align:center}
-
-/* ── Sheet (details) ─────────────────────────────────── */
-.scrim{position:fixed;inset:0;z-index:40;background:rgba(10,15,17,.42);opacity:0;pointer-events:none;transition:opacity .2s}
-.scrim.open{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:640px;margin:0 auto;background:var(--surface);
-  border-radius:22px 22px 0 0;padding:10px 18px calc(20px + env(safe-area-inset-bottom,0));max-height:88vh;overflow-y:auto;
-  transform:translateY(105%);visibility:hidden;transition:transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s linear .26s}
-.sheet.open{transform:none;visibility:visible;transition:transform .26s cubic-bezier(.2,.8,.2,1)}
-.grab{width:40px;height:5px;border-radius:3px;background:var(--hair);margin:0 auto 14px}
-.sheet h3{font:700 26px/1.1 var(--display);padding-right:44px}
-.sheet .close{position:absolute;top:14px;right:12px}
-.sheet .prod{margin-top:6px;font-size:16px;color:var(--steel)}
-.status-box{margin:16px 0;padding:12px 14px;border-radius:14px;background:var(--sunk)}
-.status-box .state{font-size:14px}
-.status-box p{margin-top:3px;font-size:15px}
-.t-flame.status-box{background:var(--flame-wash)} .t-stop.status-box{background:var(--stop-wash)}
-.t-manual.status-box{background:var(--manual-wash)} .t-wait.status-box{background:var(--wait-wash)} .t-ok.status-box{background:var(--ok-wash)}
-.facts{display:grid;gap:0;border:1px solid var(--hair);border-radius:14px;overflow:hidden}
-.fact{display:flex;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--hair);text-decoration:none}
-.fact:first-child{border-top:0}
-.fact i{font-size:20px;color:var(--steel)}
-.fact .k{font-size:13px;color:var(--steel)}
-.fact .v{font-size:16px;word-break:break-word}
-.actions{display:grid;gap:10px;margin-top:16px}
-.warnline{font-size:14px;color:var(--stop);margin-top:-2px}
-
-/* ── Toast + setup ───────────────────────────────────── */
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0));transform:translate(-50%,20px);z-index:60;
-  background:var(--ink);color:var(--paper);padding:11px 16px;border-radius:12px;font-size:15px;font-weight:500;
-  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 36px)}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.setup{min-height:100%;display:flex;flex-direction:column;justify-content:center;max-width:440px;margin:0 auto;padding:24px 22px}
-.setup h1{font:700 40px/1.02 var(--display)}
-.setup p{color:var(--steel);margin:10px 0 22px;font-size:16px}
-.setup .err{color:var(--stop);font-size:15px;margin-top:10px;min-height:22px}
-.setup .alt{margin-top:16px;font-size:15px;color:var(--steel);text-align:center}
-.setup .alt a{color:var(--ink);font-weight:600}
 [hidden]{display:none!important}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-@media (min-width:700px){.wrap{padding-top:10px}.headline{max-width:20ch}}
+
+/* ═══ 3. Utilities: safe areas + materials ══════════════════════════════════ */
+.pt-safe{padding-top:var(--sat)} .pb-safe{padding-bottom:var(--sab)}
+.px-safe{padding-left:max(var(--gutter),var(--sal));padding-right:max(var(--gutter),var(--sar))}
+.glass{background:var(--material);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px)}
+.glass-strong{background:var(--material-strong);-webkit-backdrop-filter:saturate(180%) blur(28px);backdrop-filter:saturate(180%) blur(28px)}
+.hairline{box-shadow:0 .5px 0 var(--sep)}
+.press{transition:transform .32s var(--spring),background-color .2s,opacity .2s;will-change:transform}
+.press:active{transform:scale(.97)}
+.hit{position:relative}
+.hit::after{content:"";position:absolute;inset:-6px}          /* grows any control to ≥44pt */
+
+/* ═══ 4. App frame (scales back when a sheet opens, like iOS card presentation) */
+#frame{position:fixed;inset:0;background:var(--bg);overflow:hidden;transform-origin:50% 0;
+  transition:transform .42s var(--spring),border-radius .42s var(--spring),filter .42s}
+body.sheet-open #frame{transform:translateY(calc(var(--sat) * .5 + 6px)) scale(.93);border-radius:14px;filter:brightness(.82)}
+
+/* Nav bar: transparent at rest, glass once content scrolls under it */
+#nav{position:absolute;left:0;right:0;top:0;z-index:30;padding-top:var(--sat);transition:background-color .25s,box-shadow .25s}
+#nav.scrolled{background:var(--material);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 .5px 0 var(--sep)}
+.navbar{height:var(--nav-h);display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.nav-left{font:600 17px/1 var(--font);letter-spacing:-.41px;justify-self:start}
+.nav-title{font:600 17px/1 var(--font);opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;white-space:nowrap}
+#nav.compact .nav-title{opacity:1;transform:none}
+.nav-right{justify-self:end;display:flex;align-items:center;gap:6px}
+.pill{height:30px;display:inline-flex;align-items:center;gap:7px;padding:0 12px 0 10px;border-radius:15px;background:var(--fill);font:500 15px/1 var(--font);letter-spacing:-.24px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--gray);flex:0 0 auto}
+.dot.on{background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 25%,transparent)}
+.dot.off{background:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 25%,transparent)}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:22px;font-size:22px;color:var(--accent-text)}
+.icon-btn:active{background:var(--fill)}
+.spin{animation:spin .9s linear infinite} @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Scroll view sits under the nav and above the dock */
+#view{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+  padding-top:calc(var(--sat) + var(--nav-h));padding-bottom:calc(var(--sab) + var(--dock-h) + var(--dock-gap) + 24px)}
+#content{position:relative;max-width:680px;margin:0 auto}
+#ptr{position:absolute;left:50%;top:-46px;width:28px;height:28px;margin-left:-14px;display:grid;place-items:center;color:var(--label-2);font-size:22px;opacity:0;transition:opacity .15s}
+
+/* ═══ 5. Typography (Apple type scale) ══════════════════════════════════════ */
+.large-title{font:700 34px/41px var(--font);letter-spacing:.37px;padding-top:4px}
+.large-title.attn{color:var(--accent-text)} .large-title.bad{color:var(--red-text)}
+.subhead{font:400 15px/20px var(--font);letter-spacing:-.24px;color:var(--label-2);margin-top:6px}
+.subhead b{font-weight:600;color:var(--label)}
+.section-title{font:700 22px/28px var(--font);letter-spacing:.35px;margin:28px 4px 10px;display:flex;align-items:baseline;gap:8px}
+.section-title .count{font:600 17px/1 var(--font);color:var(--label-2)}
+.footnote{font:400 13px/18px var(--font);letter-spacing:-.08px;color:var(--label-2);margin:8px 16px 0}
+.footnote a{color:var(--accent-text);font-weight:500}
+
+/* ═══ 6. Inset grouped lists ════════════════════════════════════════════════ */
+.group{background:var(--cell);border-radius:20px;overflow:hidden}
+.cell{position:relative;display:flex;align-items:center;gap:14px;width:100%;min-height:60px;padding:12px 16px;text-align:left;background:var(--cell)}
+.cell + .cell::before{content:"";position:absolute;top:0;right:0;left:62px;height:.5px;background:var(--sep)}
+.cell.plain + .cell.plain::before{left:16px}
+button.cell:active,a.cell:active,.cell[role="button"]:active{background:var(--cell-2)}
+.cell .body{flex:1;min-width:0}
+.cell .title{font:600 17px/22px var(--font);display:flex;align-items:center;gap:8px;min-width:0}
+.cell .title span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .sub{font:400 15px/20px var(--font);letter-spacing:-.24px;color:var(--label-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .why{font:400 15px/20px var(--font);letter-spacing:-.24px;margin-top:3px}
+.cell .why b{font-weight:600}
+.cell .chev{color:var(--label-3);font-size:20px;flex:0 0 auto}
+.cell .value{font:400 17px/22px var(--font);color:var(--label-2)}
+.code{font:600 12px/1 var(--font);letter-spacing:.2px;color:var(--label-2);padding:4px 6px;border-radius:6px;background:var(--fill);flex:0 0 auto}
+
+/* Leading icon tiles (Settings-app style) carry the state colour */
+.tile{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-size:19px;flex:0 0 auto;align-self:flex-start;margin-top:2px}
+.t-accent{--tone:var(--accent);--tone-text:var(--accent-text)} .t-red{--tone:var(--red);--tone-text:var(--red-text)}
+.t-blue{--tone:var(--blue);--tone-text:var(--blue-text)} .t-amber{--tone:var(--amber);--tone-text:var(--amber-text)}
+.t-green{--tone:var(--green);--tone-text:var(--green-text)} .t-gray{--tone:var(--gray);--tone-text:var(--label-2)}
+.tile{background:var(--tone)} .tone-text{color:var(--tone-text)}
+
+/* Countdown ring */
+.ring{--p:0;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;align-self:flex-start;margin-top:2px;
+  background:conic-gradient(var(--amber) calc(var(--p)*1%),color-mix(in srgb,var(--amber) 22%,transparent) 0)}
+.ring::after{content:"";grid-area:1/1;width:25px;height:25px;border-radius:50%;background:var(--cell)}
+.ring span{grid-area:1/1;z-index:1;font:600 10px/1 var(--font);letter-spacing:0}
+.ring.big{width:40px;height:40px;margin:0} .ring.big::after{width:32px;height:32px} .ring.big span{font-size:11px}
+
+/* ═══ 7. Buttons + controls ═════════════════════════════════════════════════ */
+.btn{min-height:44px;padding:0 18px;border-radius:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 17px/1 var(--font);letter-spacing:-.41px;white-space:nowrap}
+.btn.small{min-height:34px;padding:0 14px;border-radius:17px;font-size:15px;letter-spacing:-.24px}
+.btn.filled{background:var(--accent);color:var(--on-accent)}
+.btn.tinted{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-text)}
+.btn.gray{background:var(--fill);color:var(--label)}
+.btn.danger{background:var(--red);color:#fff}
+.btn.block{width:100%;min-height:50px;border-radius:14px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.chip-ok{font:600 13px/1 var(--font);padding:7px 10px;border-radius:14px;background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green-text);flex:0 0 auto}
+
+.switch{position:relative;width:51px;height:31px;flex:0 0 auto}
+.switch input{position:absolute;inset:-7px;opacity:0;z-index:1;cursor:pointer;width:65px;height:45px}
+.switch .tr{position:absolute;inset:0;border-radius:16px;background:var(--fill-strong);transition:background .25s}
+.switch .tr::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06);transition:transform .32s var(--spring)}
+.switch input:checked+.tr{background:var(--green)}
+.switch input:checked+.tr::after{transform:translateX(20px)}
+.switch input:focus-visible+.tr{outline:2px solid var(--blue);outline-offset:2px}
+
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;padding:2px;border-radius:9px;background:var(--fill);margin-top:10px;position:relative}
+.seg button{min-height:32px;border-radius:7px;font:500 13px/1 var(--font);letter-spacing:-.08px;color:var(--label);position:relative}
+.seg button::after{content:"";position:absolute;inset:-6px 0}
+.seg button[aria-pressed="true"]{background:var(--cell);font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}
+@media (prefers-color-scheme: dark){.seg button[aria-pressed="true"]{background:#636366}}
+
+.field{display:block;padding:12px 16px}
+.field + .field{box-shadow:0 -.5px 0 var(--sep)}
+.field span{display:block;font:400 13px/18px var(--font);color:var(--label-2);margin-bottom:6px}
+.field input{width:100%;height:44px;border:0;border-radius:10px;background:var(--fill);padding:0 12px;font-size:17px}
+.search{display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;border-radius:10px;background:var(--fill);margin:4px 0 6px}
+.search i{color:var(--label-2);font-size:18px}
+.search input{flex:1;min-width:0;border:0;background:none;font-size:17px;height:36px}
+.search input::placeholder{color:var(--label-2)}
+
+/* ═══ 8. Queue hero: countdown chips ═══════════════════════════════════════ */
+.track{display:flex;gap:10px;overflow-x:auto;margin:16px calc(-1 * var(--gutter)) 0;padding:2px var(--gutter) 4px;scrollbar-width:none;scroll-snap-type:x proximity}
+.track::-webkit-scrollbar{display:none}
+.tick{flex:0 0 auto;scroll-snap-align:start;display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 16px 8px 8px;border-radius:28px;background:var(--cell);text-align:left}
+.tick .who{font:600 15px/18px var(--font);letter-spacing:-.24px}
+.tick .what{font:400 13px/16px var(--font);color:var(--label-2)}
+
+/* Banners */
+.banner{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:20px;margin:12px 0 0;font:400 15px/20px var(--font);letter-spacing:-.24px;
+  background:color-mix(in srgb,var(--red) 12%,var(--cell));color:var(--label)}
+.banner i{font-size:22px;color:var(--red-text)}
+.banner b{font-weight:600}
+.banner .btn{margin-left:auto}
+
+/* Insights */
+.figures{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.fig{background:var(--cell);border-radius:20px;padding:14px}
+.fig .k{font:400 13px/18px var(--font);color:var(--label-2)}
+.fig .v{font:700 28px/34px var(--font);letter-spacing:.36px;margin-top:2px}
+.fig .m{font:400 13px/18px var(--font);color:var(--label-2)}
+.chart{padding:16px 12px 10px}
+.chart svg{width:100%;height:auto}
+.chart .axis{font:500 11px var(--font);fill:var(--label-2)}
+.bar-row{display:grid;grid-template-columns:1fr auto;gap:6px 12px;padding:12px 16px;position:relative}
+.bar-row + .bar-row::before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--sep)}
+.bar-row .label{font:400 17px/22px var(--font);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-row .val{font:600 17px/22px var(--font);color:var(--label-2)}
+.bar-row .bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
+.bar-row .bar i{display:block;height:100%;border-radius:3px;background:var(--gray)}
+.bar-row:first-child .bar i{background:var(--accent)}
+
+/* Empty states */
+.empty{display:flex;gap:14px;align-items:center;padding:16px}
+.empty .tile{align-self:center;margin:0}
+.empty b{display:block;font:600 17px/22px var(--font)}
+.empty p{font:400 15px/20px var(--font);color:var(--label-2)}
+
+/* ═══ 9. Floating dock ══════════════════════════════════════════════════════ */
+#dock{position:absolute;z-index:40;left:max(14px,var(--sal));right:max(14px,var(--sar));bottom:calc(var(--sab) + var(--dock-gap));
+  height:var(--dock-h);border-radius:32px;box-shadow:var(--shadow-dock);border:.5px solid var(--stroke);max-width:520px;margin:0 auto}
+#dock .items{position:relative;height:100%;display:grid;grid-template-columns:repeat(4,1fr);padding:6px}
+#dock .ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/4);border-radius:26px;background:var(--fill);
+  transform:translateX(calc(var(--i,0) * 100%));transition:transform .45s var(--spring)}
+.tab{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:26px;
+  font:500 10px/12px var(--font);letter-spacing:.1px;color:var(--label-2);transition:color .2s,transform .32s var(--spring)}
+.tab i{font-size:25px;line-height:1}
+.tab:active{transform:scale(.92)}
+.tab[aria-current="page"]{color:var(--accent-text)}
+.tab .badge{position:absolute;top:4px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;
+  font:600 12px/18px var(--font);text-align:center}
+
+/* ═══ 10. Bottom sheet ══════════════════════════════════════════════════════ */
+#scrim{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .35s}
+body.sheet-open #scrim{opacity:1;pointer-events:auto}
+#sheet{position:fixed;z-index:51;left:0;right:0;bottom:0;max-width:680px;margin:0 auto;display:flex;flex-direction:column;
+  max-height:calc(100% - var(--sat) - 10px);background:var(--bg);border-radius:28px 28px 0 0;
+  transform:translateY(105%);visibility:hidden;transition:transform .45s var(--spring),visibility 0s linear .45s;touch-action:pan-y}
+body.sheet-open #sheet{transform:translateY(var(--drag,0px));visibility:visible;transition:transform .45s var(--spring)}
+#sheet.dragging{transition:none!important}
+.sheet-head{padding:8px 16px 4px;cursor:grab}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--label-3);margin:0 auto 10px}
+.sheet-top{display:flex;align-items:flex-start;gap:12px}
+.sheet-top h3{flex:1;font:700 22px/28px var(--font);letter-spacing:.35px}
+.sheet-top .sub{font:400 15px/20px var(--font);color:var(--label-2);margin-top:2px}
+.close-btn{width:30px;height:30px;border-radius:15px;background:var(--fill);color:var(--label-2);display:grid;place-items:center;font-size:17px;flex:0 0 auto}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:8px 16px 16px;flex:1}
+.sheet-foot{padding:10px 16px calc(var(--sab) + 12px);display:grid;gap:10px;background:var(--bg)}
+.sheet-foot:empty{padding-top:0}
+.status-card{border-radius:20px;padding:14px 16px;background:color-mix(in srgb,var(--tone) 13%,var(--cell));margin:6px 0 14px}
+.status-card .state{font:600 15px/20px var(--font);color:var(--tone-text)}
+.status-card p{font:400 15px/20px var(--font);margin-top:2px}
+.warnline{font:400 15px/20px var(--font);color:var(--red-text);text-align:center}
+.cell a.link,.cell .link{color:var(--blue-text)}
+
+/* Toast (above the dock, inside the thumb zone) */
+#toast{position:fixed;z-index:60;left:0;right:0;margin:0 auto;width:fit-content;bottom:calc(var(--sab) + var(--dock-h) + var(--dock-gap) + 14px);transform:translateY(16px) scale(.96);
+  max-width:calc(100% - 40px);text-align:center;padding:12px 18px;border-radius:22px;font:500 15px/20px var(--font);letter-spacing:-.24px;color:var(--label);
+  box-shadow:0 8px 24px rgba(0,0,0,.18);border:.5px solid var(--stroke);opacity:0;pointer-events:none;transition:opacity .25s,transform .4s var(--spring)}
+#toast.show{opacity:1;transform:none}
+body.sheet-open #toast{bottom:auto;top:calc(var(--sat) + 10px);transform:translateY(-16px) scale(.96)}
+body.sheet-open #toast.show{transform:none}
+
+/* Setup */
+.setup{min-height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:14px;padding-top:24px;padding-bottom:8px}
+.setup .tile{width:64px;height:64px;border-radius:16px;font-size:34px;margin:0 0 6px}
+.setup p{font:400 17px/22px var(--font);color:var(--label-2)}
+.err{font:400 15px/20px var(--font);color:var(--red-text);min-height:20px;padding:0 4px}
+
+/* Tab transitions */
+@keyframes in-right{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes in-left{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+#content.in-right{animation:in-right .34s var(--spring)} #content.in-left{animation:in-left .34s var(--spring)}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important}
+  body.sheet-open #frame{transform:none;filter:brightness(.85)}
+}
+@media (min-width:700px){:root{--gutter:24px}}
+
+.cell .sub,.cell .why{display:block}
+.press-row{transition:transform .32s var(--spring),background-color .15s}
+.press-row:active{transform:scale(.985)}
+.cell .right{text-align:right;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.oid{font:600 15px/20px var(--font);letter-spacing:-.24px;font-variant-numeric:tabular-nums}
+.cell.stack{display:block;padding:14px 16px}
+.kv .k{display:block;font:400 13px/18px var(--font);color:var(--label-2)}
+.kv .v{display:block;font:400 17px/22px var(--font);word-break:break-word}
+.kv .v.link{color:var(--blue-text)}
+.day-title{display:flex;justify-content:space-between;align-items:baseline;font:600 15px/20px var(--font);letter-spacing:-.24px;color:var(--label-2);margin:24px 4px 8px}
+.ask-msg{font:400 17px/22px var(--font);color:var(--label-2);padding:4px 2px 8px}
+.press-row .why{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.setup{min-height:calc(100vh - var(--sat) - var(--nav-h) - var(--sab) - var(--dock-h) - 48px)}
 </style>
 </head>
 <body>
-<div id="app"><main id="view"><div id="content"></div></main><div class="tabs" id="tabs" hidden></div></div>
-<div class="scrim" id="scrim"></div>
-<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"></div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-
+<div id="frame">
+  <header id="nav"></header>
+  <main id="view"><div id="content"></div></main>
+  <nav id="dock" class="glass" aria-label="Sections" hidden><div class="items"></div></nav>
+</div>
+<div id="scrim"></div>
+<section id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-hidden="true"></section>
+<div id="toast" class="glass-strong" role="status" aria-live="polite"></div>
 <script>
 'use strict';
-// ── Config ─────────────────────────────────────────────────────────────────
-const APP_VERSION = '3.1.0';
+const APP_VERSION = '4.0.0';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 const VAPID_PUBLIC = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
 const POLL_MS = 15000;
@@ -288,7 +354,6 @@ function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2600);
 }
-function haptic() { try { navigator.vibrate && navigator.vibrate(8); } catch (e) {} }
 
 // ── API ────────────────────────────────────────────────────────────────────
 class ApiError extends Error {}
@@ -397,107 +462,161 @@ function humanReason(state, reason) {
   return r;
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────
+
+// ── Platform: standalone detection + haptics ────────────────────────────────
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+const STANDALONE = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+document.documentElement.classList.toggle('standalone', STANDALONE);
+document.documentElement.classList.toggle('ios', IS_IOS);
+
+const Haptics = (() => {
+  // iOS Safari has no navigator.vibrate. On Safari 18+, toggling a native <input switch>
+  // plays the system haptic, so a hidden one is clicked instead (must run inside a tap).
+  const canVibrate = typeof navigator.vibrate === 'function';
+  let label = null;
+  function iosTick() {
+    if (!label) {
+      label = document.createElement('label');
+      label.setAttribute('aria-hidden', 'true');
+      label.style.cssText = 'position:fixed;left:-100px;top:0;width:1px;height:1px;opacity:0;pointer-events:none';
+      const input = document.createElement('input');
+      input.type = 'checkbox'; input.setAttribute('switch', ''); input.tabIndex = -1;
+      label.appendChild(input); document.body.appendChild(label);
+    }
+    label.click();
+  }
+  const run = p => { try { if (canVibrate) navigator.vibrate(p); else if (IS_IOS) iosTick(); } catch (e) {} };
+  return { tap: () => run(10), select: () => run(8), success: () => run([10, 50, 14]), warning: () => run([24, 60, 24]) };
+})();
+const haptic = Haptics.tap;
+
+// ── Look of each state ───────────────────────────────────────────────────────
+const LOOK = {
+  review: ['ti-user-check', 't-accent'], unverified: ['ti-help-hexagon', 't-red'], manual: ['ti-shopping-cart', 't-blue'],
+  blocked: ['ti-alert-triangle', 't-red'], waiting: [null, 't-amber'], retry: ['ti-refresh', 't-amber'],
+  ready: ['ti-player-play', 't-green'], would_place: ['ti-flask', 't-green'], writing: ['ti-pencil', 't-green'],
+  placed: ['ti-check', 't-green'], out_of_stock: ['ti-package-off', 't-amber'], unknown: ['ti-clock', 't-gray'],
+};
+const TABS = [['queue', 'ti-list-check', 'Queue'], ['placed', 'ti-receipt', 'Placed'],
+              ['insights', 'ti-chart-bar', 'Insights'], ['settings', 'ti-settings', 'Settings']];
+const TITLE = { queue: 'Queue', placed: 'Placed', insights: 'Insights', settings: 'Settings' };
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function runnerInfo() {
+  const st = S.status, r = st && st.runner, online = !!(r && r.online);
+  const text = !st ? 'Connecting' : online ? (st.state && st.state.mode === 'shadow' ? 'Test mode' : 'Running')
+             : r && r.seenAgoSec != null ? 'Offline' : 'No runner';
+  return { online, text, known: !!st };
+}
+function renderNav(minimal) {
+  const ri = runnerInfo();
+  $('#nav').innerHTML = `<div class="navbar px-safe">
+    <div class="nav-left">Argati</div>
+    <div class="nav-title">${minimal ? '' : TITLE[S.tab]}</div>
+    <div class="nav-right">${minimal ? '' : `
+      <button class="pill press" data-act="tab" data-tab="settings" aria-label="Runner status: ${esc(ri.text)}">
+        <span class="dot ${ri.online ? 'on' : ri.known ? 'off' : ''}"></span>${esc(ri.text)}</button>
+      ${TOUCH ? '' : `<button class="icon-btn" data-act="refresh" aria-label="Refresh"><i class="ti ti-refresh ${S.loading ? 'spin' : ''}"></i></button>`}`}
+    </div></div>`;
+}
+function renderDock(badge) {
+  const dock = $('#dock'), wrap = dock.querySelector('.items');
+  dock.hidden = false;
+  if (!wrap.dataset.built) {
+    wrap.innerHTML = '<span class="ind" aria-hidden="true"></span>' + TABS.map(([id, icon, label]) =>
+      `<button class="tab" data-act="tab" data-tab="${id}"><i class="ti ${icon}" aria-hidden="true"></i><span>${label}</span></button>`).join('');
+    wrap.dataset.built = '1';
+  }
+  wrap.style.setProperty('--i', TABS.findIndex(t => t[0] === S.tab));
+  wrap.querySelectorAll('.tab').forEach(b => {
+    b.dataset.tab === S.tab ? b.setAttribute('aria-current', 'page') : b.removeAttribute('aria-current');
+    const n = b.dataset.tab === 'queue' ? badge : 0;
+    let el = b.querySelector('.badge');
+    if (n) { if (!el) { el = document.createElement('span'); el.className = 'badge'; b.appendChild(el); } el.textContent = n; }
+    else if (el) el.remove();
+  });
+}
+
 function render() {
   if (!cfg.key && !DEMO) return renderSetup();
   const list = items();
-  const needs = list.filter(i => STATES[i.state] && STATES[i.state].group === 'needs');
-  const soon = list.filter(i => !STATES[i.state] || STATES[i.state].group === 'soon');
-  const st = S.status, runner = st && st.runner;
-  const online = runner && runner.online;
+  const needs = list.filter(i => (STATES[i.state] || {}).group === 'needs');
+  const soon = list.filter(i => (STATES[i.state] || STATES.unknown).group !== 'needs');
   document.title = needs.length ? `(${needs.length}) Argati` : 'Argati';
   try { if (navigator.setAppBadge) needs.length ? navigator.setAppBadge(needs.length) : navigator.clearAppBadge(); } catch (e) {}
-
-  let body = '';
-  if (S.tab === 'queue') body = viewQueue(needs, soon);
-  if (S.tab === 'placed') body = viewPlaced();
-  if (S.tab === 'insights') body = viewInsights();
-  if (S.tab === 'settings') body = viewSettings();
-
-  const runnerTxt = !st ? 'Connecting' : online ? (st.state && st.state.mode === 'shadow' ? 'Test mode' : 'Running')
-                  : runner && runner.seenAgoSec != null ? 'Offline' : 'No runner';
-  $('#tabs').hidden = false;
-  $('#content').innerHTML = `
-    <div class="wrap">
-      <header class="top">
-        <div class="brand">Argati<small>Parts Center orders</small></div>
-        <button class="runner" data-act="tab" data-tab="settings" aria-label="Runner status: ${esc(runnerTxt)}">
-          <span class="dot ${online ? 'on' : st ? 'off' : ''}"></span>${esc(runnerTxt)}</button>
-        <button class="icon-btn" data-act="refresh" aria-label="Refresh"><i class="ti ti-refresh ${S.loading ? 'spin' : ''}"></i></button>
-      </header>
-      ${S.error ? `<div class="banner bad" role="alert"><i class="ti ti-cloud-off"></i><div><b>${esc(S.error)}.</b>
-        ${S.lastOk ? 'Showing data from ' + ago(Math.round((Date.now() - S.lastOk) / 1000)) + '.' : ''}</div>
-        <button data-act="refresh">Try again</button></div>` : ''}
-      ${body}
-    </div>`;
-  $('#tabs').innerHTML = `<nav aria-label="Sections">
-      ${tabBtn('queue', 'ti-list-check', 'Queue', needs.length)}
-      ${tabBtn('placed', 'ti-receipt', 'Placed')}
-      ${tabBtn('insights', 'ti-chart-bar', 'Insights')}
-      ${tabBtn('settings', 'ti-adjustments-horizontal', 'Settings')}
-    </nav>`;
+  renderNav(false);
+  renderDock(needs.length);
+  const views = { queue: () => viewQueue(needs, soon), placed: viewPlaced, insights: viewInsights, settings: viewSettings };
+  $('#content').innerHTML = `<div id="ptr" aria-hidden="true"><i class="ti ti-refresh"></i></div>` + views[S.tab]();
   tickCountdowns();
-  if (S.open != null) renderSheet();
-}
-function tabBtn(id, icon, label, badge) {
-  return `<button class="tab" data-act="tab" data-tab="${id}" ${S.tab === id ? 'aria-current="page"' : ''}>
-    <i class="ti ${icon}"></i>${label}${badge ? `<span class="badge">${badge}</span>` : ''}</button>`;
+  updateNavState();
+  if (Sheet.kind === 'order') Sheet.refreshOrder();
 }
 
+function errorBanner() {
+  if (!S.error) return '';
+  return `<div class="banner" role="alert"><i class="ti ti-cloud-off"></i><div><b>${esc(S.error)}.</b>
+    ${S.lastOk ? ' Showing data from ' + ago(Math.round((Date.now() - S.lastOk) / 1000)) + '.' : ''}</div>
+    <button class="btn small tinted" data-act="refresh">Retry</button></div>`;
+}
 function headline(needs, soon) {
   const st = S.status;
   if (!st) return { text: 'Connecting to the sheet…', cls: '' };
   const r = st.runner || {};
-  if (!r.online) return { text: r.seenAgoSec != null ? 'The runner is offline. Orders aren’t being placed.' : 'No runner has connected yet.', cls: 'bad' };
+  if (!r.online) return { text: r.seenAgoSec != null ? 'The runner is offline.' : 'No runner has connected yet.', cls: 'bad' };
   if (!st.autoMode) return { text: 'Automatic ordering is paused.', cls: 'attn' };
   if (needs.length) return { text: plural(needs.length, 'order needs you.', 'orders need you.'), cls: 'attn' };
   const waiting = soon.filter(i => i.state === 'waiting').length;
   if (waiting) return { text: `Placing ${plural(waiting, 'order', 'orders')} shortly.`, cls: '' };
   return { text: 'All clear.', cls: '' };
 }
-
 function viewQueue(needs, soon) {
   const h = headline(needs, soon), t = todayStats(), st = S.status;
   const waiting = soon.filter(i => i.state === 'waiting').sort((a, b) => a.until - b.until);
-  let sub = '';
-  if (st && st.runner && !st.runner.online && st.runner.seenAgoSec != null) sub = `Last seen ${ago(st.runner.seenAgoSec)}. Check that the office Mac is awake and online.`;
-  else if (st && !st.autoMode) sub = 'Clean orders wait for you. Turn it back on in Settings.';
+  let sub;
+  if (st && st.runner && !st.runner.online && st.runner.seenAgoSec != null)
+    sub = `Last seen ${ago(st.runner.seenAgoSec)}. Orders aren’t being placed. Check that the office Mac is awake and online.`;
+  else if (st && !st.autoMode) sub = 'Clean orders wait for your approval. Turn it back on in Settings.';
   else {
     sub = `<b class="num">${t.n}</b> placed today${t.sum ? `, <b class="num">${money(t.sum)}</b>` : ''}.`;
-    const last = t.last, d = last && new Date(last.placedAt);
-    if (last && !isNaN(d)) sub += ` Last: ${esc(last.name)}, ${ago(Math.max(0, Math.round((Date.now() - d) / 1000)))}.`;
+    const d = t.last && new Date(t.last.placedAt);
+    if (t.last && !isNaN(d)) sub += ` Last: ${esc(t.last.name)}, ${ago(Math.max(0, Math.round((Date.now() - d) / 1000)))}.`;
   }
-  return `
-    <section class="hero" aria-live="polite">
-      <h1 class="headline ${h.cls}">${esc(h.text)}</h1>
-      <p class="sub">${sub}</p>
-      ${waiting.length ? `<div class="track" aria-label="Orders counting down">${waiting.map(i => `
-        <button class="tick" data-act="open" data-row="${i.row}" aria-label="${esc(i.name)}, places in a moment">
-          <span class="ring" data-until="${i.until}"><span class="num">--</span></span>
-          <span><span class="who">${esc(i.first || i.name)}</span><br><span class="what">${esc(i.product)}${i.qty > 1 ? ' ×' + i.qty : ''}</span></span>
-        </button>`).join('')}</div>` : ''}
-    </section>
-    ${section('Needs you', needs, needs.length ? '' : `<div class="empty"><b>Nothing waiting for you.</b>Review items, combinations and problems show up here.</div>`)}
-    ${soon.length ? section('Coming up', soon) : ''}
-    ${!needs.length && !soon.length && S.pending ? '' : ''}`;
-}
-function section(title, list, empty) {
-  return `<section class="section"><h2>${title}<span class="count num">${list.length || ''}</span></h2>
-    <div class="panel">${list.length ? list.map(rowHtml).join('') : empty || ''}</div></section>`;
+  const empty = `<div class="empty"><span class="tile t-green"><i class="ti ti-check"></i></span>
+    <div><b>Nothing waiting for you</b><p>Approvals, problems and manual orders show up here.</p></div></div>`;
+  return `<div class="px-safe">
+    <h1 class="large-title ${h.cls}" id="lt" aria-live="polite">${esc(h.text)}</h1>
+    <p class="subhead">${sub}</p>
+    ${errorBanner()}
+    ${waiting.length ? `<div class="track" aria-label="Orders counting down">${waiting.map(i => `
+      <button class="tick press" data-act="open" data-row="${i.row}">
+        <span class="ring big" data-until="${i.until}"><span class="num">--</span></span>
+        <span><span class="who" style="display:block">${esc(i.first || i.name)}</span>
+        <span class="what" style="display:block">${esc(i.product)}${i.qty > 1 ? ' ×' + i.qty : ''}</span></span>
+      </button>`).join('')}</div>` : ''}
+    <h2 class="section-title">Needs you${needs.length ? `<span class="count num">${needs.length}</span>` : ''}</h2>
+    <div class="group">${needs.length ? needs.map(rowHtml).join('') : empty}</div>
+    ${soon.length ? `<h2 class="section-title">Coming up<span class="count num">${soon.length}</span></h2>
+    <div class="group">${soon.map(rowHtml).join('')}</div>` : ''}
+  </div>`;
 }
 function rowHtml(i) {
-  const s = STATES[i.state] || STATES.unknown;
-  let action = '';
-  if (i.approved && ['review', 'unverified', 'ready'].includes(i.state)) action = `<span class="chip">Approved</span>`;
-  else if (i.state === 'review') action = `<span class="btn primary" data-act="approve" data-row="${i.row}">Approve</span>`;
-  else if (i.state === 'manual') action = `<span class="btn quiet" data-act="open" data-row="${i.row}">Add ID</span>`;
-  else if (i.state === 'waiting') action = `<span class="ring" data-until="${i.until}"><span class="num">--</span></span>`;
-  return `<button class="row t-${s.tone}" data-act="open" data-row="${i.row}">
-    <div class="main">
-      <div class="name">${esc(i.name)} <span class="code">${esc(i.product)}</span></div>
-      <div class="line2">${esc(i.productName)}${i.qty > 1 ? ' ×' + i.qty : ''}, ${esc(i.city || 'no city')}</div>
-      <div class="why"><span class="state">${esc(s.label)}.</span> ${esc(i.reason || '')}</div>
-    </div>${action}</button>`;
+  const s = STATES[i.state] || STATES.unknown, [icon, tone] = LOOK[i.state] || LOOK.unknown;
+  const lead = i.state === 'waiting'
+    ? `<span class="ring" data-until="${i.until}"><span class="num">--</span></span>`
+    : `<span class="tile ${tone}" aria-hidden="true"><i class="ti ${icon}"></i></span>`;
+  let trail = `<i class="ti ti-chevron-right chev" aria-hidden="true"></i>`;
+  if (i.approved && ['review', 'unverified', 'ready'].includes(i.state)) trail = `<span class="chip-ok">Approved</span>`;
+  else if (i.state === 'review') trail = `<span class="btn filled small hit press" data-act="approve" data-row="${i.row}" role="button">Approve</span>`;
+  else if (i.state === 'manual') trail = `<span class="btn tinted small hit press" data-act="open" data-row="${i.row}" role="button">Add ID</span>`;
+  return `<button class="cell press-row ${tone}" data-act="open" data-row="${i.row}">
+    ${lead}
+    <span class="body">
+      <span class="title"><span>${esc(i.name)}</span></span>
+      <span class="sub">${esc(i.productName)}${i.qty > 1 ? ' ×' + i.qty : ''}, ${esc(i.city || 'no city')}</span>
+      <span class="why"><b class="tone-text">${esc(s.label)}.</b> ${esc(i.reason || '')}</span>
+    </span>${trail}</button>`;
 }
 
 function viewPlaced() {
@@ -512,95 +631,124 @@ function viewPlaced() {
   });
   const label = g => {
     if (g.k === 'unknown') return 'Earlier';
-    const today = new Date(), y = new Date(Date.now() - 86400000);
-    if (g.k === dayKey(today)) return 'Today';
-    if (g.k === dayKey(y)) return 'Yesterday';
-    return g.d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+    if (g.k === dayKey(new Date())) return 'Today';
+    if (g.k === dayKey(new Date(Date.now() - 86400000))) return 'Yesterday';
+    return g.d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
   };
-  return `
-    <label class="search"><i class="ti ti-search"></i>
-      <input type="search" id="q" placeholder="Search name, Order ID or city" value="${esc(S.query)}" autocomplete="off" enterkeyhint="search"></label>
-    ${!S.recentAt ? `<div class="empty">Loading placed orders…</div>` :
-      !groups.length ? `<div class="empty"><b>No matches.</b>Try a surname or an Order ID like 1277076.</div>` :
-      groups.map(g => `<div class="day"><span>${label(g)}</span><span class="num">${plural(g.items.length, 'order', 'orders')}${g.sum ? ', ' + money(g.sum) : ''}</span></div>
-        <div class="panel">${g.items.map(o => {
-          const d = new Date(o.placedAt);
-          return `<div class="prow" data-act="openplaced" data-id="${esc(o.orderId)}" role="button" tabindex="0"><div class="main"><div class="name">${esc(o.name)}</div>
-            <div class="line2">${isNaN(d) ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ', '}${esc(o.productName)}, ${esc(o.city)}</div></div>
-            <div class="right"><button class="oid num" data-act="copy" data-text="${esc(o.orderId)}" aria-label="Copy ${esc(o.orderId)}">${esc(o.orderId)}</button>
-            <div class="total num">${o.total ? money(parseMoney(o.total)) : ''}</div></div></div>`;
-        }).join('')}</div>`).join('')}`;
+  const body = !S.recentAt ? `<div class="group"><div class="empty"><span class="tile t-gray"><i class="ti ti-loader-2 spin"></i></span><div><b>Loading placed orders</b></div></div></div>`
+    : !groups.length ? `<div class="group"><div class="empty"><span class="tile t-gray"><i class="ti ti-search"></i></span>
+        <div><b>No matches</b><p>Try a surname or an Order ID like 1277076.</p></div></div></div>`
+    : groups.map(g => `<h2 class="day-title"><span>${label(g)}</span><span class="num">${plural(g.items.length, 'order', 'orders')}${g.sum ? ', ' + money(g.sum) : ''}</span></h2>
+      <div class="group">${g.items.map(o => {
+        const d = new Date(o.placedAt);
+        return `<button class="cell press-row" data-act="openplaced" data-id="${esc(o.orderId)}">
+          <span class="tile t-green" aria-hidden="true"><i class="ti ti-check"></i></span>
+          <span class="body"><span class="title"><span>${esc(o.name)}</span></span>
+            <span class="sub">${isNaN(d) ? '' : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) + ', '}${esc(o.productName)}, ${esc(o.city)}</span></span>
+          <span class="right"><span class="oid">${esc(o.orderId)}</span><span class="sub num">${o.total ? money(parseMoney(o.total)) : ''}</span></span>
+        </button>`;
+      }).join('')}</div>`).join('');
+  return `<div class="px-safe">
+    <h1 class="large-title" id="lt">Placed</h1>
+    <label class="search"><i class="ti ti-search" aria-hidden="true"></i>
+      <input type="search" id="q" placeholder="Name, Order ID or city" value="${esc(S.query)}" autocomplete="off" enterkeyhint="search"></label>
+    ${errorBanner()}${body}</div>`;
 }
 
 function viewInsights() {
   const orders = S.recent.map(o => Object.assign({}, o, { d: new Date(o.placedAt), v: parseMoney(o.total) })).filter(o => !isNaN(o.d));
-  if (!orders.length) return `<div class="empty" style="margin-top:20px"><b>No data yet.</b>Insights appear once orders are placed.</div>`;
+  if (!orders.length) return `<div class="px-safe"><h1 class="large-title" id="lt">Insights</h1>
+    <div class="group" style="margin-top:16px"><div class="empty"><span class="tile t-gray"><i class="ti ti-chart-bar"></i></span>
+    <div><b>No data yet</b><p>Insights appear once orders are placed.</p></div></div></div></div>`;
   const now = new Date(), start = d => { const x = new Date(now); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - d); return x; };
   const sumIn = from => orders.filter(o => o.d >= from).reduce((a, o) => ({ n: a.n + 1, v: a.v + o.v }), { n: 0, v: 0 });
   const t = sumIn(start(0)), w = sumIn(start(6)), m = sumIn(start(29));
   const days = [...Array(14)].map((_, i) => { const d = start(13 - i), k = dayKey(d);
-    const os = orders.filter(o => dayKey(o.d) === k); return { d, n: os.length, v: os.reduce((a, o) => a + o.v, 0) }; });
+    const os = orders.filter(o => dayKey(o.d) === k); return { d, n: os.length }; });
   const max = Math.max(1, ...days.map(d => d.n)), W = 600, H = 150, bw = W / 14;
   const svg = `<svg viewBox="0 0 ${W} ${H + 22}" role="img" aria-label="Orders per day, last 14 days">${days.map((d, i) => {
-      const h = Math.max(d.n ? 4 : 1, (d.n / max) * H), x = i * bw + 5, isToday = i === 13;
-      return `<rect x="${x}" y="${H - h}" width="${bw - 10}" height="${h}" rx="4" fill="${isToday ? 'var(--flame)' : 'var(--steel)'}" opacity="${isToday ? 1 : .55}"><title>${d.d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: ${d.n} orders</title></rect>
-        ${d.n ? `<text x="${x + (bw - 10) / 2}" y="${H - h - 5}" text-anchor="middle" class="axis num">${d.n}</text>` : ''}
-        ${i % 2 === 1 || isToday ? `<text x="${x + (bw - 10) / 2}" y="${H + 16}" text-anchor="middle" class="axis">${isToday ? 'Today' : d.d.getDate()}</text>` : ''}`;
+      const h = Math.max(d.n ? 4 : 1, (d.n / max) * H), x = i * bw + 6, isToday = i === 13;
+      return `<rect x="${x}" y="${H - h}" width="${bw - 12}" height="${h}" rx="5" fill="${isToday ? 'var(--accent)' : 'var(--gray)'}" opacity="${isToday ? 1 : .45}"><title>${d.d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}: ${d.n} orders</title></rect>
+        ${d.n ? `<text x="${x + (bw - 12) / 2}" y="${H - h - 5}" text-anchor="middle" class="axis">${d.n}</text>` : ''}
+        ${i % 2 === 1 || isToday ? `<text x="${x + (bw - 12) / 2}" y="${H + 16}" text-anchor="middle" class="axis">${isToday ? 'Today' : d.d.getDate()}</text>` : ''}`;
     }).join('')}</svg>`;
   const top = key => { const c = {}; orders.filter(o => o.d >= start(29)).forEach(o => { const k = o[key] || '—'; c[k] = (c[k] || 0) + 1; });
     return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 6); };
   const bars = rows => { const mx = Math.max(1, ...rows.map(r => r[1]));
-    return `<div class="panel bars">${rows.map(([k, n]) => `<div class="item"><span class="label">${esc(k)}</span><span class="val num">${n}</span>
+    return `<div class="group">${rows.map(([k, n]) => `<div class="bar-row"><span class="label">${esc(k)}</span><span class="val num">${n}</span>
       <span class="bar"><i style="width:${(n / mx) * 100}%"></i></span></div>`).join('')}</div>`; };
-  return `
+  return `<div class="px-safe">
+    <h1 class="large-title" id="lt">Insights</h1>
     <div class="figures">
       <div class="fig"><div class="k">Today</div><div class="v num">${t.n}</div><div class="m num">${money(t.v)}</div></div>
       <div class="fig"><div class="k">7 days</div><div class="v num">${w.n}</div><div class="m num">${money(w.v)}</div></div>
       <div class="fig"><div class="k">30 days</div><div class="v num">${m.n}</div><div class="m num">${money(m.v)}</div></div>
     </div>
-    <section class="section"><h2>Orders per day</h2><div class="panel chart">${svg}</div></section>
-    <section class="section"><h2>Top products, 30 days</h2>${bars(top('productName'))}</section>
-    <section class="section"><h2>Top cities, 30 days</h2>${bars(top('city'))}</section>
-    <p class="note">Based on the latest ${plural(orders.length, 'order', 'orders')} in the sheet.</p>`;
+    <h2 class="section-title">Orders per day</h2><div class="group chart">${svg}</div>
+    <h2 class="section-title">Top products</h2>${bars(top('productName'))}
+    <h2 class="section-title">Top cities</h2>${bars(top('city'))}
+    <p class="footnote">Last 30 days, from the latest ${plural(orders.length, 'order', 'orders')} in the sheet.</p></div>`;
 }
 
 function viewSettings() {
   const st = S.status || {}, r = st.runner || {}, rs = st.state || {};
-  const push = pushState(), set = st.settings || ((S.pending || {}).settings) || { quietSeconds: 120, oosRetryMin: 15 };
+  const push = pushState(), set = st.settings || ((S.pending || {}).settings) || { quietSeconds: 120, oosRetryMin: 15, oosMaxHours: 24 };
   const seg = (key, opts, fmt) => `<div class="seg" role="group">${opts.map(v =>
     `<button data-act="setting" data-key="${key}" data-val="${v}" aria-pressed="${Number(set[key]) === v}">${fmt(v)}</button>`).join('')}</div>`;
-  return `
-    <section class="section"><h2>Ordering</h2><div class="panel">
-      <div class="setting"><div class="main"><div class="t">Automatic ordering</div>
-        <div class="d">${st.autoMode ? `Clean orders are placed ${fmtWait(set.quietSeconds)} after the last edit.` : 'Paused. Clean orders wait for your approval.'}</div></div>
+  const install = IS_IOS && !STANDALONE ? `
+    <h2 class="section-title">Install</h2>
+    <div class="group"><div class="cell"><span class="tile t-blue"><i class="ti ti-share-2"></i></span>
+      <span class="body"><span class="title"><span>Add to Home Screen</span></span>
+      <span class="why">In Safari, tap Share, then Add to Home Screen. Notifications only work from the Home Screen app.</span></span></div></div>` : '';
+  const uptime = rs.stats ? (rs.stats.uptimeMin >= 60 ? Math.floor(rs.stats.uptimeMin / 60) + ' h ' + (rs.stats.uptimeMin % 60) + ' min' : rs.stats.uptimeMin + ' min') : '';
+  return `<div class="px-safe">
+    <h1 class="large-title" id="lt">Settings</h1>
+    ${errorBanner()}${install}
+    <h2 class="section-title">Ordering</h2>
+    <div class="group">
+      <div class="cell"><span class="tile t-green"><i class="ti ti-bolt"></i></span>
+        <span class="body"><span class="title"><span>Automatic ordering</span></span></span>
         <label class="switch" aria-label="Automatic ordering"><input type="checkbox" data-act="auto" ${st.autoMode ? 'checked' : ''} ${S.status ? '' : 'disabled'}><span class="tr"></span></label></div>
-      <div class="setting"><div class="main"><div class="t">Runner</div>
-        <div class="d">${r.id ? esc(r.id.replace(/\.local$/, '')) + ', ' : ''}${r.online ? 'online' : 'offline'}, checked in ${ago(r.seenAgoSec)}${rs.mode ? ', ' + (rs.mode === 'live' ? 'live' : 'test mode') : ''}</div></div>
-        <span class="dot ${r.online ? 'on' : 'off'}"></span></div>
-      ${rs.stats ? `<div class="setting"><div class="main"><div class="t">Placed by the runner today</div>
-        <div class="d">Running for ${rs.stats.uptimeMin >= 60 ? Math.floor(rs.stats.uptimeMin / 60) + ' h ' + (rs.stats.uptimeMin % 60) + ' min' : rs.stats.uptimeMin + ' min'}</div></div>
-        <span class="oid num">${rs.stats.placedToday}</span></div>` : ''}
-      <div class="setting stack"><div class="t">Wait after the last edit</div>
-        <div class="d">Gives the team time to finish typing before an order is placed.</div>
-        ${seg('quietSeconds', [60, 120, 180, 300], v => v / 60 + ' min')}</div>
-      <div class="setting stack"><div class="t">When a product is out of stock</div>
-        <div class="d">Argati checks again at this interval for up to ${set.oosMaxHours || 24} hours.</div>
-        ${seg('oosRetryMin', [10, 15, 30, 60], v => 'every ' + v)}</div>
-    </div></section>
-    <section class="section"><h2>Notifications</h2><div class="panel">
-      <div class="setting"><div class="main"><div class="t">Notifications on this device</div><div class="d">${esc(push.text)}</div></div>
-        ${push.can ? (push.on ? `<button class="btn quiet" data-act="pushoff">Turn off</button>` : `<button class="btn primary" data-act="push">Turn on</button>`) : ''}</div>
-      <div class="setting"><div class="main"><div class="t">Send a test</div><div class="d">${st.devices != null ? `Goes to ${plural(st.devices, 'device', 'devices')} with notifications on.` : 'Goes to every device with notifications on.'}</div></div>
-        <button class="btn quiet" data-act="testpush">Send test</button></div>
-    </div></section>
-    <section class="section"><h2>Connection</h2><div class="panel">
+      <div class="cell"><span class="tile t-gray"><i class="ti ti-device-laptop"></i></span>
+        <span class="body"><span class="title"><span>Runner</span></span>
+        <span class="sub">${r.id ? esc(r.id.replace(/\.local$/, '')) : 'Not connected'}${rs.mode ? ', ' + (rs.mode === 'live' ? 'live' : 'test mode') : ''}</span></span>
+        <span class="value">${r.online ? 'Online' : 'Offline'}</span></div>
+      ${rs.stats ? `<div class="cell"><span class="tile t-green"><i class="ti ti-receipt"></i></span>
+        <span class="body"><span class="title"><span>Placed today</span></span><span class="sub">Runner up for ${uptime}</span></span>
+        <span class="value num">${rs.stats.placedToday}</span></div>` : ''}
+    </div>
+    <p class="footnote">${st.autoMode ? `Clean orders are placed ${fmtWait(set.quietSeconds)} after the last edit. Last check-in ${ago(r.seenAgoSec)}.` : 'Paused. Clean orders wait for your approval.'}</p>
+
+    <h2 class="section-title">Timing</h2>
+    <div class="group">
+      <div class="cell stack"><span class="title"><span>Wait after the last edit</span></span>${seg('quietSeconds', [60, 120, 180, 300], v => v / 60 + ' min')}</div>
+      <div class="cell stack"><span class="title"><span>Out of stock, check again</span></span>${seg('oosRetryMin', [10, 15, 30, 60], v => v + ' min')}</div>
+    </div>
+    <p class="footnote">The wait gives the team time to finish typing. Out-of-stock orders are retried for up to ${set.oosMaxHours || 24} hours.</p>
+
+    <h2 class="section-title">Notifications</h2>
+    <div class="group">
+      <div class="cell"><span class="tile t-red"><i class="ti ti-bell"></i></span>
+        <span class="body"><span class="title"><span>This device</span></span><span class="sub">${push.on ? 'On' : push.can ? 'Off' : 'Unavailable'}</span></span>
+        ${push.can ? (push.on ? `<button class="btn small gray hit press" data-act="pushoff">Turn off</button>`
+                              : `<button class="btn small filled hit press" data-act="push">Turn on</button>`) : ''}</div>
+      <div class="cell"><span class="tile t-blue"><i class="ti ti-send"></i></span>
+        <span class="body"><span class="title"><span>Send a test</span></span>
+        <span class="sub">${st.devices != null ? `To ${plural(st.devices, 'device', 'devices')}` : 'To every device with notifications on'}</span></span>
+        <button class="btn small tinted hit press" data-act="testpush">Send</button></div>
+    </div>
+    <p class="footnote">${esc(push.text)}</p>
+
+    <h2 class="section-title">Connection</h2>
+    <div class="group">
       <label class="field"><span>Access key</span><input id="key" type="password" value="${esc(cfg.key)}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
       <label class="field"><span>Apps Script URL</span><input id="url" type="url" value="${esc(cfg.url)}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <div class="field"><button class="btn quiet block" data-act="saveconn">Save and test connection</button></div>
+      <div class="field"><button class="btn gray block press" data-act="saveconn">Save and test connection</button></div>
     </div>
-    ${st.sheetUrl ? `<p class="note"><a href="${esc(st.sheetUrl)}" target="_blank" rel="noopener">Open the orders sheet</a></p>` : ''}
-    <p class="note">Argati ${APP_VERSION}${st.version ? ', server ' + esc(st.version) : ''}${DEMO ? ', demo data' : ''}.
-      ${DEMO ? '<a href="./">Leave the demo</a>' : '<a href="?demo">Open a demo with sample data</a>'}</p></section>`;
+    <p class="footnote">Argati ${APP_VERSION}${st.version ? ', server ' + esc(st.version) : ''}${STANDALONE ? ', Home Screen app' : ''}.
+      ${st.sheetUrl ? `<a href="${esc(st.sheetUrl)}" target="_blank" rel="noopener">Open the orders sheet</a>. ` : ''}
+      ${DEMO ? '<a href="./">Leave the demo</a>' : '<a href="?demo">Open a demo with sample data</a>'}</p>
+  </div>`;
 }
 
 function tickCountdowns() {
@@ -612,98 +760,271 @@ function tickCountdowns() {
   });
 }
 
-// ── Detail sheet ───────────────────────────────────────────────────────────
-function openSheet(row) { S.open = row; renderSheet(); $('#scrim').classList.add('open'); $('#sheet').classList.add('open');
-  setTimeout(() => { const c = $('#sheet .close'); c && c.focus(); }, 60); }
-function closeSheet() { S.open = null; $('#scrim').classList.remove('open'); $('#sheet').classList.remove('open'); }
-function renderSheet() {
-  const i = items().find(x => x.row === S.open);
-  if (!i) { closeSheet(); return; }
-  const s = STATES[i.state] || STATES.unknown, st = S.status || {};
-  const sheetRow = st.sheetUrl ? st.sheetUrl + '&range=A' + i.row : '';
-  const prods = products();
-  const parts = String(i.product || '').split('+').map(c => c.trim()).filter(Boolean);
-  const whole = prods[String(i.product).trim()];
-  const links = whole ? [whole] : parts.map(c => prods[c]).filter(Boolean);
-  let actions = '';
-  if (i.state === 'review' || i.state === 'ready') {
-    const dup = /duplicate/i.test(i.reason || '');
-    actions = `${dup ? `<p class="warnline">Looks like a duplicate. Approve only if this customer really ordered again.</p>` : ''}
-      <button class="btn primary block" data-act="approve" data-row="${i.row}" ${i.approved ? 'disabled' : ''}>${i.approved ? 'Approved, placing soon' : 'Approve and place'}</button>`;
-  } else if (i.state === 'unverified') {
-    actions = `<p class="warnline">The order was sent but no answer came back. Check the back office first. If it is there, add its Order ID instead.</p>
-      <button class="btn primary block" data-act="approve" data-row="${i.row}" data-confirm="1" ${i.approved ? 'disabled' : ''}>Not in the back office, place it</button>
-      ${idForm(i)}`;
-  } else if (i.state === 'manual') {
-    actions = `${links.map(p => `<a class="btn quiet block" href="${esc(p.url)}" target="_blank" rel="noopener"><i class="ti ti-external-link"></i>Open ${esc(p.code)} on GjirafaMall</a>`).join('')}
-      ${idForm(i)}`;
-  } else if (i.state === 'blocked') {
-    actions = sheetRow ? `<a class="btn primary block" href="${esc(sheetRow)}" target="_blank" rel="noopener"><i class="ti ti-table"></i>Fix it in the sheet</a>` : '';
+// Nav bar: glass once content scrolls under it; compact title once the large title is gone
+function updateNavState() {
+  const v = $('#view'), nav = $('#nav'), lt = $('#lt');
+  nav.classList.toggle('scrolled', v.scrollTop > 2);
+  nav.classList.toggle('compact', !!lt && v.scrollTop > lt.offsetTop + lt.offsetHeight * 0.7);
+}
+
+// ── Tabs (direction-aware transition; tapping the active tab scrolls to top) ─
+function goTab(tab) {
+  const v = $('#view');
+  if (tab === S.tab) { v.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  const from = TABS.findIndex(t => t[0] === S.tab), to = TABS.findIndex(t => t[0] === tab);
+  S.tab = tab; Haptics.select(); v.scrollTop = 0; render();
+  const c = $('#content');
+  c.classList.remove('in-left', 'in-right'); void c.offsetWidth;
+  c.classList.add(to > from ? 'in-right' : 'in-left');
+  if (tab !== 'queue' && Date.now() - S.recentAt > 30000) refreshRecent().then(render);
+}
+
+// ── Bottom sheets ────────────────────────────────────────────────────────────
+const sheetHead = (title, sub) => `<div class="sheet-top"><div style="flex:1;min-width:0">
+  <h3 id="sheet-title">${esc(title)}</h3>${sub ? `<p class="sub">${esc(sub)}</p>` : ''}</div>
+  <button class="close-btn hit" data-act="close" aria-label="Close"><i class="ti ti-x"></i></button></div>`;
+
+const Sheet = {
+  kind: null, row: null, resolve: null, lastFocus: null,
+  open(kind, parts, opts) {
+    const el = $('#sheet');
+    this.kind = kind; this.row = (opts && opts.row) != null ? opts.row : null;
+    el.innerHTML = `<div class="sheet-head" data-drag><div class="grabber"></div>${parts.head}</div>
+      <div class="sheet-body">${parts.body || ''}</div><div class="sheet-foot">${parts.foot || ''}</div>`;
+    el.style.setProperty('--drag', '0px');
+    el.setAttribute('aria-hidden', 'false');
+    this.lastFocus = document.activeElement;
+    document.body.classList.add('sheet-open');
+    setTimeout(() => { const c = el.querySelector('.close-btn'); c && c.focus({ preventScroll: true }); }, 90);
+  },
+  close(result) {
+    if (!document.body.classList.contains('sheet-open')) return;
+    document.body.classList.remove('sheet-open');
+    $('#sheet').setAttribute('aria-hidden', 'true');
+    const r = this.resolve; this.resolve = null; this.kind = null; this.row = null;
+    if (r) r(!!result);
+    if (this.lastFocus && this.lastFocus.focus) this.lastFocus.focus({ preventScroll: true });
+  },
+  refreshOrder() {
+    const el = $('#sheet'), typing = el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT';
+    const i = items().find(x => x.row === this.row);
+    if (!i) { if (!typing) { this.close(); toast('That order has left the queue.'); } return; }
+    if (typing) return;                                   // never wipe what someone is typing
+    const p = orderParts(i);
+    el.querySelector('.sheet-body').innerHTML = p.body;
+    el.querySelector('.sheet-foot').innerHTML = p.foot;
   }
-  const fact = (icon, k, v, href) => v ? `<${href ? `a href="${esc(href)}"` : 'div'} class="fact"><i class="ti ${icon}"></i><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></${href ? 'a' : 'div'}>` : '';
-  $('#sheet').innerHTML = `
-    <div class="grab"></div>
-    <button class="icon-btn close" data-act="close" aria-label="Close"><i class="ti ti-x"></i></button>
-    <h3 id="sheet-title">${esc(i.name)}</h3>
-    <p class="prod">${esc(i.productName)}${i.qty > 1 ? ' ×' + i.qty : ''}, ${esc(i.city || 'no city')}</p>
-    <div class="status-box t-${s.tone}"><div class="state">${esc(s.label)}</div>
-      <p>${esc(i.reason || '')}</p></div>
-    <div class="facts">
-      ${fact('ti-phone', 'Phone', i.phone, i.phone ? 'tel:' + i.phone.replace(/[^\d+]/g, '') : '')}
-      ${fact('ti-map-pin', 'Address', i.address)}
-      ${fact('ti-message', 'Comment', i.comment)}
-      ${fact('ti-package', 'Product code', i.product)}
-      ${sheetRow ? fact('ti-table', 'Sheet', 'Row ' + i.row, sheetRow) : fact('ti-table', 'Sheet', 'Row ' + i.row)}
-    </div>
-    <div class="actions">${actions}</div>`;
+};
+
+// Confirmation as a bottom sheet (replaces centred alert popups); resolves true/false
+function ask({ title, message, confirm, tone = 'filled', cancel = 'Cancel' }) {
+  return new Promise(resolve => {
+    Sheet.open('ask', { head: sheetHead(title), body: `<p class="ask-msg">${esc(message)}</p>`,
+      foot: `<button class="btn block ${tone} press" data-act="ask-yes">${esc(confirm)}</button>
+             <button class="btn block gray press" data-act="ask-no">${esc(cancel)}</button>` });
+    Sheet.resolve = resolve;
+  });
+}
+
+function kv(label, value, href, icon) {
+  if (!value) return '';
+  const inner = `<span class="tile t-gray" aria-hidden="true"><i class="ti ${icon}"></i></span>
+    <span class="body kv"><span class="k">${label}</span><span class="v selectable ${href ? 'link' : ''}">${esc(value)}</span></span>`;
+  return href ? `<a class="cell" href="${esc(href)}"${/^https?:/.test(href) ? ' target="_blank" rel="noopener"' : ''}>${inner}</a>` : `<div class="cell">${inner}</div>`;
+}
+function orderParts(i) {
+  const s = STATES[i.state] || STATES.unknown, [, tone] = LOOK[i.state] || LOOK.unknown, st = S.status || {};
+  const sheetRow = st.sheetUrl ? st.sheetUrl + '&range=A' + i.row : '';
+  const prods = products(), parts = String(i.product || '').split('+').map(c => c.trim()).filter(Boolean);
+  const whole = prods[String(i.product).trim()], links = whole ? [whole] : parts.map(c => prods[c]).filter(Boolean);
+  const idField = `<div class="group" style="margin-top:14px"><label class="field"><span>Order ID from GjirafaMall</span>
+    <input id="oid" inputmode="numeric" placeholder="e.g. 1277076" autocomplete="off"></label></div>`;
+  let extra = '', foot = '';
+  if (i.state === 'review' || i.state === 'ready') {
+    const dup = /Same customer and product/.test(i.reason || '');
+    foot = `${dup ? `<p class="warnline">Looks like a duplicate. Approve only if they ordered again.</p>` : ''}
+      <button class="btn filled block press" data-act="approve" data-row="${i.row}" ${i.approved ? 'disabled' : ''}>${i.approved ? 'Approved, placing soon' : 'Approve and place'}</button>`;
+  } else if (i.state === 'unverified') {
+    extra = idField;
+    foot = `<button class="btn gray block press" data-act="saveid" data-row="${i.row}">Save Order ID</button>
+      <button class="btn danger block press" data-act="approve" data-row="${i.row}" data-strong="1" ${i.approved ? 'disabled' : ''}>Not in the back office, place it</button>`;
+  } else if (i.state === 'manual') {
+    extra = `<div class="group" style="margin-top:14px">${links.map(p => `<a class="cell" href="${esc(p.url)}" target="_blank" rel="noopener">
+        <span class="tile t-blue"><i class="ti ti-external-link"></i></span><span class="body"><span class="title"><span>Open ${esc(p.code)} on GjirafaMall</span></span></span>
+        <i class="ti ti-chevron-right chev"></i></a>`).join('')}</div>${idField}`;
+    foot = `<button class="btn filled block press" data-act="saveid" data-row="${i.row}">Save Order ID</button>`;
+  } else if (i.state === 'blocked' && sheetRow) {
+    foot = `<a class="btn filled block press" href="${esc(sheetRow)}" target="_blank" rel="noopener"><i class="ti ti-table"></i>Fix it in the sheet</a>`;
+  }
+  const head = sheetHead(i.name, `${i.productName}${i.qty > 1 ? ' ×' + i.qty : ''}, ${i.city || 'no city'}`);
+  const body = `<div class="status-card ${tone}"><div class="state">${esc(s.label)}</div><p>${esc(i.reason || '')}</p></div>
+    <div class="group">
+      ${kv('Phone', i.phone, i.phone ? 'tel:' + i.phone.replace(/[^\d+]/g, '') : '', 'ti-phone')}
+      ${kv('Address', i.address, '', 'ti-map-pin')}
+      ${kv('Comment', i.comment, '', 'ti-message')}
+      ${kv('Product code', i.product, '', 'ti-package')}
+      ${kv('Sheet', 'Row ' + i.row, sheetRow, 'ti-table')}
+    </div>${extra}`;
+  return { head, body, foot };
+}
+function openOrder(row) {
+  const i = items().find(x => x.row === row); if (!i) return;
+  haptic(); Sheet.open('order', orderParts(i), { row });
 }
 function openPlaced(id) {
   const o = S.recent.find(x => x.orderId === id); if (!o) return;
   const st = S.status || {}, d = new Date(o.placedAt);
-  const fact = (icon, k, v, href) => v ? `<${href ? `a href="${esc(href)}" target="_blank" rel="noopener"` : 'div'} class="fact"><i class="ti ${icon}"></i><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></${href ? 'a' : 'div'}>` : '';
-  S.open = null;
-  $('#sheet').innerHTML = `
-    <div class="grab"></div>
-    <button class="icon-btn close" data-act="close" aria-label="Close"><i class="ti ti-x"></i></button>
-    <h3 id="sheet-title">${esc(o.name)}</h3>
-    <p class="prod">${esc(o.productName)}, ${esc(o.city)}</p>
-    <div class="status-box t-ok"><div class="state">Placed${isNaN(d) ? '' : ' ' + d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+  haptic();
+  Sheet.open('placed', {
+    head: sheetHead(o.name, `${o.productName}, ${o.city}`),
+    body: `<div class="status-card t-green"><div class="state">Placed${isNaN(d) ? '' : ' ' + d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
       <p>Order ${esc(o.orderId)}${o.total ? ', ' + money(parseMoney(o.total)) + ' with transport' : ''}.</p></div>
-    <div class="facts">
-      ${fact('ti-hash', 'Order ID', o.orderId)}
-      ${fact('ti-package', 'Product code', o.product)}
-      ${st.sheetUrl ? fact('ti-table', 'Sheet', 'Row ' + o.row, st.sheetUrl + '&range=A' + o.row) : ''}
-    </div>
-    <div class="actions"><button class="btn primary block" data-act="copy" data-text="${esc(o.orderId)}"><i class="ti ti-copy"></i>Copy Order ID</button></div>`;
-  $('#scrim').classList.add('open'); $('#sheet').classList.add('open');
-  setTimeout(() => { const c = $('#sheet .close'); c && c.focus(); }, 60);
+      <div class="group">${kv('Order ID', o.orderId, '', 'ti-hash')}${kv('Product code', o.product, '', 'ti-package')}
+      ${st.sheetUrl ? kv('Sheet', 'Row ' + o.row, st.sheetUrl + '&range=A' + o.row, 'ti-table') : ''}</div>`,
+    foot: `<button class="btn filled block press" data-act="copy" data-text="${esc(o.orderId)}"><i class="ti ti-copy"></i>Copy Order ID</button>`
+  });
 }
-function idForm(i) {
-  return `<label class="field" style="padding:4px 0 0;border:0"><span>Order ID from GjirafaMall</span>
-    <input id="oid" inputmode="numeric" placeholder="e.g. 1277076" autocomplete="off"></label>
-    <button class="btn quiet block" data-act="saveid" data-row="${i.row}">Save Order ID</button>`;
+
+// ── Gestures: drag a sheet down to dismiss; pull the list down to refresh ────
+(function sheetDrag() {
+  const el = $('#sheet');
+  let y0 = null, dy = 0, t0 = 0, fromBody = false;
+  el.addEventListener('touchstart', e => {
+    const body = el.querySelector('.sheet-body'), inHead = !!e.target.closest('[data-drag]');
+    fromBody = !inHead && !!body && body.contains(e.target) && body.scrollTop <= 0 && !e.target.closest('input');
+    if (!inHead && !fromBody) { y0 = null; return; }
+    y0 = e.touches[0].clientY; dy = 0; t0 = Date.now();
+  }, { passive: true });
+  el.addEventListener('touchmove', e => {
+    if (y0 == null) return;
+    dy = e.touches[0].clientY - y0;
+    if (dy <= 0) { if (fromBody) y0 = null; el.classList.remove('dragging'); el.style.setProperty('--drag', '0px'); return; }
+    if (fromBody && e.cancelable) e.preventDefault();
+    el.classList.add('dragging');
+    el.style.setProperty('--drag', dy + 'px');
+  }, { passive: false });
+  el.addEventListener('touchend', () => {
+    if (y0 == null) return;
+    const velocity = dy / Math.max(1, Date.now() - t0);
+    el.classList.remove('dragging'); y0 = null;
+    if (dy > 120 || (dy > 30 && velocity > 0.6)) { haptic(); Sheet.close(false); }
+    else el.style.setProperty('--drag', '0px');
+  });
+})();
+(function pullToRefresh() {
+  const v = $('#view');
+  let y0 = null, armed = false;
+  v.addEventListener('touchstart', e => { y0 = v.scrollTop <= 0 ? e.touches[0].clientY : null; armed = false; }, { passive: true });
+  v.addEventListener('touchmove', e => {
+    const p = $('#ptr'); if (y0 == null || !p) return;
+    const dy = e.touches[0].clientY - y0;
+    p.style.opacity = dy > 8 ? Math.min(1, dy / 72) : 0;
+    p.style.transform = `rotate(${Math.min(dy, 110) * 3}deg)`;
+    if (dy > 72 && !armed) { armed = true; Haptics.select(); }
+  }, { passive: true });
+  v.addEventListener('touchend', () => {
+    const p = $('#ptr'); if (y0 == null) return;
+    y0 = null; if (p) p.style.opacity = 0;
+    if (armed) refresh(true);
+    armed = false;
+  });
+  v.addEventListener('scroll', updateNavState, { passive: true });
+})();
+
+// ── Setup screen ─────────────────────────────────────────────────────────────
+function renderSetup() {
+  $('#dock').hidden = true;
+  renderNav(true);
+  $('#content').innerHTML = `<div class="px-safe setup">
+    <span class="tile t-accent" aria-hidden="true"><i class="ti ti-truck-delivery"></i></span>
+    <h1 class="large-title">Connect Argati</h1>
+    <p>Paste the access key from the Apps Script setup log. You only do this once on each device.</p>
+    <div class="group"><label class="field"><span>Access key</span>
+      <input id="key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="32 letters and numbers"></label></div>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn filled block press" data-act="connect">Connect</button>
+    <p class="footnote" style="text-align:center">Just looking? <a href="?demo">Open the demo with sample data</a></p>
+  </div>`;
+}
+async function connect() {
+  const key = ($('#key').value || '').trim(), err = $('#err');
+  if (!key) { err.textContent = 'Paste the access key first.'; Haptics.warning(); return; }
+  err.textContent = 'Checking…'; cfg = { key, url: cfg.url || DEFAULT_URL };
+  try { await get('status'); store.set(cfg); S.error = ''; Haptics.success(); render(); refresh(true); }
+  catch (e) {
+    cfg.key = ''; Haptics.warning();
+    err.textContent = e.message === 'The access key was rejected' ? 'That key was rejected. Copy it again from the setup log.' : e.message + '. Check the connection and try again.';
+  }
+}
+
+// ── Events ───────────────────────────────────────────────────────────────────
+document.addEventListener('touchstart', () => {}, { passive: true });   // lets :active styles fire on iOS
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act, row = Number(el.dataset.row);
+  if (act === 'tab') goTab(el.dataset.tab);
+  else if (act === 'refresh') { haptic(); refresh(true); }
+  else if (act === 'open') { e.preventDefault(); openOrder(row); }
+  else if (act === 'approve') { e.stopPropagation(); if (Sheet.kind === 'order') Sheet.close(); approve(row, el.dataset.strong === '1'); }
+  else if (act === 'saveid') saveOrderId(row);
+  else if (act === 'close') Sheet.close(false);
+  else if (act === 'ask-yes') { Haptics.tap(); Sheet.close(true); }
+  else if (act === 'ask-no') Sheet.close(false);
+  else if (act === 'copy') { navigator.clipboard && navigator.clipboard.writeText(el.dataset.text).then(() => { Haptics.success(); toast('Copied ' + el.dataset.text); }); }
+  else if (act === 'push') enablePush();
+  else if (act === 'pushoff') disablePush();
+  else if (act === 'testpush') post('alert', { title: '🔔 Argati test', body: 'Notifications work on this device.' }).then(() => { Haptics.success(); toast('Test sent.'); }, err => toast(err.message));
+  else if (act === 'saveconn') saveConnection();
+  else if (act === 'connect') connect();
+  else if (act === 'setting') saveSetting(el.dataset.key, Number(el.dataset.val));
+  else if (act === 'openplaced') openPlaced(el.dataset.id);
+});
+document.addEventListener('change', e => { if (e.target.matches('[data-act="auto"]')) { haptic(); setAuto(e.target.checked, e.target); } });
+document.addEventListener('input', e => {
+  if (e.target.id !== 'q') return;
+  S.query = e.target.value; const pos = e.target.selectionStart; render();
+  const q = $('#q'); q.focus({ preventScroll: true }); q.setSelectionRange(pos, pos);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && Sheet.kind) Sheet.close(false);
+  if (e.key === 'Enter' && e.target.id === 'key' && !cfg.key) connect();
+  if (e.key === 'Enter' && e.target.id === 'oid' && Sheet.row != null) saveOrderId(Sheet.row);
+});
+$('#scrim').addEventListener('click', () => Sheet.close(false));
+$('#content').addEventListener('animationend', () => $('#content').classList.remove('in-left', 'in-right'));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
+setInterval(() => { if (document.visibilityState === 'visible' && !Sheet.kind) refresh(); }, POLL_MS);
+setInterval(tickCountdowns, 1000);
+if ('serviceWorker' in navigator && !DEMO) {
+  navigator.serviceWorker.register('sw.js').then(() => tellWorker()).catch(() => {});
+  navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'refresh') refresh(true); });
 }
 
 // ── Actions ────────────────────────────────────────────────────────────────
 async function approve(row, strong) {
   const i = items().find(x => x.row === row); if (!i) return;
-  if (strong && !confirm(`Place ${i.name}'s order again?\n\nOnly do this if it is NOT in the GjirafaMall back office.`)) return;
+  if (strong && !(await ask({ title: 'Place this order again?', confirm: 'Place it again', tone: 'danger',
+      message: `Only continue if ${i.name}'s order is NOT in the GjirafaMall back office. Otherwise the customer gets two orders.` }))) return;
+  if (!strong && /Same customer and product/.test(i.reason || '') && !(await ask({ title: 'Order again for the same customer?',
+      confirm: 'Approve anyway', message: `${i.name} already has an order for this product. Approve only if they really ordered again.` }))) return;
   haptic(); S.approved[row] = Date.now(); render();
-  try { await post('approve', { row: i.row, product: i.product, phone: i.phone }); toast('Approved. It will be placed within a minute.'); }
-  catch (e) { delete S.approved[row]; render(); toast('Approval didn’t go through: ' + e.message); }
+  try { await post('approve', { row: i.row, product: i.product, phone: i.phone }); Haptics.success(); toast('Approved. It will be placed within a minute.'); }
+  catch (e) { delete S.approved[row]; render(); Haptics.warning(); toast('Approval didn’t go through: ' + e.message); }
 }
 async function saveOrderId(row) {
   const i = items().find(x => x.row === row); const v = (($('#oid') || {}).value || '').replace(/\D/g, '');
   if (!i) return;
-  if (v.length < 5) { toast('Enter the Order ID number, e.g. 1277076'); return; }
+  if (v.length < 5) { Haptics.warning(); toast('Enter the Order ID number, e.g. 1277076'); return; }
   haptic();
   try {
     await post('setOrderId', { row: i.row, product: i.product, phone: i.phone, first: i.first, last: i.last, orderId: v });
-    toast(`Saved #${v} to row ${i.row}.`); closeSheet(); refresh(true);
-  } catch (e) { toast('Couldn’t save: ' + e.message); }
+    Haptics.success(); toast(`Saved #${v} to row ${i.row}.`); Sheet.close(); refresh(true);
+  } catch (e) { Haptics.warning(); toast('Couldn’t save: ' + e.message); }
 }
 async function setAuto(on, input) {
-  if (on && !confirm('Turn on automatic ordering?\n\nClean orders will be placed 2 minutes after the last edit.')) { input.checked = false; return; }
+  const wait = fmtWait(((S.status || {}).settings || {}).quietSeconds);
+  if (on && !(await ask({ title: 'Turn on automatic ordering?', confirm: 'Turn on',
+      message: `Clean orders will be placed ${wait} after the last edit, without asking.` }))) { input.checked = false; return; }
   try { await post('setAuto', { on }); S.status.autoMode = on; toast(on ? 'Automatic ordering is on.' : 'Automatic ordering is paused.'); render(); }
   catch (e) { input.checked = !on; toast('Couldn’t change it: ' + e.message); }
 }
@@ -762,64 +1083,7 @@ function tellWorker() {
   navigator.serviceWorker.controller.postMessage({ type: 'config', url: cfg.url, key: cfg.key });
 }
 
-// ── Setup screen ───────────────────────────────────────────────────────────
-function renderSetup() {
-  $('#tabs').hidden = true;
-  $('#content').innerHTML = `
-    <main class="setup">
-      <h1>Connect Argati</h1>
-      <p>Paste the access key from the Apps Script setup log. You only do this once per device.</p>
-      <div class="panel">
-        <label class="field"><span>Access key</span><input id="key" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="32 letters and numbers"></label>
-        <div class="field"><button class="btn primary block" data-act="connect">Connect</button></div>
-      </div>
-      <div class="err" id="err" role="alert"></div>
-      <p class="alt">Just looking? <a href="?demo">Open the demo with sample data</a></p>
-    </main>`;
-  setTimeout(() => { const k = $('#key'); k && k.focus(); }, 50);
-}
-async function connect() {
-  const key = ($('#key').value || '').trim(); const err = $('#err');
-  if (!key) { err.textContent = 'Paste the access key first.'; return; }
-  err.textContent = 'Checking…'; cfg = { key, url: cfg.url || DEFAULT_URL };
-  try { await get('status'); store.set(cfg); S.error = ''; render(); refresh(true); }
-  catch (e) { cfg.key = ''; err.textContent = e.message === 'The access key was rejected' ? 'That key was rejected. Copy it again from the setup log.' : e.message + '. Check your connection and try again.'; }
-}
 
-// ── Events ─────────────────────────────────────────────────────────────────
-document.addEventListener('click', e => {
-  const el = e.target.closest('[data-act]'); if (!el) return;
-  const act = el.dataset.act, row = Number(el.dataset.row);
-  if (act === 'tab') { S.tab = el.dataset.tab; render(); $('#view').scrollTop = 0; if (S.tab !== 'queue' && Date.now() - S.recentAt > 30000) refreshRecent().then(render); }
-  else if (act === 'refresh') refresh(true);
-  else if (act === 'open') { e.preventDefault(); openSheet(row); }
-  else if (act === 'approve') { e.stopPropagation(); approve(row, el.dataset.confirm === '1'); }
-  else if (act === 'saveid') saveOrderId(row);
-  else if (act === 'close') closeSheet();
-  else if (act === 'copy') { navigator.clipboard && navigator.clipboard.writeText(el.dataset.text).then(() => toast('Copied ' + el.dataset.text)); }
-  else if (act === 'push') enablePush();
-  else if (act === 'pushoff') disablePush();
-  else if (act === 'setting') saveSetting(el.dataset.key, Number(el.dataset.val));
-  else if (act === 'openplaced') openPlaced(el.dataset.id);
-  else if (act === 'testpush') post('alert', { title: '🔔 Argati test', body: 'Notifications work on this device.' }).then(() => toast('Test sent.'), err => toast(err.message));
-  else if (act === 'saveconn') saveConnection();
-  else if (act === 'connect') connect();
-});
-document.addEventListener('change', e => { if (e.target.matches('[data-act="auto"]')) setAuto(e.target.checked, e.target); });
-document.addEventListener('input', e => { if (e.target.id === 'q') { S.query = e.target.value; const pos = e.target.selectionStart; render(); const q = $('#q'); q.focus(); q.setSelectionRange(pos, pos); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#sheet').classList.contains('open')) closeSheet();
-  if (e.key === 'Enter' && e.target.matches('.prow')) openPlaced(e.target.dataset.id);
-  if (e.key === 'Enter' && e.target.id === 'key' && !cfg.key) connect(); });
-$('#scrim').addEventListener('click', closeSheet);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') refresh(); });
-setInterval(() => { if (document.visibilityState === 'visible') refresh(); }, POLL_MS);
-setInterval(tickCountdowns, 1000);
-if ('serviceWorker' in navigator && !DEMO) {
-  navigator.serviceWorker.register('sw.js').then(() => tellWorker()).catch(() => {});
-  navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'refresh') refresh(true); });
-}
-
-// ── Demo data (?demo) ──────────────────────────────────────────────────────
 const Demo = {
   auto: true,
   settings: { quietSeconds: 120, oosRetryMin: 15, oosMaxHours: 24 },
