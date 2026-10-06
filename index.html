@@ -306,7 +306,7 @@ body.sheet-open #toast.show{transform:none}
 <div id="toast" class="glass-strong" role="status" aria-live="polite"></div>
 <script>
 'use strict';
-const APP_VERSION = '4.0.1';
+const APP_VERSION = '4.1.0';
 const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzQMxhghzC2LCW36uaUJTlOI4WxHV6h8snnhRPRBgSM6fXeyG8LZS67Pzxoet41wes/exec';
 const VAPID_PUBLIC = 'BPMuB6Ef73ZeI70auGOSVXz1DUz5GW2CDCzh0S-ecMFiyrhjVQv6OyF48qm-Kd_tKeyBqj7E1ZrYYHpR7KtKeuQ';
 const POLL_MS = 15000;
@@ -694,7 +694,8 @@ function viewInsights() {
 
 function viewSettings() {
   const st = S.status || {}, r = st.runner || {}, rs = st.state || {};
-  const push = pushState(), set = st.settings || ((S.pending || {}).settings) || { quietSeconds: 120, oosRetryMin: 15, oosMaxHours: 24 };
+  const push = pushState(), set = Object.assign({ quietSeconds: 120, oosRetryMin: 15, oosMaxHours: 24, priceGuard: 1, priceCheckHour: 8, summaryHour: 20 },
+                                                   st.settings || ((S.pending || {}).settings) || {});
   const seg = (key, opts, fmt) => `<div class="seg" role="group">${opts.map(v =>
     `<button data-act="setting" data-key="${key}" data-val="${v}" aria-pressed="${Number(set[key]) === v}">${fmt(v)}</button>`).join('')}</div>`;
   const install = IS_IOS && !STANDALONE ? `
@@ -727,6 +728,16 @@ function viewSettings() {
       <div class="cell stack"><span class="title"><span>Out of stock, check again</span></span>${seg('oosRetryMin', [10, 15, 30, 60], v => v + ' min')}</div>
     </div>
     <p class="footnote">The wait gives the team time to finish typing. Out-of-stock orders are retried for up to ${set.oosMaxHours || 24} hours.</p>
+
+    <h2 class="section-title">Checks</h2>
+    <div class="group">
+      <div class="cell"><span class="tile t-amber"><i class="ti ti-currency-euro"></i></span>
+        <span class="body"><span class="title"><span>Price guard</span></span><span class="sub">Hold orders when a price rises</span></span>
+        <label class="switch" aria-label="Hold orders when a price rises"><input type="checkbox" data-act="priceguard" ${Number(set.priceGuard ?? 1) ? 'checked' : ''} ${S.status ? '' : 'disabled'}><span class="tr"></span></label></div>
+      <div class="cell stack"><span class="title"><span>Morning catalog check</span></span>${seg('priceCheckHour', [7, 8, 9, 10], v => String(v).padStart(2, '0') + ':00')}</div>
+      <div class="cell stack"><span class="title"><span>Evening summary</span></span>${seg('summaryHour', [18, 19, 20, 21], v => v + ':00')}</div>
+    </div>
+    <p class="footnote">The morning check opens every product page and tells you about price changes, €0.00 prices and broken links. The summary sends one notification with the day's orders, delays and problems.</p>
 
     <h2 class="section-title">Notifications</h2>
     <div class="group">
@@ -981,7 +992,10 @@ document.addEventListener('click', e => {
   else if (act === 'setting') saveSetting(el.dataset.key, Number(el.dataset.val));
   else if (act === 'openplaced') openPlaced(el.dataset.id);
 });
-document.addEventListener('change', e => { if (e.target.matches('[data-act="auto"]')) { haptic(); setAuto(e.target.checked, e.target); } });
+document.addEventListener('change', e => {
+  if (e.target.matches('[data-act="auto"]')) { haptic(); setAuto(e.target.checked, e.target); }
+  if (e.target.matches('[data-act="priceguard"]')) { haptic(); saveSetting('priceGuard', e.target.checked ? 1 : 0); }
+});
 document.addEventListener('input', e => {
   if (e.target.id !== 'q') return;
   S.query = e.target.value; const pos = e.target.selectionStart; render();
@@ -1088,7 +1102,7 @@ function tellWorker() {
 
 const Demo = {
   auto: true,
-  settings: { quietSeconds: 120, oosRetryMin: 15, oosMaxHours: 24 },
+  settings: { quietSeconds: 120, oosRetryMin: 15, oosMaxHours: 24, priceGuard: 1, priceCheckHour: 8, summaryHour: 20 },
   products: [['104','Pastrues Filtrave DPF 104'],['106','DPF Additiv 106'],['107','Pastrues DPF 107'],['201','Super Diesel Additiv 201'],
     ['204','Pastrues Injektimit Dizel 204'],['207','Additiv Vaj Motorik 207'],['210','Pastrues Injektimit Benzine 210'],
     ['204+107+106','Set Diesel 2+1 Gratis'],['210+209+206','Set Benzine 2+1 Gratis']].map(([code, name]) => ({ code, name, url: 'https://gjirafamall.com/', active: true })),
