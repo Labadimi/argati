@@ -1,26 +1,37 @@
 {
-  "name": "Parts Center - Argati",
+  "name": "Argati — Parts Center orders",
   "short_name": "Argati",
-  "description": "Order notifications and management for Parts Center",
-  "start_url": "/argati/",
+  "description": "Automatic GjirafaMall order placement for Parts Center",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f0f2f5",
-  "theme_color": "#ff4500",
   "orientation": "portrait",
-  "lang": "sq",
-  "scope": "/argati/",
+  "background_color": "#1E4E72",
+  "theme_color": "#F2F2F7",
   "icons": [
     {
-      "src": "/argati/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/argati/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
